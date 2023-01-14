@@ -1,9 +1,9 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Credential;
+namespace Phpkg\Classes\Credential;
 
-use Saeghe\Datatype\Collection;
-use function Saeghe\Datatype\Arr\reduce;
+use PhpRepos\Datatype\Collection;
+use function PhpRepos\Datatype\Arr\reduce;
 
 class Credentials extends Collection
 {

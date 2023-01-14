@@ -1,14 +1,14 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Project;
+namespace Phpkg\Classes\Project;
 
-use Saeghe\Datatype\Collection;
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\FileManager\Filesystem\File;
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Classes\Meta\Meta;
-use Saeghe\Saeghe\Git\Repository;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Classes\Meta\Meta;
+use Phpkg\Git\Repository;
+use PhpRepos\Datatype\Collection;
+use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Filesystem\File;
+use PhpRepos\FileManager\Filesystem\Filename;
 
 class Project
 {
@@ -23,8 +23,8 @@ class Project
     public function __construct(
         public Directory $root,
     ) {
-        $this->config_file = (new Filename('saeghe.config.json'))->file($this->root);
-        $this->meta_file = (new Filename('saeghe.config-lock.json'))->file($this->root);
+        $this->config_file = (new Filename('phpkg.config.json'))->file($this->root);
+        $this->meta_file = (new Filename('phpkg.config-lock.json'))->file($this->root);
         $this->packages = new Collection();
     }
 

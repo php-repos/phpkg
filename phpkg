@@ -18,16 +18,16 @@ require realpath(__DIR__ . '/Source/Commands/Update.php');
 require realpath(__DIR__ . '/Source/Commands/Version.php');
 require realpath(__DIR__ . '/Source/Commands/Watch.php');
 
-use Saeghe\Cli\IO\Read;
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\Saeghe\Classes\Credential\Credential;
-use Saeghe\Saeghe\Classes\Credential\Credentials;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\Saeghe\Exception\CredentialCanNotBeSetException;
-use function Saeghe\Saeghe\Exception\register_exception_handler;
-use function Saeghe\Saeghe\Providers\GitHub\github_token;
-use const Saeghe\Saeghe\Providers\GitHub\GITHUB_DOMAIN;
+use Phpkg\Classes\Credential\Credential;
+use Phpkg\Classes\Credential\Credentials;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Exception\CredentialCanNotBeSetException;
+use PhpRepos\Cli\IO\Read;
+use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\FileType\Json;
+use function Phpkg\Exception\register_exception_handler;
+use function Phpkg\Providers\GitHub\github_token;
+use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
 
 register_exception_handler();
 
@@ -40,21 +40,21 @@ if (is_null($command)) {
 $environment = new Environment(Directory::from_string(__DIR__));
 
 match ($command) {
-    'add' => \Saeghe\Saeghe\Commands\Add\run($environment),
-    'alias' => \Saeghe\Saeghe\Commands\Alias\run($environment),
-    'build' => \Saeghe\Saeghe\Commands\Build\run($environment),
-    'credential' => \Saeghe\Saeghe\Commands\Credential\run($environment),
-    'flush' => \Saeghe\Saeghe\Commands\Flush\run($environment),
-    'init' => \Saeghe\Saeghe\Commands\Init\run($environment),
-    'install' => \Saeghe\Saeghe\Commands\Install\run($environment),
-    'man' => \Saeghe\Saeghe\Commands\Man\run(),
-    'migrate' => \Saeghe\Saeghe\Commands\Migrate\run($environment),
-    'remove' => \Saeghe\Saeghe\Commands\Remove\run($environment),
-    'run' => \Saeghe\Saeghe\Commands\Run\run($environment),
-    'update' => \Saeghe\Saeghe\Commands\Update\run($environment),
-    'version' => \Saeghe\Saeghe\Commands\Version\run(),
-    'watch' => \Saeghe\Saeghe\Commands\Watch\run(),
-    default => \Saeghe\Saeghe\Commands\Help\run(),
+    'add' => \Phpkg\Commands\Add\run($environment),
+    'alias' => \Phpkg\Commands\Alias\run($environment),
+    'build' => \Phpkg\Commands\Build\run($environment),
+    'credential' => \Phpkg\Commands\Credential\run($environment),
+    'flush' => \Phpkg\Commands\Flush\run($environment),
+    'init' => \Phpkg\Commands\Init\run($environment),
+    'install' => \Phpkg\Commands\Install\run($environment),
+    'man' => \Phpkg\Commands\Man\run(),
+    'migrate' => \Phpkg\Commands\Migrate\run($environment),
+    'remove' => \phpkg\Commands\Remove\run($environment),
+    'run' => \phpkg\Commands\Run\run($environment),
+    'update' => \Phpkg\Commands\Update\run($environment),
+    'version' => \Phpkg\Commands\Version\run(),
+    'watch' => \Phpkg\Commands\Watch\run(),
+    default => \Phpkg\Commands\Help\run(),
 };
 
 function set_credentials(Environment $environment): void

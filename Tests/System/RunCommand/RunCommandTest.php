@@ -2,13 +2,14 @@
 
 namespace Tests\System\RunCommand\RunCommandTest;
 
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should run the given entry point on the given package',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe run https://github.com/saeghe/chuck-norris.git');
+        $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git');
 
         assert_true(str_contains($output, 'Chuck Norris'));
     }
@@ -17,7 +18,7 @@ test(
 test(
     title: 'it should show error message when the entry point is not defined',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe run https://github.com/saeghe/chuck-norris.git not-exists.php');
+        $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git not-exists.php');
 
         $expected = <<<EOD
 \e[91mEntry point not-exists.php is not defined in the package.\e[39m

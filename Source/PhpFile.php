@@ -1,10 +1,10 @@
 <?php
 
-namespace Saeghe\Saeghe;
+namespace Phpkg;
 
 use Closure;
-use Saeghe\Datatype\Str;
-use function Saeghe\Datatype\Arr\has;
+use PhpRepos\Datatype\Str;
+use function PhpRepos\Datatype\Arr\has;
 
 class PhpFile
 {

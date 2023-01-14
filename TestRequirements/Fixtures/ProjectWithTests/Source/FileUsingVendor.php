@@ -2,7 +2,7 @@
 
 namespace ProjectWithTests\SampleFile;
 
-use Saeghe\SimplePackage\AUsefulClass;
+use PhpRepos\SimplePackage\AUsefulClass;
 
 class FileWithPackageDependency
 {

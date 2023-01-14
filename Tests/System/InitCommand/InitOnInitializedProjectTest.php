@@ -2,14 +2,15 @@
 
 namespace Tests\System\InitCommand\InitOnInitializedProject;
 
-use function Saeghe\FileManager\Directory\clean;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should return error when project is already initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
 \e[39mInit project...
@@ -20,7 +21,7 @@ EOD;
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));

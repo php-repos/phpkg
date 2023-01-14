@@ -1,25 +1,25 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Run;
+namespace Phpkg\Commands\Run;
 
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\Saeghe\Classes\Build\Build;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Classes\Config\LinkPair;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\Saeghe\Classes\Meta\Dependency;
-use Saeghe\Saeghe\Classes\Meta\Meta;
-use Saeghe\Saeghe\Classes\Package\Package;
-use Saeghe\Saeghe\Classes\Project\Project;
-use Saeghe\Saeghe\Git\Repository;
-use function Saeghe\Cli\IO\Read\argument;
-use function Saeghe\Cli\IO\Write\error;
-use function Saeghe\Saeghe\Commands\Build\add_autoloads;
-use function Saeghe\Saeghe\Commands\Build\add_executables;
-use function Saeghe\Saeghe\Commands\Build\compile_packages;
-use function Saeghe\Saeghe\Commands\Build\compile_project_files;
+use Phpkg\Classes\Build\Build;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Classes\Config\LinkPair;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Meta\Dependency;
+use Phpkg\Classes\Meta\Meta;
+use Phpkg\Classes\Package\Package;
+use Phpkg\Classes\Project\Project;
+use Phpkg\Git\Repository;
+use PhpRepos\FileManager\Filesystem\Filename;
+use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\Filesystem\Directory;
+use function Phpkg\Commands\Build\add_autoloads;
+use function Phpkg\Commands\Build\add_executables;
+use function Phpkg\Commands\Build\compile_packages;
+use function Phpkg\Commands\Build\compile_project_files;
+use function PhpRepos\Cli\IO\Read\argument;
+use function PhpRepos\Cli\IO\Write\error;
 
 function run(Environment $environment): void
 {
@@ -29,7 +29,7 @@ function run(Environment $environment): void
 
     $repository = Repository::from_url($package_url)->latest_version()->detect_hash();
 
-    $root = Directory::from_string(sys_get_temp_dir())->subdirectory('saeghe/runner/' . $repository->owner . '/' . $repository->repo);
+    $root = Directory::from_string(sys_get_temp_dir())->subdirectory('phpkg/runner/' . $repository->owner . '/' . $repository->repo);
 
     $repository->download($root);
 

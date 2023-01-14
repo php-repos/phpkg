@@ -1,5 +1,5 @@
 {
-    "name": "saeghe/composer-package",
+    "name": "php-repos/composer-package",
     "description": "A test composer package",
     "type": "library",
     "require": {
@@ -8,7 +8,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Saeghe\\ComposerPackage\\": "src/"
+            "PhpRepos\\ComposerPackage\\": "src/"
         }
     },
     "require-dev": {

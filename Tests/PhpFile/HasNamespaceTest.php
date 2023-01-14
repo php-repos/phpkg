@@ -2,9 +2,10 @@
 
 namespace Tests\PhpFile\HasNamespaceTest;
 
-use Saeghe\Saeghe\PhpFile;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_false;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use Phpkg\PhpFile;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should detect namespace in files with env',

@@ -1,12 +1,12 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Package;
+namespace Phpkg\Classes\Package;
 
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\FileManager\Filesystem\File;
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Git\Repository;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Git\Repository;
+use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Filesystem\File;
+use PhpRepos\FileManager\Filesystem\Filename;
 
 class Package
 {
@@ -17,7 +17,7 @@ class Package
         public Directory $root,
         public Repository $repository,
     ) {
-        $this->config_file = (new Filename('saeghe.config.json'))->file($this->root);
+        $this->config_file = (new Filename('phpkg.config.json'))->file($this->root);
     }
 
     public function is_downloaded(): bool

@@ -2,8 +2,9 @@
 
 namespace Tests\PhpFile\UsedFunctionsTest;
 
-use Saeghe\Saeghe\PhpFile;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use Phpkg\PhpFile;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should return correct list when namespace used as constant',

@@ -2,21 +2,21 @@
 
 namespace Tests\System\AddCommand\AddCommandTest;
 
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\TestRunner\Assertions\File;
-use function Saeghe\FileManager\Directory\clean;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\Saeghe\Providers\GitHub\github_token;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
-use const Saeghe\Saeghe\Providers\GitHub\GITHUB_DOMAIN;
+use PhpRepos\FileManager\FileType\Json;
+use function Phpkg\Providers\GitHub\github_token;
+use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
+use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
 
 test(
     title: 'it should show error message when project is not initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
         $expected = <<<EOD
-\e[39mAdding package git@github.com:saeghe/simple-package.git latest version...
+\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
 \e[91mProject is not initialized. Please try to initialize using the init command.\e[39m
 
 EOD;
@@ -28,10 +28,10 @@ EOD;
 test(
     title: 'it should show error message when there is no credential files and there is no GITHUB_TOKEN',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
-\e[39mAdding package git@github.com:saeghe/simple-package.git latest version...
+\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
 \e[39mSetting env credential...
 \e[91mThere is no credential file. Please use the `credential` command to add your token.\e[39m
 
@@ -40,7 +40,7 @@ EOD;
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
         github_token('');
     },
@@ -53,10 +53,10 @@ EOD;
 test(
     title: 'it should not show error message when there is no credential files but GITHUB_TOKEN is set',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
-\e[39mAdding package git@github.com:saeghe/simple-package.git latest version...
+\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mChecking installed packages...
@@ -66,14 +66,14 @@ test(
 \e[39mDownloading the package...
 \e[39mUpdating configs...
 \e[39mCommitting configs...
-\e[92mPackage git@github.com:saeghe/simple-package.git has been added successfully.\e[39m
+\e[92mPackage git@github.com:php-repos/simple-package.git has been added successfully.\e[39m
 
 EOD;
 
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         $credential = Json\to_array(root() . 'credentials.json');
         github_token($credential[GITHUB_DOMAIN]['token']);
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
@@ -87,10 +87,10 @@ EOD;
 test(
     title: 'it should show error message when token is invalid',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
-\e[39mAdding package git@github.com:saeghe/simple-package.git latest version...
+\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mChecking installed packages...
@@ -102,9 +102,9 @@ EOD;
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
-        shell_exec('php ' . root() . 'saeghe credential github.com not-valid');
+        shell_exec('php ' . root() . 'phpkg credential github.com not-valid');
         github_token('');
     },
     after: function () {
@@ -116,7 +116,7 @@ EOD;
 test(
     title: 'it should add package to the project',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         assert_output($output);
         assert_config_file_created_for_simple_project('Config file is not created!' . $output);
@@ -126,7 +126,7 @@ test(
         assert_meta_has_desired_data('Meta data is not what we want.' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
@@ -136,12 +136,12 @@ test(
 test(
     title: 'it should add package to the project without trailing .git',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package --project=TestRequirements/Fixtures/EmptyProject');
 
         assert_simple_package_cloned('Simple package does not cloned!' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
@@ -151,27 +151,27 @@ test(
 test(
     title: 'it should use same repo with git and https urls',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe add https://github.com/saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
-\e[39mAdding package https://github.com/saeghe/simple-package.git latest version...
+\e[39mAdding package https://github.com/php-repos/simple-package.git latest version...
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mChecking installed packages...
-\e[91mPackage https://github.com/saeghe/simple-package.git is already exists.\e[39m
+\e[91mPackage https://github.com/php-repos/simple-package.git is already exists.\e[39m
 
 EOD;
 
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
 
-        $config = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config.json');
-        $meta = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config-lock.json');
+        $config = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
+        $meta = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
         assert_true(count($config['packages']) === 1);
         assert_true(count($meta['packages']) === 1);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
@@ -181,7 +181,7 @@ EOD;
 function assert_output($output)
 {
     $expected = <<<EOD
-\e[39mAdding package git@github.com:saeghe/simple-package.git latest version...
+\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mChecking installed packages...
@@ -191,7 +191,7 @@ function assert_output($output)
 \e[39mDownloading the package...
 \e[39mUpdating configs...
 \e[39mCommitting configs...
-\e[92mPackage git@github.com:saeghe/simple-package.git has been added successfully.\e[39m
+\e[92mPackage git@github.com:php-repos/simple-package.git has been added successfully.\e[39m
 
 EOD;
 
@@ -200,32 +200,32 @@ EOD;
 
 function assert_config_file_created_for_simple_project($message)
 {
-    File\assert_file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config.json'), $message);
+    assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json')), $message);
 }
 
 function assert_packages_directory_created_for_empty_project($message)
 {
-    File\assert_file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'), $message);
+    assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages')), $message);
 }
 
 function assert_simple_package_cloned($message)
 {
-    assert_true((
-            File\assert_file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/simple-package'))
-            && File\assert_file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/simple-package/saeghe.config.json'))
-            && File\assert_file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/simple-package/README.md'))
-        ),
+    assert_true(
+        file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package'))
+            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package/phpkg.config.json'))
+            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package/README.md'))
+        ,
         $message
     );
 }
 
 function assert_simple_package_added_to_config($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config.json'));
+    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true((
-            isset($config['packages']['git@github.com:saeghe/simple-package.git'])
-            && 'development' === $config['packages']['git@github.com:saeghe/simple-package.git']
+            isset($config['packages']['git@github.com:php-repos/simple-package.git'])
+            && 'development' === $config['packages']['git@github.com:php-repos/simple-package.git']
         ),
         $message
     );
@@ -233,14 +233,14 @@ function assert_simple_package_added_to_config($message)
 
 function assert_meta_has_desired_data($message)
 {
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config-lock.json'));
+    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true((
-            isset($meta['packages']['git@github.com:saeghe/simple-package.git'])
-            && 'development' === $meta['packages']['git@github.com:saeghe/simple-package.git']['version']
-            && 'saeghe' === $meta['packages']['git@github.com:saeghe/simple-package.git']['owner']
-            && 'simple-package' === $meta['packages']['git@github.com:saeghe/simple-package.git']['repo']
-            && '85f94d8c34cb5678a5b37707479517654645c102' === $meta['packages']['git@github.com:saeghe/simple-package.git']['hash']
+            isset($meta['packages']['git@github.com:php-repos/simple-package.git'])
+            && 'development' === $meta['packages']['git@github.com:php-repos/simple-package.git']['version']
+            && 'php-repos' === $meta['packages']['git@github.com:php-repos/simple-package.git']['owner']
+            && 'simple-package' === $meta['packages']['git@github.com:php-repos/simple-package.git']['repo']
+            && '1022f2004a8543326a92c0ba606439db530a23c9' === $meta['packages']['git@github.com:php-repos/simple-package.git']['hash']
         ),
         $message
     );

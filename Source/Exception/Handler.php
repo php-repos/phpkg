@@ -1,11 +1,11 @@
 <?php
 
-namespace Saeghe\Saeghe\Exception;
+namespace Phpkg\Exception;
 
-use Saeghe\Saeghe\Git\Exception\InvalidTokenException;
+use Phpkg\Git\Exception\InvalidTokenException;
 use Throwable;
-use function Saeghe\Cli\IO\Write\error;
-use function Saeghe\Cli\IO\Write\line;
+use function PhpRepos\Cli\IO\Write\error;
+use function PhpRepos\Cli\IO\Write\line;
 
 function register_exception_handler()
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Saeghe\ComplexPackage\Models;
+namespace PhpRepos\ComplexPackage\Models;
 
 class User
 {

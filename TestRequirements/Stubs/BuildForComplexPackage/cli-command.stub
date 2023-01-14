@@ -3,18 +3,18 @@
 
 spl_autoload_register(function ($class) {
     $classes = [
-        'Saeghe\ComplexPackage\Models\User' => '$environment_build_path/Packages/saeghe/complex-package/src/Models/User.php',
-        'Saeghe\SimplePackage\SimpleClass' => '$environment_build_path/Packages/saeghe/simple-package/Source/SimpleClass.php',
-        'Saeghe\ComplexPackage\Controllers\HomeController' => '$environment_build_path/Packages/saeghe/complex-package/src/Controllers/HomeController.php',
+        'PhpRepos\ComplexPackage\Models\User' => '$environment_build_path/Packages/php-repos/complex-package/src/Models/User.php',
+        'PhpRepos\SimplePackage\SimpleClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/SimpleClass.php',
+        'PhpRepos\ComplexPackage\Controllers\HomeController' => '$environment_build_path/Packages/php-repos/complex-package/src/Controllers/HomeController.php',
         'Tests\TestHelper' => '$environment_build_path/Tests/TestHelper.php',
-        'Saeghe\SimplePackage\ImaginaryClass' => '$environment_build_path/Packages/saeghe/simple-package/Source/ImaginaryClass.php',
+        'PhpRepos\SimplePackage\ImaginaryClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/ImaginaryClass.php',
         'ProjectWithTests\CompoundNamespace\Foo' => '$environment_build_path/Source/CompoundNamespace/Foo.php',
         'ProjectWithTests\SubDirectory\SimpleClass' => '$environment_build_path/Source/SubDirectory/SimpleClass.php',
-        'Saeghe\SimplePackage\AUsefulClass' => '$environment_build_path/Packages/saeghe/simple-package/Source/AUsefulClass.php',
+        'PhpRepos\SimplePackage\AUsefulClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/AUsefulClass.php',
         'ProjectWithTests\SubDirectory\ClassUseAnotherClass' => '$environment_build_path/Source/SubDirectory/ClassUseAnotherClass.php',
         'ProjectWithTests\TypeClasses\InjectedClassInConstructor' => '$environment_build_path/Source/TypeClasses/InjectedClassInConstructor.php',
         'ProjectWithTests\TypeClasses\InjectedPublicClassInConstructor' => '$environment_build_path/Source/TypeClasses/InjectedPublicClassInConstructor.php',
-        'Saeghe\SimplePackage\TypeClasses\InjectedClassFromPackageToConstructor' => '$environment_build_path/Packages/saeghe/simple-package/Source/TypeClasses/InjectedClassFromPackageToConstructor.php',
+        'PhpRepos\SimplePackage\TypeClasses\InjectedClassFromPackageToConstructor' => '$environment_build_path/Packages/php-repos/simple-package/Source/TypeClasses/InjectedClassFromPackageToConstructor.php',
         'ProjectWithTests\TypeClasses\InjectedParameterClass' => '$environment_build_path/Source/TypeClasses/InjectedParameterClass.php',
         'ProjectWithTests\TypeClasses\OtherInjectedParameterClass' => '$environment_build_path/Source/TypeClasses/OtherInjectedParameterClass.php',
         'ProjectWithTests\TypeClasses\ReturnTypeClassA' => '$environment_build_path/Source/TypeClasses/ReturnTypeClassA.php',
@@ -25,7 +25,7 @@ spl_autoload_register(function ($class) {
         'ProjectWithTests\ClassName\ClassA' => '$environment_build_path/Source/ClassName/ClassA.php',
         'ProjectWithTests\ClassName\ClassB' => '$environment_build_path/Source/ClassName/ClassB.php',
         'ProjectWithTests\Classes\NewInstanceClassA' => '$environment_build_path/Source/Classes/NewInstanceClassA.php',
-        'Saeghe\SimplePackage\Classes\PackageClass' => '$environment_build_path/Packages/saeghe/simple-package/Source/Classes/PackageClass.php',
+        'PhpRepos\SimplePackage\Classes\PackageClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/Classes/PackageClass.php',
         'ProjectWithTests\Classes\NewInstanceClassB' => '$environment_build_path/Source/Classes/NewInstanceClassB.php',
         'ProjectWithTests\Classes\NewInstanceClassC' => '$environment_build_path/Source/Classes/NewInstanceClassC.php',
         'ProjectWithTests\Classes\StaticClassA' => '$environment_build_path/Source/Classes/StaticClassA.php',
@@ -52,9 +52,9 @@ spl_autoload_register(function ($class) {
 
 spl_autoload_register(function ($class) {
     $namespaces = [
-        'Saeghe\ComplexPackage' => '$environment_build_path/Packages/saeghe/complex-package/src',
+        'PhpRepos\ComplexPackage' => '$environment_build_path/Packages/php-repos/complex-package/src',
         'Tests' => '$environment_build_path/Tests',
-        'Saeghe\SimplePackage' => '$environment_build_path/Packages/saeghe/simple-package/Source',
+        'PhpRepos\SimplePackage' => '$environment_build_path/Packages/php-repos/simple-package/Source',
         'ProjectWithTests' => '$environment_build_path/Source',
         'ProjectWithTests\Service\helper' => '$environment_build_path/Services/Functions.php',
         'ProjectWithTests\Service\HELPER_CONST' => '$environment_build_path/Services/Constants.php',
@@ -75,10 +75,10 @@ spl_autoload_register(function ($class) {
     }
 });
 
-require_once '$environment_build_path/Packages/saeghe/complex-package/src/Helpers.php';
+require_once '$environment_build_path/Packages/php-repos/complex-package/src/Helpers.php';
 
-use Saeghe\ComplexPackage\Models\User;
-use Saeghe\SimplePackage\SimpleClass;
-use Saeghe\ComplexPackage\Helpers;
+use PhpRepos\ComplexPackage\Models\User;
+use PhpRepos\SimplePackage\SimpleClass;
+use PhpRepos\ComplexPackage\Helpers;
 
 Helpers\helper(new User(SimpleClass::email()));

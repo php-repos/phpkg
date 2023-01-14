@@ -1,12 +1,12 @@
 <?php
 
-namespace Saeghe\ComplexPackage\Controllers;
+namespace PhpRepos\ComplexPackage\Controllers;
 
-require_once '$environment_build_path/Packages/saeghe/complex-package/src/Helpers.php';
+require_once '$environment_build_path/Packages/php-repos/complex-package/src/Helpers.php';
 
-use Saeghe\ComplexPackage\Models\User;
-use function Saeghe\ComplexPackage\Helpers\helper1;
-use function Saeghe\ComplexPackage\Helpers\helper2;
+use PhpRepos\ComplexPackage\Models\User;
+use function PhpRepos\ComplexPackage\Helpers\helper1;
+use function PhpRepos\ComplexPackage\Helpers\helper2;
 
 class HomeController extends Controller
 {

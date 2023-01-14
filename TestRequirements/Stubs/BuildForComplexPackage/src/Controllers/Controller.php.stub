@@ -1,8 +1,8 @@
 <?php
 
-namespace Saeghe\ComplexPackage\Controllers;
+namespace PhpRepos\ComplexPackage\Controllers;
 
-use Saeghe\SimplePackage\SimpleClass;
+use PhpRepos\SimplePackage\SimpleClass;
 
 class Controller extends SimpleClass
 {

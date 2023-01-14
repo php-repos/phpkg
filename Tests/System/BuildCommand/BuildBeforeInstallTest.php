@@ -2,31 +2,32 @@
 
 namespace Tests\System\BuildCommand\BuildBeforeInstallTest;
 
-use function Saeghe\FileManager\Directory\delete_recursive;
-use function Saeghe\FileManager\File\delete;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should show error message when project packages are not installed',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe build --project=TestRequirements/Fixtures/ProjectWithTests');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/ProjectWithTests');
 
         assert_output($output);
     },
     before: function () {
         copy(
-            realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/saeghe.config.json'),
-            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config.json')
+            realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/phpkg.config.json'),
+            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json')
         );
-        shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
-        delete_recursive(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/saeghe/simple-package');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
+        delete_recursive(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/simple-package');
     },
     after: function () {
         delete_packages_directory();
-        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config.json'));
-        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config-lock.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
     }
 );
 

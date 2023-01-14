@@ -2,8 +2,9 @@
 
 namespace Tests\PhpFile\ImportsTest;
 
-use Saeghe\Saeghe\PhpFile;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use Phpkg\PhpFile;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should return array of imports',
@@ -201,18 +202,18 @@ test(
 #!/usr/bin/env php
 <?php
 
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\Cli\IO\Write\error;
-use function Saeghe\Cli\IO\Write\line;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\Cli\IO\Write\error;
+use function PhpRepos\Cli\IO\Write\line;
 
 EOD;
         assert_true(
             [
                 'constants' => [],
                 'functions' => [
-                    'Saeghe\Cli\IO\Read\parameter' => 'parameter',
-                    'Saeghe\Cli\IO\Write\error' => 'error',
-                    'Saeghe\Cli\IO\Write\line' => 'line',
+                    'PhpRepos\Cli\IO\Read\parameter' => 'parameter',
+                    'PhpRepos\Cli\IO\Write\error' => 'error',
+                    'PhpRepos\Cli\IO\Write\line' => 'line',
                 ],
                 'classes' => [],
             ]
@@ -228,18 +229,18 @@ test(
         $content = <<<'EOD'
 <?php
 
-use const Saeghe\Cli\IO\Read\{Constant};
-use function Saeghe\Cli\IO\Read\{parameter};
+use const PhpRepos\Cli\IO\Read\{Constant};
+use function PhpRepos\Cli\IO\Read\{parameter};
 use Application\{Classes};
 
 EOD;
         assert_true(
             [
                 'constants' => [
-                    'Saeghe\Cli\IO\Read\Constant' => 'Constant',
+                    'PhpRepos\Cli\IO\Read\Constant' => 'Constant',
                 ],
                 'functions' => [
-                    'Saeghe\Cli\IO\Read\parameter' => 'parameter',
+                    'PhpRepos\Cli\IO\Read\parameter' => 'parameter',
                 ],
                 'classes' => [
                     'Application\Classes' => 'Classes',
@@ -257,11 +258,11 @@ test(
         $content = <<<'EOD'
 <?php
 
-use  const  Saeghe\Cli\IO\Read\{ConstantA};
-  use  const  Saeghe\Cli\IO\Read\{ConstantB};
-use   function   Saeghe\Cli\IO\Read\{parameter};
+use  const  PhpRepos\Cli\IO\Read\{ConstantA};
+  use  const  PhpRepos\Cli\IO\Read\{ConstantB};
+use   function   PhpRepos\Cli\IO\Read\{parameter};
 use   
-    function   Saeghe\Cli\IO\Read\{func};
+    function   PhpRepos\Cli\IO\Read\{func};
 use 
    Application\{Classes};
 
@@ -280,12 +281,12 @@ EOD;
         assert_true(
             [
                 'constants' => [
-                    'Saeghe\Cli\IO\Read\ConstantA' => 'ConstantA',
-                    'Saeghe\Cli\IO\Read\ConstantB' => 'ConstantB',
+                    'PhpRepos\Cli\IO\Read\ConstantA' => 'ConstantA',
+                    'PhpRepos\Cli\IO\Read\ConstantB' => 'ConstantB',
                 ],
                 'functions' => [
-                    'Saeghe\Cli\IO\Read\parameter' => 'parameter',
-                    'Saeghe\Cli\IO\Read\func' => 'func',
+                    'PhpRepos\Cli\IO\Read\parameter' => 'parameter',
+                    'PhpRepos\Cli\IO\Read\func' => 'func',
                 ],
                 'classes' => [
                     'Application\Classes' => 'Classes',

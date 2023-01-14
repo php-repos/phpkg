@@ -1,30 +1,30 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Build;
+namespace Phpkg\Commands\Build;
 
-use Saeghe\Cli\IO\Write;
-use Saeghe\Datatype\Map;
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\FileManager\Path;
-use Saeghe\Saeghe\Classes\Build\Build;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Classes\Config\LinkPair;
-use Saeghe\Saeghe\Classes\Config\NamespacePathPair;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\Saeghe\Classes\Meta\Meta;
-use Saeghe\Saeghe\Classes\Meta\Dependency;
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\FileManager\Filesystem\File;
-use Saeghe\FileManager\Filesystem\FilesystemCollection;
-use Saeghe\FileManager\Filesystem\Symlink;
-use Saeghe\Saeghe\Classes\Package\Package;
-use Saeghe\Saeghe\Classes\Project\Project;
-use Saeghe\Saeghe\PhpFile;
-use Saeghe\Datatype\Str;
-use function Saeghe\Cli\IO\Read\argument;
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\Datatype\Str\after_first_occurrence;
+use Phpkg\Classes\Build\Build;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Classes\Config\LinkPair;
+use Phpkg\Classes\Config\NamespacePathPair;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Meta\Meta;
+use Phpkg\Classes\Meta\Dependency;
+use Phpkg\Classes\Package\Package;
+use Phpkg\Classes\Project\Project;
+use Phpkg\PhpFile;
+use PhpRepos\Cli\IO\Write;
+use PhpRepos\Datatype\Map;
+use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\Filesystem\Filename;
+use PhpRepos\FileManager\Path;
+use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Filesystem\File;
+use PhpRepos\FileManager\Filesystem\FilesystemCollection;
+use PhpRepos\FileManager\Filesystem\Symlink;
+use PhpRepos\Datatype\Str;
+use function PhpRepos\Cli\IO\Read\argument;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\Datatype\Str\after_first_occurrence;
 
 function run(Environment $environment): void
 {

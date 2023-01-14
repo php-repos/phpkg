@@ -2,16 +2,17 @@
 
 namespace Tests\System\BuildCommand\BuildCommandTest;
 
-use function Saeghe\FileManager\Directory\delete_recursive;
-use function Saeghe\FileManager\File\delete;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should show error message when the project is not initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe build --project=TestRequirements/Fixtures/ProjectWithTests');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/ProjectWithTests');
 
         $expected = <<<EOD
 \e[39mStart building...
@@ -26,7 +27,7 @@ EOD;
 test(
     title: 'it should build the project',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe build --project=TestRequirements/Fixtures/ProjectWithTests');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/ProjectWithTests');
 
         assert_output($output);
         assert_build_directory_exists('Build directory has not been created!' . $output);
@@ -50,16 +51,16 @@ test(
     },
     before: function () {
         copy(
-            realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/saeghe.config.json'),
-            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config.json')
+            realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/phpkg.config.json'),
+            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json')
         );
-        shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
     },
     after: function () {
         delete_build_directory();
         delete_packages_directory();
-        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config.json'));
-        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config-lock.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
     }
 );
 
@@ -72,12 +73,12 @@ function assert_output($output)
 \e[39mPrepare build directory...
 \e[39mMake namespaces map...
 \e[39mBuilding packages...
-\e[39mBuilding package git@github.com:saeghe/simple-package.git...
+\e[39mBuilding package git@github.com:php-repos/simple-package.git...
 \e[39mBuilding the project...
 \e[39mBuilding entry points...
 \e[39mBuilding entry point entry-point
 \e[39mBuilding executables...
-\e[39mBuilding executables for package git@github.com:saeghe/simple-package.git
+\e[39mBuilding executables for package git@github.com:php-repos/simple-package.git
 \e[39mBuilding executable file run-executable from run.php
 \e[92mBuild finished successfully.\e[39m
 
@@ -220,7 +221,7 @@ function assert_git_directory_excluded($message)
     assert_true((
             ! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/.git'))
             &&
-            ! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/saeghe/simple-package/.git'))
+            ! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/php-repos/simple-package/.git'))
         ),
         $message
     );
@@ -229,7 +230,7 @@ function assert_git_directory_excluded($message)
 function assert_executables_are_linked($message)
 {
     $link_file = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/run-executable';
-    $link_source = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/saeghe/simple-package/run.php';
+    $link_source = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/php-repos/simple-package/run.php';
     $stub = root() . 'TestRequirements/Stubs/ProjectWithTests/simple-package-run-executable.stub';
     $environment_build_path = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development';
 
@@ -258,8 +259,8 @@ function assert_build_for_packages_entry_points($message)
     $stubs_directory = root() . 'TestRequirements/Stubs/SimplePackage';
 
     assert_true((
-            file_exists(realpath($environment_build_path . '/Packages/saeghe/simple-package/entry-point'))
-            && file_get_contents(realpath($environment_build_path . '/Packages/saeghe/simple-package/entry-point')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/entry-point.stub')))
+            file_exists(realpath($environment_build_path . '/Packages/php-repos/simple-package/entry-point'))
+            && file_get_contents(realpath($environment_build_path . '/Packages/php-repos/simple-package/entry-point')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/entry-point.stub')))
         ),
         $message
     );

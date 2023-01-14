@@ -1,15 +1,15 @@
 <?php
 
-namespace Saeghe\Saeghe\Providers\GitHub;
+namespace Phpkg\Providers\GitHub;
 
-use Saeghe\Saeghe\Git\Exception\InvalidTokenException;
+use Phpkg\Git\Exception\InvalidTokenException;
 use ZipArchive;
-use function Saeghe\FileManager\Directory\delete_recursive;
-use function Saeghe\FileManager\Directory\ls;
-use function Saeghe\FileManager\Directory\preserve_copy_recursively;
-use function Saeghe\FileManager\Directory\renew_recursive;
-use function Saeghe\FileManager\File\delete;
-use function Saeghe\FileManager\Resolver\realpath;
+use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\Directory\ls;
+use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
+use function PhpRepos\FileManager\Directory\renew_recursive;
+use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\Resolver\realpath;
 
 const GITHUB_DOMAIN = 'github.com';
 const GITHUB_URL = 'https://github.com/';
@@ -65,7 +65,7 @@ function get_json(string $api_sub_url): array
     $token = github_token();
 
     $ch = curl_init(GITHUB_API_URL . $api_sub_url);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Saeghe');
+    curl_setopt($ch, CURLOPT_USERAGENT, 'phpkg');
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         "Accept: application/vnd.github+json",
         "Authorization: Bearer $token",
@@ -114,7 +114,7 @@ function find_latest_commit_hash(string $owner, string $repo): string
 function download(string $destination, string $owner, string $repo, string $version): bool
 {
     $token = github_token();
-    $temp = realpath(sys_get_temp_dir(). "/saeghe/installer/cache/$owner/$repo/") . DIRECTORY_SEPARATOR;
+    $temp = realpath(sys_get_temp_dir(). "/phpkg/installer/cache/$owner/$repo/") . DIRECTORY_SEPARATOR;
 
     renew_recursive($temp);
 

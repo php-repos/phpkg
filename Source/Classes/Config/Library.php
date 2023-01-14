@@ -1,9 +1,9 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Config;
+namespace Phpkg\Classes\Config;
 
-use Saeghe\Datatype\Pair;
-use Saeghe\Saeghe\Git\Repository;
+use Phpkg\Git\Repository;
+use PhpRepos\Datatype\Pair;
 
 class Library extends Pair
 {

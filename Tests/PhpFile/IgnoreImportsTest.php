@@ -2,8 +2,9 @@
 
 namespace Tests\PhpFile\IgnoreImportsTest;
 
-use Saeghe\Saeghe\PhpFile;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use Phpkg\PhpFile;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should ignore imports in classes',

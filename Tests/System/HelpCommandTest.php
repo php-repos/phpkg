@@ -2,14 +2,15 @@
 
 namespace Tests\System\HelpCommandTest;
 
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 $help_content = <<<'EOD'
-usage: saeghe [-v | --version] [-h | --help] [--man]
+usage: phpkg [-v | --version] [-h | --help] [--man]
            <command> [<args>]
 
-These are common Saeghe commands used in various situations:
+These are common phpkg commands used in various situations:
 
 start a working area
     init                Initialize an empty project or reinitialize an existing one
@@ -36,7 +37,7 @@ EOD;
 test(
     title: 'it should show help output',
     case: function () use ($help_content) {
-        $output = shell_exec('php ' . root() . 'saeghe -h');
+        $output = shell_exec('php ' . root() . 'phpkg -h');
 
         assert_true(str_contains($output, $help_content), 'Help output is not what we want!' . $output);
     }
@@ -45,7 +46,7 @@ test(
 test(
     title: 'it should show help output when help option passed',
     case: function () use ($help_content) {
-        $output = shell_exec('php ' . root() . 'saeghe --help');
+        $output = shell_exec('php ' . root() . 'phpkg --help');
 
         assert_true(str_contains($output, $help_content), 'Help output is not what we want!' . $output);
     }
@@ -54,7 +55,7 @@ test(
 test(
     title: 'it should show help output when no command passed',
     case: function () use ($help_content) {
-        $output = shell_exec('php ' . root() . 'saeghe');
+        $output = shell_exec('php ' . root() . 'phpkg');
 
         assert_true(str_contains($output, $help_content), 'Help output is not what we want!' . $output);
     }

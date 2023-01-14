@@ -2,15 +2,16 @@
 
 namespace Tests\System\WatchCommandTest;
 
-use function Saeghe\FileManager\Directory\clean;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should watch for changes',
     case: function () {
-        $command =  'php ' . root() . 'saeghe watch --wait=1 --project=TestRequirements/Fixtures/EmptyProject > /dev/null 2>&1 & echo $!; ';
+        $command =  'php ' . root() . 'phpkg watch --wait=1 --project=TestRequirements/Fixtures/EmptyProject > /dev/null 2>&1 & echo $!; ';
         $pid = exec($command, $output);
 
         copy(
@@ -30,7 +31,7 @@ test(
     },
     before: function () {
         mkdir(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Source'));
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));

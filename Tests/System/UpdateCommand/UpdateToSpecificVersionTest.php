@@ -2,19 +2,20 @@
 
 namespace Tests\System\UpdateCommand\UpdateToSpecificVersionTest;
 
-use Saeghe\FileManager\FileType\Json;
-use function Saeghe\FileManager\Directory\clean;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should update to the given version',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe update git@github.com:saeghe/released-package.git --version=v1.0.5 --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
-\e[39mUpdating package git@github.com:saeghe/released-package.git to version v1.0.5...
+\e[39mUpdating package git@github.com:php-repos/released-package.git to version v1.0.1...
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mFinding package in configs...
@@ -25,7 +26,7 @@ test(
 \e[39mDownloading the package with new version...
 \e[39mUpdating configs...
 \e[39mCommitting new configs...
-\e[92mPackage git@github.com:saeghe/released-package.git has been updated.\e[39m
+\e[92mPackage git@github.com:php-repos/released-package.git has been updated.\e[39m
 
 EOD;
 
@@ -33,8 +34,8 @@ EOD;
         assert_given_version_added('Package did not updated to given package version. ' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/released-package.git --version=v1.0.3 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
@@ -43,18 +44,17 @@ EOD;
 
 function assert_given_version_added($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config.json'));
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config-lock.json'));
+    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
-    assert_true((
-        isset($config['packages']['git@github.com:saeghe/released-package.git'])
-        && 'v1.0.5' === $config['packages']['git@github.com:saeghe/released-package.git']
-        && isset($meta['packages']['git@github.com:saeghe/released-package.git'])
-        && 'v1.0.5' === $meta['packages']['git@github.com:saeghe/released-package.git']['version']
-        && 'saeghe' === $meta['packages']['git@github.com:saeghe/released-package.git']['owner']
-        && 'released-package' === $meta['packages']['git@github.com:saeghe/released-package.git']['repo']
-        && '5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01' === $meta['packages']['git@github.com:saeghe/released-package.git']['hash']
-    ),
+    assert_true(
+        isset($config['packages']['git@github.com:php-repos/released-package.git'])
+        && 'v1.0.1' === $config['packages']['git@github.com:php-repos/released-package.git']
+        && isset($meta['packages']['git@github.com:php-repos/released-package.git'])
+        && 'v1.0.1' === $meta['packages']['git@github.com:php-repos/released-package.git']['version']
+        && 'php-repos' === $meta['packages']['git@github.com:php-repos/released-package.git']['owner']
+        && 'released-package' === $meta['packages']['git@github.com:php-repos/released-package.git']['repo']
+        && '34c23761155364826342a79766b6d662aa0ae7fb' === $meta['packages']['git@github.com:php-repos/released-package.git']['hash'],
         $message
     );
 }

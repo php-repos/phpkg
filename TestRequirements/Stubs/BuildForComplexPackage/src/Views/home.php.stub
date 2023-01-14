@@ -1,10 +1,10 @@
 <?php
 
-require_once '$environment_build_path/Packages/saeghe/complex-package/src/Helpers.php';
+require_once '$environment_build_path/Packages/php-repos/complex-package/src/Helpers.php';
 
-use Saeghe\ComplexPackage\Models\User;
-use Saeghe\SimplePackage\SimpleClass;
-use Saeghe\ComplexPackage\Helpers;
+use PhpRepos\ComplexPackage\Models\User;
+use PhpRepos\SimplePackage\SimpleClass;
+use PhpRepos\ComplexPackage\Helpers;
 
 $user = new User();
 $description = SimpleClass::description();

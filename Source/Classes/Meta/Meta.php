@@ -1,8 +1,8 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Meta;
+namespace Phpkg\Classes\Meta;
 
-use Saeghe\Datatype\Map;
+use PhpRepos\Datatype\Map;
 
 class Meta
 {

@@ -2,19 +2,20 @@
 
 namespace Tests\System\CredentialCommand\CredentialCommandTest;
 
-use Saeghe\Cli\IO\Write;
-use Saeghe\FileManager\FileType\Json;
-use function Saeghe\FileManager\File\delete;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\File\move;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use PhpRepos\Cli\IO\Write;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\File\move;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should set credential for github.com',
     case: function () {
         $token = 'a_token';
-        $output = shell_exec('php ' . root() . 'saeghe credential github.com ' . $token);
+        $output = shell_exec('php ' . root() . 'phpkg credential github.com ' . $token);
 
         Write\assert_success('Credential for github.com has been set successfully.', $output);
 
@@ -42,7 +43,7 @@ test(
     title: 'it should add credential for github.com',
     case: function () {
         $token = 'a_token';
-        $output = shell_exec('php ' . root() . 'saeghe credential github.com ' . $token);
+        $output = shell_exec('php ' . root() . 'phpkg credential github.com ' . $token);
 
         Write\assert_success('Credential for github.com has been set successfully.', $output);
 

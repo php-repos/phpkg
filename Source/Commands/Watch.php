@@ -1,8 +1,8 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Watch;
+namespace Phpkg\Commands\Watch;
 
-use function Saeghe\Cli\IO\Read\parameter;
+use function PhpRepos\Cli\IO\Read\parameter;
 
 function run(): void
 {

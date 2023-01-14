@@ -2,24 +2,25 @@
 
 namespace Tests\GitTest\GitHubTest;
 
-use Saeghe\FileManager\Path;
-use Saeghe\FileManager\FileType\Json;
+use PhpRepos\FileManager\Path;
+use PhpRepos\FileManager\FileType\Json;
 use function file_exists;
-use function Saeghe\Saeghe\Providers\GitHub\clone_to;
-use function Saeghe\Saeghe\Providers\GitHub\download;
-use function Saeghe\Saeghe\Providers\GitHub\extract_owner;
-use function Saeghe\Saeghe\Providers\GitHub\extract_repo;
-use function Saeghe\Saeghe\Providers\GitHub\find_latest_commit_hash;
-use function Saeghe\Saeghe\Providers\GitHub\find_latest_version;
-use function Saeghe\Saeghe\Providers\GitHub\find_version_hash;
-use function Saeghe\Saeghe\Providers\GitHub\github_token;
-use function Saeghe\Saeghe\Providers\GitHub\has_release;
-use function Saeghe\Saeghe\Providers\GitHub\is_ssh;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_false;
-use const Saeghe\Saeghe\Providers\GitHub\GITHUB_DOMAIN;
+use function Phpkg\Providers\GitHub\clone_to;
+use function Phpkg\Providers\GitHub\download;
+use function Phpkg\Providers\GitHub\extract_owner;
+use function Phpkg\Providers\GitHub\extract_repo;
+use function Phpkg\Providers\GitHub\find_latest_commit_hash;
+use function Phpkg\Providers\GitHub\find_latest_version;
+use function Phpkg\Providers\GitHub\find_version_hash;
+use function Phpkg\Providers\GitHub\github_token;
+use function Phpkg\Providers\GitHub\has_release;
+use function Phpkg\Providers\GitHub\is_ssh;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
+use function PhpRepos\TestRunner\Runner\test;
+use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
 
 test(
     title: 'it should detect if url is ssh',
@@ -32,18 +33,18 @@ test(
 test(
     title: 'it should extract owner from url',
     case: function () {
-        assert_true('saeghe' === extract_owner('git@github.com:saeghe/repo'));
-        assert_true('saeghe' === extract_owner('git@github.com:saeghe/repo.git'));
-        assert_true('saeghe' === extract_owner('https://github.com/saeghe/repo'));
+        assert_true('php-repos' === extract_owner('git@github.com:php-repos/repo'));
+        assert_true('php-repos' === extract_owner('git@github.com:php-repos/repo.git'));
+        assert_true('php-repos' === extract_owner('https://github.com/php-repos/repo'));
     }
 );
 
 test(
     title: 'it should extract repo from url',
     case: function () {
-        assert_true('cli' === extract_repo('git@github.com:saeghe/cli'));
-        assert_true('cli' === extract_repo('git@github.com:saeghe/cli.git'));
-        assert_true('test-runner' === extract_repo('https://github.com/saeghe/test-runner'));
+        assert_true('cli' === extract_repo('git@github.com:php-repos/cli'));
+        assert_true('cli' === extract_repo('git@github.com:php-repos/cli.git'));
+        assert_true('test-runner' === extract_repo('https://github.com/php-repos/test-runner'));
     }
 );
 
@@ -65,8 +66,8 @@ test(
 test(
     title: 'it should detect if repository has release',
     case: function () {
-        assert_true(has_release('saeghe', 'released-package'));
-        assert_false(has_release('saeghe', 'simple-package'));
+        assert_true(has_release('php-repos', 'released-package'));
+        assert_false(has_release('php-repos', 'simple-package'));
     },
     before: function () {
         $credentials = Json\to_array(realpath(root() . 'credentials.json'));
@@ -77,7 +78,7 @@ test(
 test(
     title: 'it should find latest version for released repository',
     case: function () {
-        assert_true('v1.0.6' === find_latest_version('saeghe', 'released-package'));
+        assert_true('v1.1.0' === find_latest_version('php-repos', 'released-package'));
     },
     before: function () {
         $credentials = Json\to_array(realpath(root() . 'credentials.json'));
@@ -88,9 +89,9 @@ test(
 test(
     title: 'it should find version hash for released repository',
     case: function () {
-        assert_true('9e9b796915596f7c5e0b91d2f9fa5f916a9b5cc8' === find_version_hash('saeghe', 'released-package', 'v1.0.3'));
-        assert_true('5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01' === find_version_hash('saeghe', 'released-package', 'v1.0.5'));
-        assert_true('5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01' === find_version_hash('saeghe', 'released-package', 'v1.0.6'));
+        assert_true('875b7ecebe6d781bec4b670a77b00471ffaa3422' === find_version_hash('php-repos', 'released-package', 'v1.0.0'));
+        assert_true('34c23761155364826342a79766b6d662aa0ae7fb' === find_version_hash('php-repos', 'released-package', 'v1.0.1'));
+        assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_version_hash('php-repos', 'released-package', 'v1.1.0'));
     },
     before: function () {
         $credentials = Json\to_array(realpath(root() . 'credentials.json'));
@@ -101,8 +102,8 @@ test(
 test(
     title: 'it should find latest commit hash for repository',
     case: function () {
-        assert_true('85f94d8c34cb5678a5b37707479517654645c102' === find_latest_commit_hash('saeghe', 'simple-package'));
-        assert_true('5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01' === find_latest_commit_hash('saeghe', 'released-package'));
+        assert_true('1022f2004a8543326a92c0ba606439db530a23c9' === find_latest_commit_hash('php-repos', 'simple-package'));
+        assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_latest_commit_hash('php-repos', 'released-package'));
     },
     before: function () {
         $credentials = Json\to_array(realpath(root() . 'credentials.json'));
@@ -140,7 +141,7 @@ test(
 test(
     title: 'it should clone given repository',
     case: function (Path $packages_directory) {
-        assert_true(clone_to($packages_directory, 'saeghe', 'simple-package'));
+        assert_true(clone_to($packages_directory, 'php-repos', 'simple-package'));
         // Assert latest changes on the latest commit
         assert_true(true ===
             str_contains(

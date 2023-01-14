@@ -1,10 +1,10 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Environment;
+namespace Phpkg\Classes\Environment;
 
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\FileManager\Filesystem\File;
-use function Saeghe\FileManager\Resolver\root;
+use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Filesystem\File;
+use function PhpRepos\FileManager\Resolver\root;
 
 class Environment
 {
@@ -12,9 +12,9 @@ class Environment
     public File $credential_file;
 
     public function __construct(
-        public Directory $saeghe,
+        public Directory $root,
     ) {
         $this->pwd = Directory::from_string(root());
-        $this->credential_file = $this->saeghe->file('credentials.json');
+        $this->credential_file = $this->root->file('credentials.json');
     }
 }

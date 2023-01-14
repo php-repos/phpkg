@@ -1,11 +1,11 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Config;
+namespace Phpkg\Classes\Config;
 
-use Saeghe\Datatype\Collection;
-use Saeghe\Datatype\Map;
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\Saeghe\Git\Repository;
+use Phpkg\Git\Repository;
+use PhpRepos\Datatype\Collection;
+use PhpRepos\Datatype\Map;
+use PhpRepos\FileManager\Filesystem\Filename;
 
 class Config
 {

@@ -1,16 +1,16 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Help;
+namespace Phpkg\Commands\Help;
 
-use Saeghe\Cli\IO\Write;
+use PhpRepos\Cli\IO\Write;
 
 function run(): void
 {
     $content = <<<EOD
-usage: saeghe [-v | --version] [-h | --help] [--man]
+usage: phpkg [-v | --version] [-h | --help] [--man]
            <command> [<args>]
 
-These are common Saeghe commands used in various situations:
+These are common phpkg commands used in various situations:
 
 start a working area
     init                Initialize an empty project or reinitialize an existing one

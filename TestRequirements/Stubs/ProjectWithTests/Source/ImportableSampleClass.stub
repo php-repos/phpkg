@@ -2,13 +2,13 @@
 
 namespace ProjectWithTests\SampleFile;
 
-require_once '$environment_build_path/Packages/saeghe/simple-package/Source/Classes/PackageConst.php';
+require_once '$environment_build_path/Packages/php-repos/simple-package/Source/Classes/PackageConst.php';
 
 use ProjectWithTests\Parents\ParentClass;
 use ProjectWithTests\Interfaces\ClassInterface;
 use ProjectWithTests\TypeClasses\InjectedClassInConstructor;
 use ProjectWithTests\TypeClasses\InjectedPublicClassInConstructor;
-use Saeghe\SimplePackage\TypeClasses\InjectedClassFromPackageToConstructor;
+use PhpRepos\SimplePackage\TypeClasses\InjectedClassFromPackageToConstructor;
 use ProjectWithTests\TypeClasses\InjectedParameterClass;
 use ProjectWithTests\TypeClasses\OtherInjectedParameterClass;
 use ProjectWithTests\TypeClasses\ReturnTypeClassA;
@@ -19,14 +19,14 @@ use ProjectWithTests\TypeClasses\ReturnTypeClassC;
 use ProjectWithTests\ClassName\ClassA;
 use ProjectWithTests\ClassName\ClassB;
 use ProjectWithTests\Classes\NewInstanceClassA;
-use Saeghe\SimplePackage\Classes\PackageClass;
+use PhpRepos\SimplePackage\Classes\PackageClass;
 use ProjectWithTests\Classes\NewInstanceClassB;
 use ProjectWithTests\Classes\NewInstanceClassC;
 use ProjectWithTests\Classes\StaticClassA;
 use ProjectWithTests\Classes\StaticClassB;
 use ProjectWithTests\Classes\StaticClassC;
 use ProjectWithTests\Classes\ClassWithConstant;
-use Saeghe\SimplePackage\Classes\PackageConst;
+use PhpRepos\SimplePackage\Classes\PackageConst;
 use ProjectWithTests\AnyNamespace as CompoundNamespace;
 use ProjectWithTests\Attributes\SetUp;
 use \ArrayAccess;

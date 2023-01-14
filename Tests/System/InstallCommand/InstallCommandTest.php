@@ -2,17 +2,18 @@
 
 namespace Tests\System\InstallCommand\InstallCommandTest;
 
-use Saeghe\FileManager\FileType\Json;
-use function Saeghe\FileManager\Directory\clean;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_false;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should show error message when the project is not initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe install --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
 
         $expected = <<<EOD
 \e[39mInstalling packages...
@@ -27,7 +28,7 @@ EOD;
 test(
     title: 'it should install packages from lock file',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe install --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
 
         assert_output($output);
         assert_config_file_content_not_changed('Config file has been changed!' . $output);
@@ -36,8 +37,8 @@ test(
         assert_zip_file_deleted('Zip file has not been deleted.' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/released-package.git --version=v1.0.3 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
     },
     after: function () {
@@ -53,9 +54,9 @@ function assert_output($output)
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mDownloading packages...
-\e[39mDownloading package git@github.com:saeghe/released-package.git to {$packages}saeghe/released-package
-\e[39mDownloading package git@github.com:saeghe/complex-package to {$packages}saeghe/complex-package
-\e[39mDownloading package git@github.com:saeghe/simple-package.git to {$packages}saeghe/simple-package
+\e[39mDownloading package git@github.com:php-repos/released-package.git to {$packages}php-repos/released-package
+\e[39mDownloading package git@github.com:php-repos/complex-package to {$packages}php-repos/complex-package
+\e[39mDownloading package git@github.com:php-repos/simple-package.git to {$packages}php-repos/simple-package
 \e[92mPackages has been installed successfully.\e[39m
 
 EOD;
@@ -65,11 +66,11 @@ EOD;
 
 function assert_config_file_content_not_changed($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config.json'));
+    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true((
-            isset($config['packages']['git@github.com:saeghe/released-package.git'])
-            && 'v1.0.3' === $config['packages']['git@github.com:saeghe/released-package.git']
+            isset($config['packages']['git@github.com:php-repos/released-package.git'])
+            && 'v1.0.1' === $config['packages']['git@github.com:php-repos/released-package.git']
         ),
         $message
     );
@@ -77,14 +78,14 @@ function assert_config_file_content_not_changed($message)
 
 function assert_meta_file_content_not_changed($message)
 {
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/saeghe.config-lock.json'));
+    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true((
-            isset($meta['packages']['git@github.com:saeghe/released-package.git'])
-            && 'v1.0.3' === $meta['packages']['git@github.com:saeghe/released-package.git']['version']
-            && 'saeghe' === $meta['packages']['git@github.com:saeghe/released-package.git']['owner']
-            && 'released-package' === $meta['packages']['git@github.com:saeghe/released-package.git']['repo']
-            && '9e9b796915596f7c5e0b91d2f9fa5f916a9b5cc8' === $meta['packages']['git@github.com:saeghe/released-package.git']['hash']
+            isset($meta['packages']['git@github.com:php-repos/released-package.git'])
+            && 'v1.0.1' === $meta['packages']['git@github.com:php-repos/released-package.git']['version']
+            && 'php-repos' === $meta['packages']['git@github.com:php-repos/released-package.git']['owner']
+            && 'released-package' === $meta['packages']['git@github.com:php-repos/released-package.git']['repo']
+            && '34c23761155364826342a79766b6d662aa0ae7fb' === $meta['packages']['git@github.com:php-repos/released-package.git']['hash']
         ),
         $message
     );
@@ -93,10 +94,10 @@ function assert_meta_file_content_not_changed($message)
 function assert_package_exists_in_packages_directory($message)
 {
     assert_true((
-            file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/released-package'))
-            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/released-package/saeghe.config.json'))
-            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/released-package/saeghe.config-lock.json'))
-            && ! file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/released-package/Tests'))
+            file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package'))
+            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/phpkg.config.json'))
+            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/phpkg.config-lock.json'))
+            && ! file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/Tests'))
         ),
         $message
     );
@@ -104,7 +105,8 @@ function assert_package_exists_in_packages_directory($message)
 
 function assert_zip_file_deleted($message)
 {
-    assert_false(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/saeghe/released-package.zip')),
+    assert_false(
+        file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package.zip')),
         $message
     );
 }

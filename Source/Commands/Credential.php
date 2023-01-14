@@ -1,13 +1,13 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Credential;
+namespace Phpkg\Commands\Credential;
 
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\Saeghe\Classes\Credential\Credential;
-use Saeghe\Saeghe\Classes\Credential\Credentials;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use function Saeghe\Cli\IO\Read\argument;
-use function Saeghe\Cli\IO\Write\success;
+use Phpkg\Classes\Credential\Credential;
+use Phpkg\Classes\Credential\Credentials;
+use Phpkg\Classes\Environment\Environment;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\Cli\IO\Read\argument;
+use function PhpRepos\Cli\IO\Write\success;
 
 function run(Environment $environment): void
 {

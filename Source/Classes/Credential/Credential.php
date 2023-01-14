@@ -1,8 +1,8 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Credential;
+namespace Phpkg\Classes\Credential;
 
-use Saeghe\Datatype\Pair;
+use PhpRepos\Datatype\Pair;
 
 class Credential extends Pair
 {

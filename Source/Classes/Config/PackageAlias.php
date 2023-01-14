@@ -1,8 +1,8 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Config;
+namespace Phpkg\Classes\Config;
 
-use Saeghe\Datatype\Pair;
+use PhpRepos\Datatype\Pair;
 
 class PackageAlias extends Pair
 {

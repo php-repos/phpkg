@@ -1,15 +1,15 @@
 <?php
 
-namespace Saeghe\Saeghe\Git;
+namespace Phpkg\Git;
 
-use function Saeghe\Saeghe\Providers\GitHub\clone_to;
-use function Saeghe\Saeghe\Providers\GitHub\download;
-use function Saeghe\Saeghe\Providers\GitHub\extract_owner;
-use function Saeghe\Saeghe\Providers\GitHub\extract_repo;
-use function Saeghe\Saeghe\Providers\GitHub\find_latest_commit_hash;
-use function Saeghe\Saeghe\Providers\GitHub\find_latest_version;
-use function Saeghe\Saeghe\Providers\GitHub\find_version_hash;
-use function Saeghe\Saeghe\Providers\GitHub\has_release;
+use function Phpkg\Providers\GitHub\clone_to;
+use function Phpkg\Providers\GitHub\download;
+use function Phpkg\Providers\GitHub\extract_owner;
+use function Phpkg\Providers\GitHub\extract_repo;
+use function Phpkg\Providers\GitHub\find_latest_commit_hash;
+use function Phpkg\Providers\GitHub\find_latest_version;
+use function Phpkg\Providers\GitHub\find_version_hash;
+use function Phpkg\Providers\GitHub\has_release;
 
 class Repository
 {

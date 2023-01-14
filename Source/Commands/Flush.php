@@ -1,12 +1,12 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Flush;
+namespace Phpkg\Commands\Flush;
 
-use Saeghe\Saeghe\Classes\Build\Build;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\Saeghe\Classes\Project\Project;
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\Cli\IO\Write\success;
+use Phpkg\Classes\Build\Build;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Project\Project;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\Cli\IO\Write\success;
 
 function run(Environment $environment): void
 {

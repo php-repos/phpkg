@@ -1,13 +1,13 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Build;
+namespace Phpkg\Classes\Build;
 
-use Saeghe\Datatype\Map;
-use Saeghe\FileManager\Filesystem\Directory;
-use Saeghe\Saeghe\Classes\Config\NamespaceFilePair;
-use Saeghe\Saeghe\Classes\Config\NamespacePathPair;
-use Saeghe\Saeghe\Classes\Package\Package;
-use Saeghe\Saeghe\Classes\Project\Project;
+use Phpkg\Classes\Config\NamespaceFilePair;
+use Phpkg\Classes\Config\NamespacePathPair;
+use Phpkg\Classes\Package\Package;
+use Phpkg\Classes\Project\Project;
+use PhpRepos\Datatype\Map;
+use PhpRepos\FileManager\Filesystem\Directory;
 
 class Build
 {

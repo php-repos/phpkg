@@ -1,5 +1,5 @@
 <?php
 
-use Saeghe\SimplePackage\ImaginaryClass;
+use PhpRepos\SimplePackage\ImaginaryClass;
 
 new ImaginaryClass();

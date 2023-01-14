@@ -1,11 +1,11 @@
 {
     "packages-directory": "vendor",
     "map": {
-        "Saeghe\\ComplexPackage": "src",
+        "PhpRepos\\ComplexPackage": "src",
         "Tests": "tests"
     },
     "packages": {
-        "git@github.com:saeghe\/simple-package.git": "development"
+        "git@github.com:php-repos\/simple-package.git": "development"
     },
     "executables": {
         "complex": "cli-command"

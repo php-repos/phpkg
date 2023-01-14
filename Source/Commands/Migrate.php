@@ -1,23 +1,23 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Migrate;
+namespace Phpkg\Commands\Migrate;
 
-use Saeghe\Cli\IO\Write;
-use Saeghe\Datatype\Map;
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Classes\Config\Library;
-use Saeghe\Saeghe\Classes\Config\NamespaceFilePair;
-use Saeghe\Saeghe\Classes\Config\PackageAlias;
-use Saeghe\Saeghe\Classes\Meta\Dependency;
-use Saeghe\Saeghe\Classes\Meta\Meta;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\Saeghe\Classes\Package\Package;
-use Saeghe\Saeghe\Classes\Project\Project;
-use Saeghe\Saeghe\Git\Repository;
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\FileManager\Directory\preserve_copy_recursively;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Classes\Config\Library;
+use Phpkg\Classes\Config\NamespaceFilePair;
+use Phpkg\Classes\Config\PackageAlias;
+use Phpkg\Classes\Meta\Dependency;
+use Phpkg\Classes\Meta\Meta;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Package\Package;
+use Phpkg\Classes\Project\Project;
+use Phpkg\Git\Repository;
+use PhpRepos\Cli\IO\Write;
+use PhpRepos\Datatype\Map;
+use PhpRepos\FileManager\Filesystem\Filename;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
 
 function run(Environment $environment): void
 {
@@ -100,7 +100,7 @@ function migrate(Project $project, array $composer_setting, array $composer_lock
         $package_config->map = psr4_to_map($package_composer_settings['autoload']['psr-4'] ?? []);
 
         Json\write($package->config_file, $package_config->to_array());
-        Json\write($package->root->file( 'saeghe.config-lock.json'), []);
+        Json\write($package->root->file( 'phpkg.config-lock.json'), []);
     });
 
     Json\write($project->config_file, $project->config->to_array());

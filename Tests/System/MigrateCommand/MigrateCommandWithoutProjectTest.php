@@ -2,15 +2,16 @@
 
 namespace Tests\System\MigrateCommand\MigrateCommandWithoutProjectTest;
 
-use Saeghe\Cli\IO\Write;
-use function Saeghe\FileManager\Directory\delete_recursive;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\FileManager\Resolver\root;
+use PhpRepos\Cli\IO\Write;
+use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should show proper message when there is no composer.json file',
     case: function ($project) {
-        $output = shell_exec('php ' . root() . 'saeghe migrate --project=TestRequirements/' . $project);
+        $output = shell_exec('php ' . root() . 'phpkg migrate --project=TestRequirements/' . $project);
 
         Write\assert_error('There is no composer.json file in this project!', $output);
 
@@ -31,7 +32,7 @@ test(
 test(
     title: 'it should show proper message when there is no composer.lock file',
     case: function ($project) {
-        $output = shell_exec('php ' . root() . 'saeghe migrate --project=TestRequirements/' . $project);
+        $output = shell_exec('php ' . root() . 'phpkg migrate --project=TestRequirements/' . $project);
 
         Write\assert_error('There is no composer.lock file in this project!', $output);
 

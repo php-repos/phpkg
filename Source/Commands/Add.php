@@ -1,22 +1,22 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Add;
+namespace Phpkg\Commands\Add;
 
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\Saeghe\Classes\Config\PackageAlias;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Classes\Config\Library;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\Saeghe\Classes\Meta\Meta;
-use Saeghe\Saeghe\Classes\Meta\Dependency;
-use Saeghe\Saeghe\Classes\Package\Package;
-use Saeghe\Saeghe\Classes\Project\Project;
-use Saeghe\Saeghe\Git\Repository;
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\Cli\IO\Read\argument;
-use function Saeghe\Cli\IO\Write\error;
-use function Saeghe\Cli\IO\Write\line;
-use function Saeghe\Cli\IO\Write\success;
+use Phpkg\Classes\Config\PackageAlias;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Classes\Config\Library;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Meta\Meta;
+use Phpkg\Classes\Meta\Dependency;
+use Phpkg\Classes\Package\Package;
+use Phpkg\Classes\Project\Project;
+use Phpkg\Git\Repository;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\Cli\IO\Read\argument;
+use function PhpRepos\Cli\IO\Write\error;
+use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\IO\Write\success;
 
 function run(Environment $environment): void
 {

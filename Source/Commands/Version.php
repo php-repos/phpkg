@@ -1,10 +1,10 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Version;
+namespace Phpkg\Commands\Version;
 
-use Saeghe\Cli\IO\Write;
+use PhpRepos\Cli\IO\Write;
 
 function run(): void
 {
-    Write\success('Saeghe version 1.15.1');
+    Write\success('phpkg version 1.0.0');
 }

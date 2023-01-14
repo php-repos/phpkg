@@ -1,12 +1,12 @@
-[submodule "Packages/test-runner"]
-	path = Packages/saeghe/test-runner
-	url = git@github.com:saeghe/test-runner.git
-[submodule "Packages/saeghe/cli"]
-	path = Packages/saeghe/cli
-	url = git@github.com:saeghe/cli.git
-[submodule "Packages/saeghe/datatype"]
-	path = Packages/saeghe/datatype
-	url = https://github.com/saeghe/datatype.git
-[submodule "Packages/saeghe/file-manager"]
-	path = Packages/saeghe/file-manager
-	url = git@github.com:saeghe/file-manager.git
+[submodule "Packages/php-repos/test-runner"]
+	path = Packages/php-repos/test-runner
+	url = git@github.com:php-repos/test-runner.git
+[submodule "Packages/php-repos/cli"]
+	path = Packages/php-repos/cli
+	url = git@github.com:php-repos/cli.git
+[submodule "Packages/php-repos/datatype"]
+	path = Packages/php-repos/datatype
+	url = git@github.com:php-repos/datatype.git
+[submodule "Packages/php-repos/file-manager"]
+	path = Packages/php-repos/file-manager
+	url = git@github.com:php-repos/file-manager.git

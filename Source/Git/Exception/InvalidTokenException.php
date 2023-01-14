@@ -1,6 +1,6 @@
 <?php
 
-namespace Saeghe\Saeghe\Git\Exception;
+namespace Phpkg\Git\Exception;
 
 use InvalidArgumentException;
 

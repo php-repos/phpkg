@@ -2,23 +2,24 @@
 
 namespace Tests\System\VersionCommandTest;
 
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\Cli\IO\Write\assert_success;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should show version in the output',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe -v');
+        $output = shell_exec('php ' . root() . 'phpkg -v');
 
-        assert_success('Saeghe version 1.15.1', $output);
+        assert_success('phpkg version 1.0.0', $output);
     }
 );
 
 test(
     title: 'it should show version in the output with version option',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe --version');
+        $output = shell_exec('php ' . root() . 'phpkg --version');
 
-        assert_success('Saeghe version 1.15.1', $output);
+        assert_success('phpkg version 1.0.0', $output);
     }
 );

@@ -1,17 +1,17 @@
 <?php
 
-namespace Saeghe\Saeghe\Commands\Init;
+namespace Phpkg\Commands\Init;
 
-use Saeghe\FileManager\Filesystem\Filename;
-use Saeghe\FileManager\FileType\Json;
-use Saeghe\Saeghe\Classes\Config\Config;
-use Saeghe\Saeghe\Classes\Meta\Meta;
-use Saeghe\Saeghe\Classes\Environment\Environment;
-use Saeghe\Saeghe\Classes\Project\Project;
-use function Saeghe\Cli\IO\Read\parameter;
-use function Saeghe\Cli\IO\Write\error;
-use function Saeghe\Cli\IO\Write\line;
-use function Saeghe\Cli\IO\Write\success;
+use Phpkg\Classes\Config\Config;
+use Phpkg\Classes\Meta\Meta;
+use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Project\Project;
+use PhpRepos\FileManager\Filesystem\Filename;
+use PhpRepos\FileManager\FileType\Json;
+use function PhpRepos\Cli\IO\Read\parameter;
+use function PhpRepos\Cli\IO\Write\error;
+use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\IO\Write\success;
 
 function run(Environment $environment): void
 {

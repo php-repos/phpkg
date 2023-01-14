@@ -1,6 +1,6 @@
 <?php
 
-namespace Saeghe\ComplexPackage\Helpers;
+namespace PhpRepos\ComplexPackage\Helpers;
 
 function helper1()
 {

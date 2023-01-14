@@ -1,6 +1,6 @@
 <?php
 
-namespace Saeghe\Saeghe\Exception;
+namespace Phpkg\Exception;
 
 use Exception;
 

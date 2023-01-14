@@ -1,9 +1,9 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Config;
+namespace Phpkg\Classes\Config;
 
-use Saeghe\Datatype\Pair;
-use Saeghe\FileManager\Filesystem\Filename;
+use PhpRepos\Datatype\Pair;
+use PhpRepos\FileManager\Filesystem\Filename;
 
 class NamespaceFilePair extends Pair
 {

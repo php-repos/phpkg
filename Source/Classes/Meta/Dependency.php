@@ -1,9 +1,9 @@
 <?php
 
-namespace Saeghe\Saeghe\Classes\Meta;
+namespace Phpkg\Classes\Meta;
 
-use Saeghe\Datatype\Pair;
-use Saeghe\Saeghe\Git\Repository;
+use Phpkg\Git\Repository;
+use PhpRepos\Datatype\Pair;
 
 class Dependency extends Pair
 {

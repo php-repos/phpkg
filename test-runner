@@ -2,7 +2,7 @@
 <?php
 
 require realpath(__DIR__ . '/Import.php');
-require_once realpath(__DIR__ . '/Packages/saeghe/test-runner/Source/Assertions/Boolean.php');
-require_once realpath(__DIR__ . '/Packages/saeghe/test-runner/Source/Assertions/Str.php');
-require_once realpath(__DIR__ . '/Packages/saeghe/test-runner/Source/Assertions/File.php');
-require_once realpath(__DIR__ . '/Packages/saeghe/test-runner/run');
+require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/Source/Assertions/Boolean.php');
+require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/Source/Assertions/Str.php');
+require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/Source/Runner.php');
+require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/run');

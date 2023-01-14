@@ -2,32 +2,33 @@
 
 namespace Tests\System\BuildCommand\BuildWithCustomPackageDirectoryTest;
 
-use function Saeghe\FileManager\Directory\delete_recursive;
-use function Saeghe\FileManager\File\delete;
-use function Saeghe\FileManager\Resolver\realpath;
-use function Saeghe\FileManager\Resolver\root;
-use function Saeghe\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\Resolver\realpath;
+use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Runner\test;
 
 test(
     title: 'it should build the project with custom packages directory',
     case: function () {
-        $output = shell_exec('php ' . root() . 'saeghe build --project=TestRequirements/Fixtures/ProjectWithTests');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/ProjectWithTests');
 
         assert_file_with_package_dependency_has_been_built('File with package dependency has not been built properly!' . $output);
     },
     before: function () {
         copy(
             realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/build-with-custom-packages-directory.json'),
-            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config.json')
+            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json')
         );
-        shell_exec('php ' . root() . 'saeghe init --project=TestRequirements/Fixtures/ProjectWithTests --packages-directory=vendor');
-        shell_exec('php ' . root() . 'saeghe add git@github.com:saeghe/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/ProjectWithTests --packages-directory=vendor');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
     },
     after: function () {
         delete_build_directory();
         delete_packages_directory();
-        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config.json'));
-        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/saeghe.config-lock.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
     }
 );
 
