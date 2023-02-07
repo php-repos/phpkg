@@ -17,6 +17,7 @@ spl_autoload_register(function ($class) {
         'Phpkg\Classes\Package\Package' => realpath(__DIR__ . '/Source/Classes/Package/Package.php'),
         'Phpkg\Classes\Project\Project' => realpath(__DIR__ . '/Source/Classes/Project/Project.php'),
         'Phpkg\Exception\CredentialCanNotBeSetException' => realpath(__DIR__ . '/Source/Exception/CredentialCanNotBeSetException.php'),
+        'Phpkg\Exception\PreRequirementsFailedException' => realpath(__DIR__ . '/Source/Exception/PreRequirementsFailedException.php'),
         'Phpkg\Git\Repository' => realpath(__DIR__ . '/Source/Git/Repository.php'),
         'Phpkg\Git\Exception\InvalidTokenException' => realpath(__DIR__ . '/Source/Git/Exception/InvalidTokenException.php'),
         'Phpkg\PhpFile' => realpath(__DIR__ . '/Source/PhpFile.php'),

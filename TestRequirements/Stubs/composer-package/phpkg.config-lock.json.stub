@@ -1,22 +1,3 @@
 {
-    "packages": {
-        "https:\/\/github.com\/Seldaek\/monolog.git": {
-            "owner": "Seldaek",
-            "repo": "monolog",
-            "version": "3.2.0",
-            "hash": "305444bc6fb6c89e490f4b34fa6e979584d7fa81"
-        },
-        "https:\/\/github.com\/php-fig\/log.git": {
-            "owner": "php-fig",
-            "repo": "log",
-            "version": "3.0.0",
-            "hash": "fe5ea303b0887d5caefd3d431c3e61ad47037001"
-        },
-        "https:\/\/github.com\/symfony\/thanks.git": {
-            "owner": "symfony",
-            "repo": "thanks",
-            "version": "v1.2.10",
-            "hash": "e9c4709560296acbd4fe9e12b8d57a925aa7eae8"
-        }
-    }
+    "packages": []
 }

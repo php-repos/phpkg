@@ -25,6 +25,7 @@ use PhpRepos\Datatype\Str;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
+use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
 
 function run(Environment $environment): void
 {
@@ -57,6 +58,8 @@ function run(Environment $environment): void
     $build = new Build($project, argument(2, 'development'));
     $build->root()->renew_recursive();
     $build->packages_directory()->exists_or_create();
+
+    preserve_copy_recursively($project->packages_directory, $build->packages_directory());
 
     Write\line('Make namespaces map...');
     $build->load_namespace_map();

@@ -11,6 +11,11 @@
             "PhpRepos\\ComposerPackage\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
     "require-dev": {
         "symfony/thanks": "^1.2"
     }

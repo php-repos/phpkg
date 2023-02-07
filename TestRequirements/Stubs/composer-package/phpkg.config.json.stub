@@ -1,19 +1,14 @@
 {
     "map": {
-        "PhpRepos\\ComposerPackage": "src"
+        "PhpRepos\\ComposerPackage": "src",
+        "Tests": "tests",
+        "Monolog": "vendor\/monolog\/monolog\/src/Monolog",
+        "Psr\\Log": "vendor\/psr\/log\/src",
+        "Symfony\\Thanks": "vendor\/symfony\/thanks\/src"
     },
     "entry-points": [],
-    "excludes": [
-        "vendor"
-    ],
+    "excludes": [],
     "executables": [],
-    "packages-directory": "Packages",
-    "packages": {
-        "https:\/\/github.com\/Seldaek\/monolog.git": "3.2.0",
-        "https:\/\/github.com\/symfony\/thanks.git": "v1.2.10"
-    },
-    "aliases": {
-        "monolog\/monolog": "https:\/\/github.com\/Seldaek\/monolog.git",
-        "symfony\/thanks": "https:\/\/github.com\/symfony\/thanks.git"
-    }
+    "packages-directory": "vendor",
+    "packages": []
 }
