@@ -11,6 +11,7 @@ use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Meta\Dependency;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\PhpFile;
 use PhpRepos\Cli\IO\Write;
 use PhpRepos\Datatype\Map;
@@ -25,6 +26,7 @@ use PhpRepos\Datatype\Str;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
+use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
 
 function run(Environment $environment): void
 {
@@ -32,8 +34,7 @@ function run(Environment $environment): void
     $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
 
     if (! $project->config_file->exists()) {
-        Write\error('Project is not initialized. Please try to initialize using the init command.');
-        return;
+        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
     Write\line('Loading configs...');
@@ -49,14 +50,15 @@ function run(Environment $environment): void
     });
 
     if (! $packages_installed) {
-        Write\error('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
-        return;
+        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
     }
 
     Write\line('Prepare build directory...');
     $build = new Build($project, argument(2, 'development'));
     $build->root()->renew_recursive();
     $build->packages_directory()->exists_or_create();
+
+    preserve_copy_recursively($project->packages_directory, $build->packages_directory());
 
     Write\line('Make namespaces map...');
     $build->load_namespace_map();
