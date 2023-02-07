@@ -6,10 +6,10 @@ use Phpkg\Classes\Config\PackageAlias;
 use Phpkg\Classes\Config\Config;
 use Phpkg\Classes\Environment\Environment;
 use Phpkg\Classes\Project\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\FileManager\FileType\Json;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Read\parameter;
-use function PhpRepos\Cli\IO\Write\error;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 
@@ -23,8 +23,7 @@ function run(Environment $environment): void
     $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
 
     if (! $project->config_file->exists()) {
-        error('Project is not initialized. Please try to initialize using the init command.');
-        return;
+        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
     $project->config(Config::from_array(Json\to_array($project->config_file)));
@@ -32,8 +31,7 @@ function run(Environment $environment): void
     $registered_alias = $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $alias);
 
     if ($registered_alias) {
-        error("The alias is already registered for $registered_alias->value.");
-        return;
+        throw new PreRequirementsFailedException("The alias is already registered for $registered_alias->value.");
     }
 
     $project->config->aliases->push(new PackageAlias($alias, $package_url));

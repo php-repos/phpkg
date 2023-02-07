@@ -10,11 +10,11 @@ use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Meta\Dependency;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
 use PhpRepos\FileManager\FileType\Json;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Read\argument;
-use function PhpRepos\Cli\IO\Write\error;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 
@@ -28,8 +28,7 @@ function run(Environment $environment): void
     $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
 
     if (! $project->config_file->exists()) {
-        error('Project is not initialized. Please try to initialize using the init command.');
-        return;
+        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
     line('Setting env credential...');
@@ -48,8 +47,7 @@ function run(Environment $environment): void
 
     line('Checking installed packages...');
     if ($project->config->repositories->has(fn (Library $library) => $library->repository()->is($repository))) {
-        error("Package $package_url is already exists.");
-        return;
+        throw new PreRequirementsFailedException("Package $package_url is already exists.");
     }
 
     line('Setting package version...');

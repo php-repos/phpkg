@@ -10,6 +10,7 @@ use Phpkg\Classes\Environment\Environment;
 use Phpkg\Classes\Meta\Dependency;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
 use PhpRepos\FileManager\FileType\Json;
 use function Phpkg\Commands\Add\add;
@@ -29,8 +30,7 @@ function run(Environment $environment): void
     $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
 
     if (! $project->config_file->exists()) {
-        error('Project is not initialized. Please try to initialize using the init command.');
-        return;
+        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
     line('Setting env credential...');
@@ -54,8 +54,7 @@ function run(Environment $environment): void
             => $dependency->repository()->is($library->repository())));
 
     if (! $library instanceof Library || ! $dependency instanceof Dependency) {
-        error("Package $package_url does not found in your project!");
-        return;
+        throw new PreRequirementsFailedException("Package $package_url does not found in your project!");
     }
 
     line('Setting package version...');
@@ -70,8 +69,7 @@ function run(Environment $environment): void
     });
 
     if (! $packages_installed) {
-        error('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
-        return;
+        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
     }
 
     line('Deleting package\'s files...');

@@ -11,6 +11,7 @@ use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Meta\Dependency;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\PhpFile;
 use PhpRepos\Cli\IO\Write;
 use PhpRepos\Datatype\Map;
@@ -33,8 +34,7 @@ function run(Environment $environment): void
     $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
 
     if (! $project->config_file->exists()) {
-        Write\error('Project is not initialized. Please try to initialize using the init command.');
-        return;
+        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
     Write\line('Loading configs...');
@@ -50,8 +50,7 @@ function run(Environment $environment): void
     });
 
     if (! $packages_installed) {
-        Write\error('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
-        return;
+        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
     }
 
     Write\line('Prepare build directory...');

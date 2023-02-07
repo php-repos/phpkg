@@ -6,10 +6,10 @@ use Phpkg\Classes\Config\Config;
 use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Environment\Environment;
 use Phpkg\Classes\Project\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\FileManager\Filesystem\Filename;
 use PhpRepos\FileManager\FileType\Json;
 use function PhpRepos\Cli\IO\Read\parameter;
-use function PhpRepos\Cli\IO\Write\error;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 
@@ -19,8 +19,7 @@ function run(Environment $environment): void
     $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
 
     if ($project->config_file->exists()) {
-        error('The project is already initialized.');
-        return;
+        throw new PreRequirementsFailedException('The project is already initialized.');
     }
 
     $config = pipe(Config::init(), function (Config $config) {
