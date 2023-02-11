@@ -12,6 +12,7 @@ use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
+use Phpkg\PackageManager;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
@@ -53,14 +54,14 @@ function run(Environment $environment): void
     }
 
     line('Setting package version...');
-    $version ? $repository->version($version) : $repository->latest_version();
+    $repository->version($version ?? PackageManager\get_latest_version($repository));
     $library = new Library($package_url, $repository);
 
     line('Creating package directory...');
     unless(Directory\exists($project->packages_directory), fn () => Directory\make_recursive($project->packages_directory));
 
     line('Detecting version hash...');
-    $library->repository()->detect_hash();
+    $library->repository()->hash(PackageManager\detect_hash($library->repository()));
 
     line('Downloading the package...');
     $dependency = new Dependency($package_url, $library->meta());
@@ -80,7 +81,7 @@ function add(Project $project, Dependency $dependency): void
 {
     $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
 
-    unless(Directory\exists($package->root), fn () => $package->repository->download($package->root) && $project->meta->dependencies->push($dependency));
+    unless(Directory\exists($package->root), fn () => PackageManager\download($package->repository, $package->root) && $project->meta->dependencies->push($dependency));
 
     $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
 
@@ -89,7 +90,7 @@ function add(Project $project, Dependency $dependency): void
             => $project->meta->dependencies->has(fn (Dependency $dependency)
                 => $dependency->repository()->is($library->repository())))
         ->each(function (Library $library) use ($project) {
-            $library->repository()->detect_hash();
+            $library->repository()->hash(PackageManager\detect_hash($library->repository()));
             add($project, new Dependency($library->key, $library->meta()));
         });
 }

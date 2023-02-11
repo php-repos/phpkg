@@ -9,6 +9,7 @@ use Phpkg\Classes\Meta\Dependency;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
+use Phpkg\PackageManager;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
@@ -39,7 +40,7 @@ function run(Environment $environment): void
     $project->meta->dependencies->each(function (Dependency $dependency) use ($project) {
         $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
         line('Downloading package ' . $dependency->key . ' to ' . $package->root);
-        $package->repository->download($package->root);
+        PackageManager\download($package->repository, $package->root);
     });
 
     success('Packages has been installed successfully.');

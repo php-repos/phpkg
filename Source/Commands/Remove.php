@@ -95,6 +95,6 @@ function remove(Project $project, Dependency $dependency): void
             => $package->repository->is($dependency->repository())),
         fn () => Directory\delete_recursive($package->root)
             && $project->meta->dependencies->forget(fn (Dependency $meta_dependency)
-            => $meta_dependency->repository()->is($dependency->repository()))
+                => $meta_dependency->repository()->is($dependency->repository()))
     );
 }

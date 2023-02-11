@@ -46,3 +46,4 @@ require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Directory.ph
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/JsonFile.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
+require realpath(__DIR__ . '/Source/PackageManager.php');

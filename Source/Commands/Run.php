@@ -11,6 +11,7 @@ use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Git\Repository;
+use Phpkg\PackageManager;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\Filename;
@@ -29,11 +30,13 @@ function run(Environment $environment): void
 
     set_credentials($environment);
 
-    $repository = Repository::from_url($package_url)->latest_version()->detect_hash();
+    $repository = Repository::from_url($package_url);
+    $repository->version(PackageManager\get_latest_version($repository));
+    $repository->hash(PackageManager\detect_hash($repository));
 
     $root = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/' . $repository->owner . '/' . $repository->repo);
 
-    $repository->download($root);
+    PackageManager\download($repository, $root);
 
     $project = new Project($root);
 
@@ -44,7 +47,7 @@ function run(Environment $environment): void
 
     $project->meta->dependencies->each(function (Dependency $dependency) use ($project) {
         $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-        $package->repository->download($package->root);
+        PackageManager\download($package->repository, $package->root);
         $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
         $project->packages->push($package);
     });

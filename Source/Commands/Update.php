@@ -12,6 +12,7 @@ use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
+use Phpkg\PackageManager;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
@@ -59,7 +60,7 @@ function run(Environment $environment): void
     }
 
     line('Setting package version...');
-    $version ? $library->repository()->version($version) : $library->repository()->latest_version();
+    $library->repository()->version($version ?? PackageManager\get_latest_version($library->repository()));
 
     line('Loading package\'s config...');
     $packages_installed = $project->meta->dependencies->every(function (Dependency $dependency) use ($project) {
@@ -77,7 +78,7 @@ function run(Environment $environment): void
     delete($project, $dependency);
 
     line('Detecting version hash...');
-    $library->repository()->detect_hash();
+    $library->repository()->hash(PackageManager\detect_hash($library->repository()));
 
     line('Downloading the package with new version...');
     $dependency = new Dependency($package_url, $library->meta());
