@@ -3,7 +3,7 @@
 namespace Tests\Git\GitHub\GetJsonTest;
 
 use Phpkg\Git\Exception\InvalidTokenException;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Providers\GitHub\get_json;
 use function Phpkg\Providers\GitHub\github_token;
 use function PhpRepos\FileManager\Resolver\root;
@@ -19,7 +19,7 @@ test(
         assert_true('TestRunner package for phpkg' === get_json('repos/php-repos/test-runner')['description']);
     },
     before: function () {
-        $credentials = Json\to_array(realpath(root() . 'credentials.json'));
+        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
     }
 );

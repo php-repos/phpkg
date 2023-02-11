@@ -2,9 +2,10 @@
 
 namespace Tests\System\MigrateCommandTest\MigrateFromComposerTest;
 
-use PhpRepos\FileManager\Filesystem\File;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
+use PhpRepos\FileManager\Path;
 use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
@@ -19,17 +20,17 @@ test(
         assert_config_lock_file();
     },
     after: function () {
-        File::from_string(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config.json')->delete();
-        File::from_string(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config-lock.json')->delete();
+        delete(Path::from_string(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config.json'));
+        delete(Path::from_string(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config-lock.json'));
     }
 );
 
 function assert_config_file()
 {
     assert_true(
-        Json\to_array(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config.json')
+        JsonFile\to_array(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config.json')
         ===
-        Json\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config.json.stub'),
+        JsonFile\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config.json.stub'),
         'Config file is not correct.'
     );
 }
@@ -37,9 +38,9 @@ function assert_config_file()
 function assert_config_lock_file()
 {
     assert_true(
-        Json\to_array(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config-lock.json')
+        JsonFile\to_array(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config-lock.json')
         ===
-        Json\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config-lock.json.stub'),
+        JsonFile\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config-lock.json.stub'),
         'Config file is not correct.'
     );
 }

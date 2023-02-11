@@ -2,7 +2,7 @@
 
 namespace Tests\System\AddCommand\AddingComplexProjectTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
@@ -83,7 +83,7 @@ function assert_packages_added_to_packages_directory($message)
 
 function assert_config_file_has_desired_data($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
 
     assert_true((
             ! isset($config['packages']['git@github.com:php-repos/simple-package.git'])
@@ -96,7 +96,7 @@ function assert_config_file_has_desired_data($message)
 
 function assert_meta_file_has_desired_data($message)
 {
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/simple-package.git'])

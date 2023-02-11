@@ -12,11 +12,12 @@ use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\Directory;
+use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Commands\Add\add;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Read\argument;
-use function PhpRepos\Cli\IO\Write\error;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 
@@ -27,9 +28,9 @@ function run(Environment $environment): void
 
     line('Updating package ' . $package_url . ' to ' . ($version ? 'version ' . $version : 'latest version') . '...');
 
-    $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
+    $project = new Project($environment->pwd->append(parameter('project', '')));
 
-    if (! $project->config_file->exists()) {
+    if (! File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
@@ -37,8 +38,8 @@ function run(Environment $environment): void
     set_credentials($environment);
 
     line('Loading configs...');
-    $project->config(Config::from_array(Json\to_array($project->config_file)));
-    $project->meta = Meta::from_array(Json\to_array($project->meta_file));
+    $project->config(Config::from_array(JsonFile\to_array($project->config_file)));
+    $project->meta = Meta::from_array(JsonFile\to_array($project->meta_file));
 
     $package_url = when_exists(
         $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $package_url),
@@ -63,9 +64,9 @@ function run(Environment $environment): void
     line('Loading package\'s config...');
     $packages_installed = $project->meta->dependencies->every(function (Dependency $dependency) use ($project) {
         $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-        $package->config = $package->config_file->exists() ? Config::from_array(Json\to_array($package->config_file)) : Config::init();
+        $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
         $project->packages->push($package);
-        return $package->is_downloaded();
+        return Directory\exists($package->root);
     });
 
     if (! $packages_installed) {
@@ -86,8 +87,8 @@ function run(Environment $environment): void
     $project->config->repositories->push($library);
 
     line('Committing new configs...');
-    Json\write($project->config_file, $project->config->to_array());
-    Json\write($project->meta_file, $project->meta->to_array());
+    JsonFile\write($project->config_file, $project->config->to_array());
+    JsonFile\write($project->meta_file, $project->meta->to_array());
 
     success("Package $package_url has been updated.");
 }
@@ -108,7 +109,7 @@ function delete(Project $project, Dependency $dependency): void
         );
     });
 
-    $package->root->delete_recursive();
+    Directory\delete_recursive($package->root);
     $project->meta->dependencies->forget(fn (Dependency $meta_dependency)
         => $meta_dependency->repository()->is($dependency->repository()));
 }

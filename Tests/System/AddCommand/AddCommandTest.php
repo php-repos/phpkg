@@ -2,7 +2,7 @@
 
 namespace Tests\System\AddCommand\AddCommandTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Providers\GitHub\github_token;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
@@ -74,7 +74,7 @@ EOD;
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        $credential = Json\to_array(root() . 'credentials.json');
+        $credential = JsonFile\to_array(root() . 'credentials.json');
         github_token($credential[GITHUB_DOMAIN]['token']);
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
     },
@@ -164,8 +164,8 @@ EOD;
 
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
 
-        $config = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
-        $meta = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
+        $config = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
+        $meta = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
         assert_true(count($config['packages']) === 1);
         assert_true(count($meta['packages']) === 1);
     },
@@ -221,7 +221,7 @@ function assert_simple_package_cloned($message)
 
 function assert_simple_package_added_to_config($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['git@github.com:php-repos/simple-package.git'])
@@ -233,7 +233,7 @@ function assert_simple_package_added_to_config($message)
 
 function assert_meta_has_desired_data($message)
 {
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/simple-package.git'])

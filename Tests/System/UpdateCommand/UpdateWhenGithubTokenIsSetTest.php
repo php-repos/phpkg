@@ -2,7 +2,7 @@
 
 namespace Tests\System\UpdateCommand\UpdateWhenGithubTokenIsSetTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Providers\GitHub\github_token;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
@@ -38,7 +38,7 @@ EOD;
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        $credential = Json\to_array(root() . 'credentials.json');
+        $credential = JsonFile\to_array(root() . 'credentials.json');
         github_token($credential[GITHUB_DOMAIN]['token']);
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
     },

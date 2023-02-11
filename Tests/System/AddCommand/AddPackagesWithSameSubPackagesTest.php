@@ -2,7 +2,7 @@
 
 namespace Tests\System\AddCommand\AddPackagesWithSameSubPackagesTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -17,14 +17,14 @@ test(
         assert_output($output);
         assert_true(file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/cli'));
         assert_true(file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/test-runner'));
-        $config = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
+        $config = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
         assert_true((
                 isset($config['packages']['git@github.com:php-repos/test-runner.git'])
                 && isset($config['packages']['git@github.com:php-repos/cli.git'])
             ),
             'Config file has not been created properly.'
         );
-        $meta = Json\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
+        $meta = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
         assert_true(4 === count($meta['packages']), 'Count of packages in meta file is not correct.');
         assert_true((
                 array_key_exists('git@github.com:php-repos/test-runner.git', $meta['packages'])

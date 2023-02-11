@@ -23,8 +23,9 @@ use Phpkg\Classes\Credential\Credentials;
 use Phpkg\Classes\Environment\Environment;
 use Phpkg\Exception\CredentialCanNotBeSetException;
 use PhpRepos\Cli\IO\Read;
-use PhpRepos\FileManager\Filesystem\Directory;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\JsonFile;
+use PhpRepos\FileManager\Path;
 use function Phpkg\Exception\register_exception_handler;
 use function Phpkg\Providers\GitHub\github_token;
 use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
@@ -37,7 +38,7 @@ if (is_null($command)) {
     $command = Read\option('v') || Read\option('version') ? 'version' : (Read\option('man') ? 'man' : 'help');
 }
 
-$environment = new Environment(Directory::from_string(__DIR__));
+$environment = new Environment(Path::from_string(__DIR__));
 
 match ($command) {
     'add' => \Phpkg\Commands\Add\run($environment),
@@ -65,12 +66,12 @@ function set_credentials(Environment $environment): void
         return;
     }
 
-    if (! $environment->credential_file->path->exists()) {
+    if (! File\exists($environment->credential_file)) {
         throw new CredentialCanNotBeSetException('There is no credential file. Please use the `credential` command to add your token.');
     }
 
     /** @var Credential $github_credential */
-    $github_credential = Credentials::from_array(Json\to_array($environment->credential_file->path))
+    $github_credential = Credentials::from_array(JsonFile\to_array($environment->credential_file))
         ->first(fn (Credential $credential) => $credential->provider() === GITHUB_DOMAIN);
 
     github_token(is_null($github_credential) ? '' : $github_credential->token());

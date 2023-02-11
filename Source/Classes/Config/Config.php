@@ -5,7 +5,7 @@ namespace Phpkg\Classes\Config;
 use Phpkg\Git\Repository;
 use PhpRepos\Datatype\Collection;
 use PhpRepos\Datatype\Map;
-use PhpRepos\FileManager\Filesystem\Filename;
+use PhpRepos\FileManager\Filename;
 
 class Config
 {

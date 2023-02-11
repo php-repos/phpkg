@@ -2,7 +2,7 @@
 
 namespace Tests\System\AddCommand\AddUsingHttpsPath;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -66,7 +66,7 @@ function assert_http_package_cloned($message)
 
 function assert_http_package_added_to_config($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['https://github.com/php-repos/cli.git'])
@@ -78,7 +78,7 @@ function assert_http_package_added_to_config($message)
 
 function assert_meta_has_desired_data($message)
 {
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['https://github.com/php-repos/cli.git'])

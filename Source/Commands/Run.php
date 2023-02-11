@@ -11,9 +11,11 @@ use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Git\Repository;
-use PhpRepos\FileManager\Filesystem\Filename;
-use PhpRepos\FileManager\FileType\Json;
-use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Directory;
+use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\Filename;
+use PhpRepos\FileManager\JsonFile;
+use PhpRepos\FileManager\Path;
 use function Phpkg\Commands\Build\add_autoloads;
 use function Phpkg\Commands\Build\add_executables;
 use function Phpkg\Commands\Build\compile_packages;
@@ -29,27 +31,27 @@ function run(Environment $environment): void
 
     $repository = Repository::from_url($package_url)->latest_version()->detect_hash();
 
-    $root = Directory::from_string(sys_get_temp_dir())->subdirectory('phpkg/runner/' . $repository->owner . '/' . $repository->repo);
+    $root = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/' . $repository->owner . '/' . $repository->repo);
 
     $repository->download($root);
 
     $project = new Project($root);
 
-    $project->config($project->config_file->exists() ? Config::from_array(Json\to_array($project->config_file)) : Config::init());
-    $project->meta = Meta::from_array(Json\to_array($project->meta_file));
+    $project->config(File\exists($project->config_file) ? Config::from_array(JsonFile\to_array($project->config_file)) : Config::init());
+    $project->meta = Meta::from_array(JsonFile\to_array($project->meta_file));
 
-    $project->packages_directory->exists_or_create();
+    Directory\exists_or_create($project->packages_directory);
 
     $project->meta->dependencies->each(function (Dependency $dependency) use ($project) {
         $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-        $package->download();
-        $package->config = $package->config_file->exists() ? Config::from_array(Json\to_array($package->config_file)) : Config::init();
+        $package->repository->download($package->root);
+        $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
         $project->packages->push($package);
     });
 
     $build = new Build($project, 'production');
-    $build->root()->renew_recursive();
-    $build->packages_directory()->exists_or_create();
+    Directory\renew_recursive($build->root());
+    Directory\exists_or_create($build->packages_directory());
     $build->load_namespace_map();
 
     $project->packages->each(function (Package $package) use ($project, $build) {
@@ -59,20 +61,20 @@ function run(Environment $environment): void
     compile_project_files($build);
 
     $project->config->entry_points->each(function (Filename $entry_point) use ($build) {
-        add_autoloads($build, $build->root()->file($entry_point));
+        add_autoloads($build, $build->root()->append($entry_point));
     });
 
     $project->packages->each(function (Package $package)  use ($project, $build) {
         $package->config->executables->each(function (LinkPair $executable) use ($build, $package) {
-            add_executables($build, $build->package_root($package)->file($executable->source()), $build->root()->symlink($executable->symlink()));
+            add_executables($build, $build->package_root($package)->append($executable->source()), $build->root()->append($executable->symlink()));
         });
     });
 
     $entry_point = argument(3) ? argument(3) : $project->config->entry_points->first();
 
-    $entry_point_path = $build->root()->file($entry_point)->path;
+    $entry_point_path = $build->root()->append($entry_point);
 
-    if (! $entry_point_path->exists()) {
+    if (! File\exists($entry_point_path)) {
         error("Entry point $entry_point is not defined in the package.");
         return;
     }

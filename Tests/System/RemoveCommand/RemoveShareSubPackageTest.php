@@ -2,7 +2,7 @@
 
 namespace Tests\System\RemoveCommand\RemoveShareSubPackageTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
@@ -41,7 +41,7 @@ function assert_desired_data_in_packages_directory($message)
 
 function assert_config_file_is_clean($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true(
         isset($config['packages']['git@github.com:php-repos/cli.git'])
@@ -52,7 +52,7 @@ function assert_config_file_is_clean($message)
 
 function assert_meta_is_clean($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true(isset($config['packages']['https://github.com/php-repos/cli.git']), $message . ' Cli package not found in the lock file.');
     assert_true(isset($config['packages']['git@github.com:php-repos/test-runner.git']), $message . ' Test runner package not found in the lock file.');
