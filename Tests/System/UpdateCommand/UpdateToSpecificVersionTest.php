@@ -2,7 +2,7 @@
 
 namespace Tests\System\UpdateCommand\UpdateToSpecificVersionTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -44,8 +44,8 @@ EOD;
 
 function assert_given_version_added($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true(
         isset($config['packages']['git@github.com:php-repos/released-package.git'])

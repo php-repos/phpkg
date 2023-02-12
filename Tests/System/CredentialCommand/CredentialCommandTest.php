@@ -3,7 +3,7 @@
 namespace Tests\System\CredentialCommand\CredentialCommandTest;
 
 use PhpRepos\Cli\IO\Write;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
@@ -22,7 +22,7 @@ test(
         assert_true(
             ['github.com' => ['token' => $token]]
             ===
-            Json\to_array(realpath(root() . 'credentials.json')),
+            JsonFile\to_array(realpath(root() . 'credentials.json')),
             'Credential content is not set properly!'
         );
     },
@@ -50,7 +50,7 @@ test(
         assert_true(
             ['gitlab.com' => ['token' => 'gitlab-token'], 'github.com' => ['token' => $token]]
             ===
-            Json\to_array(realpath(root() . 'credentials.json')),
+            JsonFile\to_array(realpath(root() . 'credentials.json')),
             'Credential content is not set properly!'
         );
     },

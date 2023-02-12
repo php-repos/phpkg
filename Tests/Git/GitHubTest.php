@@ -3,7 +3,7 @@
 namespace Tests\GitTest\GitHubTest;
 
 use PhpRepos\FileManager\Path;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function file_exists;
 use function Phpkg\Providers\GitHub\clone_to;
 use function Phpkg\Providers\GitHub\download;
@@ -15,6 +15,7 @@ use function Phpkg\Providers\GitHub\find_version_hash;
 use function Phpkg\Providers\GitHub\github_token;
 use function Phpkg\Providers\GitHub\has_release;
 use function Phpkg\Providers\GitHub\is_ssh;
+use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -70,7 +71,7 @@ test(
         assert_false(has_release('php-repos', 'simple-package'));
     },
     before: function () {
-        $credentials = Json\to_array(realpath(root() . 'credentials.json'));
+        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
     }
 );
@@ -81,7 +82,7 @@ test(
         assert_true('v1.1.0' === find_latest_version('php-repos', 'released-package'));
     },
     before: function () {
-        $credentials = Json\to_array(realpath(root() . 'credentials.json'));
+        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
     }
 );
@@ -94,7 +95,7 @@ test(
         assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_version_hash('php-repos', 'released-package', 'v1.1.0'));
     },
     before: function () {
-        $credentials = Json\to_array(realpath(root() . 'credentials.json'));
+        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
     }
 );
@@ -106,7 +107,7 @@ test(
         assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_latest_commit_hash('php-repos', 'released-package'));
     },
     before: function () {
-        $credentials = Json\to_array(realpath(root() . 'credentials.json'));
+        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
     }
 );
@@ -128,13 +129,13 @@ test(
         return $packages_directory;
     },
     before: function () {
-        $credentials = Json\to_array(realpath(root() . 'credentials.json'));
+        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
 
         return Path::from_string(root() . 'Tests/PlayGround/downloads/package');
     },
     after: function (Path $packages_directory) {
-        $packages_directory->parent()->delete_recursive();
+        delete_recursive($packages_directory->parent());
     }
 );
 
@@ -159,6 +160,6 @@ test(
         return $packages_directory;
     },
     after: function (Path $packages_directory) {
-        $packages_directory->parent()->delete_recursive();
+        delete_recursive($packages_directory->parent());
     }
 );

@@ -2,8 +2,10 @@
 
 namespace Tests\System\MigrateCommand\MigratePreRequirementsTest;
 
-use PhpRepos\FileManager\Filesystem\File;
+use PhpRepos\FileManager\Path;
 use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\FileManager\File\create;
+use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Runner\test;
 
@@ -24,9 +26,9 @@ test(
         assert_error('There is no composer.lock file.', $output);
     },
     before: function () {
-        File::from_string(root() . '/TestRequirements/Fixtures/EmptyProject/composer.json')->create('');
+        create(Path::from_string(root() . '/TestRequirements/Fixtures/EmptyProject/composer.json'), '');
     },
     after: function () {
-        File::from_string(root() . '/TestRequirements/Fixtures/EmptyProject/composer.json')->delete();
+        delete(Path::from_string(root() . '/TestRequirements/Fixtures/EmptyProject/composer.json'));
     }
 );

@@ -26,14 +26,10 @@ spl_autoload_register(function ($class) {
         'PhpRepos\Datatype\Pair' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Pair.php'),
         'PhpRepos\Datatype\Text' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Text.php'),
         'PhpRepos\Datatype\Tree' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Tree.php'),
+        'PhpRepos\FileManager\Filename' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filename.php'),
+        'PhpRepos\FileManager\FilesystemCollection' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/FilesystemCollection.php'),
+        'PhpRepos\FileManager\FilesystemTree' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/FilesystemTree.php'),
         'PhpRepos\FileManager\Path' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Path.php'),
-        'PhpRepos\FileManager\Filesystem\Address' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/Address.php'),
-        'PhpRepos\FileManager\Filesystem\Directory' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/Directory.php'),
-        'PhpRepos\FileManager\Filesystem\File' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/File.php'),
-        'PhpRepos\FileManager\Filesystem\Filename' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/Filename.php'),
-        'PhpRepos\FileManager\Filesystem\FilesystemCollection' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/FilesystemCollection.php'),
-        'PhpRepos\FileManager\Filesystem\FilesystemTree' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/FilesystemTree.php'),
-        'PhpRepos\FileManager\Filesystem\Symlink' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filesystem/Symlink.php'),
     ];
 
     require_once $class_map[$class];
@@ -47,6 +43,7 @@ require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Resolver.php
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/File.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Symlink.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Directory.php');
-require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/FileType/Json.php');
+require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/JsonFile.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
+require realpath(__DIR__ . '/Source/PackageManager.php');

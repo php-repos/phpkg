@@ -2,7 +2,7 @@
 
 namespace Tests\System\AddCommand\AddReleasedPackageWithSpecificVersionTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -72,7 +72,7 @@ function assert_released_package_cloned($message)
 
 function assert_released_package_added_to_config($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['git@github.com:php-repos/released-package.git'])
@@ -84,7 +84,7 @@ function assert_released_package_added_to_config($message)
 
 function assert_meta_has_desired_data($message)
 {
-    $meta = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/released-package.git'])

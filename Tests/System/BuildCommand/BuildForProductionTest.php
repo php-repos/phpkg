@@ -156,12 +156,7 @@ function assert_executables_are_linked($message)
     $link_file = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/production/run-executable';
     $link_source = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/production/Packages/php-repos/simple-package/run.php';
 
-    assert_true((
-            is_link(realpath($link_file))
-            && readlink(realpath($link_file)) === realpath($link_source)
-        ),
-        $message
-    );
+    assert_true(is_link(realpath($link_file)) && readlink(realpath($link_file)) === realpath($link_source), $message);
 }
 
 function assert_build_for_project_entry_points($message)

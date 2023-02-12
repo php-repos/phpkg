@@ -3,7 +3,7 @@
 namespace Phpkg\Classes\Config;
 
 use PhpRepos\Datatype\Pair;
-use PhpRepos\FileManager\Filesystem\Filename;
+use PhpRepos\FileManager\Filename;
 
 class NamespaceFilePair extends Pair
 {

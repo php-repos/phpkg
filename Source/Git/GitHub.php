@@ -3,6 +3,7 @@
 namespace Phpkg\Providers\GitHub;
 
 use Phpkg\Git\Exception\InvalidTokenException;
+use PhpRepos\FileManager\Path;
 use ZipArchive;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\ls;
@@ -142,11 +143,10 @@ function download(string $destination, string $owner, string $repo, string $vers
 
     delete($zip_file);
 
-    $files = ls($temp);
-    $directory = array_reduce($files, function ($carry, $filename) use ($owner, $repo) {
-        return str_starts_with($filename, "$owner-$repo-") ? $filename : $carry;
-    });
-    $unzip_directory = $temp . $directory;
+    $unzip_directory = ls($temp)
+        ->reduce(function ($carry, Path $path) use ($owner, $repo) {
+            return str_starts_with($path->leaf(), "$owner-$repo-") ? $path : $carry;
+        });
 
     renew_recursive($destination);
 

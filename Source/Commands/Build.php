@@ -15,38 +15,37 @@ use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\PhpFile;
 use PhpRepos\Cli\IO\Write;
 use PhpRepos\Datatype\Map;
-use PhpRepos\FileManager\FileType\Json;
-use PhpRepos\FileManager\Filesystem\Filename;
-use PhpRepos\FileManager\Path;
-use PhpRepos\FileManager\Filesystem\Directory;
-use PhpRepos\FileManager\Filesystem\File;
-use PhpRepos\FileManager\Filesystem\FilesystemCollection;
-use PhpRepos\FileManager\Filesystem\Symlink;
 use PhpRepos\Datatype\Str;
+use PhpRepos\FileManager\Directory;
+use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\Filename;
+use PhpRepos\FileManager\FilesystemCollection;
+use PhpRepos\FileManager\JsonFile;
+use PhpRepos\FileManager\Path;
+use PhpRepos\FileManager\Symlink;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
-use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
 
 function run(Environment $environment): void
 {
     Write\line('Start building...');
-    $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
+    $project = new Project($environment->pwd->append(parameter('project', '')));
 
-    if (! $project->config_file->exists()) {
+    if (! File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
     Write\line('Loading configs...');
-    $project->config(Config::from_array(Json\to_array($project->config_file)));
-    $project->meta = Meta::from_array(Json\to_array($project->meta_file));
+    $project->config(Config::from_array(JsonFile\to_array($project->config_file)));
+    $project->meta = Meta::from_array(JsonFile\to_array($project->meta_file));
 
     Write\line('Checking packages...');
     $packages_installed = $project->meta->dependencies->every(function (Dependency $dependency) use ($project) {
         $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-        $package->config = $package->config_file->exists() ? Config::from_array(Json\to_array($package->config_file)) : Config::init();
+        $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
         $project->packages->push($package);
-        return $package->is_downloaded();
+        return Directory\exists($package->root);
     });
 
     if (! $packages_installed) {
@@ -55,10 +54,10 @@ function run(Environment $environment): void
 
     Write\line('Prepare build directory...');
     $build = new Build($project, argument(2, 'development'));
-    $build->root()->renew_recursive();
-    $build->packages_directory()->exists_or_create();
+    Directory\renew_recursive($build->root());
+    Directory\exists_or_create($build->packages_directory());
 
-    preserve_copy_recursively($project->packages_directory, $build->packages_directory());
+    Directory\preserve_copy_recursively($project->packages_directory, $build->packages_directory());
 
     Write\line('Make namespaces map...');
     $build->load_namespace_map();
@@ -76,7 +75,7 @@ function run(Environment $environment): void
     Write\line('Building entry points...');
     $project->config->entry_points->each(function (Filename $entry_point) use ($build) {
         Write\line('Building entry point ' . $entry_point);
-        add_autoloads($build, $build->root()->file($entry_point));
+        add_autoloads($build, $build->root()->append($entry_point));
     });
 
     Write\line('Building executables...');
@@ -85,50 +84,50 @@ function run(Environment $environment): void
         Write\line('Building executables for package ' . $key);
         $package->config->executables->each(function (LinkPair $executable) use ($build, $package) {
             Write\line('Building executable file ' . $executable->symlink() . ' from ' . $executable->source());
-            add_executables($build, $build->package_root($package)->file($executable->source()), $build->root()->symlink($executable->symlink()));
+            add_executables($build, $build->package_root($package)->append($executable->source()), $build->root()->append($executable->symlink()));
         });
     });
 
     Write\success('Build finished successfully.');
 }
 
-function add_executables(Build $build, File $source, Symlink $symlink): void
+function add_executables(Build $build, Path $source, Path $symlink): void
 {
-    $symlink->link($source);
+    Symlink\link($source, $symlink);
     add_autoloads($build, $source);
-    $source->chmod(0774);
+    File\chmod($source, 0774);
 }
 
 function compile_packages(Package $package, Build $build): void
 {
-    $build->package_root($package)->renew_recursive();
+    Directory\renew_recursive($build->package_root($package));
     package_compilable_files_and_directories($package)
-        ->each(fn (Directory|File|Symlink $filesystem)
+        ->each(fn (Path $filesystem)
             => compile($filesystem, $package->root, $build->package_root($package), $build, $package->config));
 }
 
 function compile_project_files(Build $build): void
 {
     compilable_files_and_directories($build->project)
-        ->each(fn (Directory|File|Symlink $filesystem)
+        ->each(fn (Path $filesystem)
             => compile($filesystem, $build->project->root, $build->root(), $build, $build->project->config)
         );
 }
 
-function compile(Directory|File|Symlink $address, Directory $origin, Directory $destination, Build $build, Config $config): void
+function compile(Path $address, Path $origin, Path $destination, Build $build, Config $config): void
 {
     $destination_path = $address->relocate($origin, $destination);
 
-    if ($address instanceof Directory) {
-        $address->preserve_copy($destination_path->as_directory());
+    if (is_dir($address)) {
+        Directory\preserve_copy($address, $destination_path);
 
-        $address->ls_all()
+        Directory\ls_all($address)
             ->each(
-                fn (Directory|File|Symlink $filesystem)
+                fn (Path $filesystem)
                 => compile(
                     $filesystem,
-                    $origin->subdirectory($address->leaf()),
-                    $destination->subdirectory($address->leaf()),
+                    $origin->append($address->leaf()),
+                    $destination->append($address->leaf()),
                     $build,
                     $config,
                 )
@@ -137,30 +136,30 @@ function compile(Directory|File|Symlink $address, Directory $origin, Directory $
         return;
     }
 
-    if ($address instanceof Symlink) {
-        $source_link = $address->parent()->file(readlink($address));
-        $destination_path->as_symlink()->link($source_link);
+    if (is_link($address)) {
+        $source_link = $address->parent()->append(readlink($address));
+        Symlink\link($source_link, $destination_path);
 
         return;
     }
 
     if (file_needs_modification($address, $config)) {
-        compile_file($build, $address, $destination_path->as_file());
+        compile_file($build, $address, $destination_path);
 
         return;
     }
 
-    $address->preserve_copy($destination_path->as_file());
+    File\preserve_copy($address, $destination_path);
 }
 
-function compile_file(Build $build, File $origin, File $destination): void
+function compile_file(Build $build, Path $origin, Path $destination): void
 {
-    $destination->create(apply_file_modifications($build, $origin), $origin->permission());
+    File\create($destination, apply_file_modifications($build, $origin), File\permission($origin));
 }
 
-function apply_file_modifications(Build $build, File $origin): string
+function apply_file_modifications(Build $build, Path $origin): string
 {
-    $php_file = PhpFile::from_content($origin->content());
+    $php_file = PhpFile::from_content(File\content($origin));
     $file_imports = $php_file->imports();
 
     $autoload = $file_imports['classes'];
@@ -222,38 +221,38 @@ function apply_file_modifications(Build $build, File $origin): string
 function package_compilable_files_and_directories(Package $package): FilesystemCollection
 {
     $excluded_paths = new FilesystemCollection();
-    $excluded_paths->push($package->root->subdirectory('.git'));
+    $excluded_paths->push($package->root->append('.git'));
     $package->config->excludes
         ->each(fn (Filename $exclude) => $excluded_paths->push($this->root->subdirectory($exclude)));
 
-    return $package->root->ls_all()
-        ->except(fn (Directory|File|Symlink $file_or_directory)
-            => $excluded_paths->has(fn (Directory|File|Symlink $excluded) => $excluded->path->string() === $file_or_directory->path->string()));
+    return Directory\ls_all($package->root)
+        ->except(fn (Path $file_or_directory)
+            => $excluded_paths->has(fn (Path $excluded) => $excluded->string() === $file_or_directory->string()));
 }
 
 function compilable_files_and_directories(Project $project): FilesystemCollection
 {
     $excluded_paths = new FilesystemCollection();
-    $excluded_paths->push($project->root->subdirectory('.git'));
-    $excluded_paths->push($project->root->subdirectory('.idea'));
-    $excluded_paths->push($project->root->subdirectory('builds'));
+    $excluded_paths->push($project->root->append('.git'));
+    $excluded_paths->push($project->root->append('.idea'));
+    $excluded_paths->push($project->root->append('builds'));
     $excluded_paths->push($project->packages_directory);
     $project->config->excludes
-        ->each(fn (Filename $exclude) => $excluded_paths->push($project->root->subdirectory($exclude)));
+        ->each(fn (Filename $exclude) => $excluded_paths->push($project->root->append($exclude)));
 
-    return $project->root->ls_all()
-        ->except(fn (Directory|File|Symlink $file_or_directory)
-        => $excluded_paths->has(fn (Directory|File|Symlink $excluded) => $excluded->path->string() === $file_or_directory->path->string()));
+    return Directory\ls_all($project->root)
+        ->except(fn (Path $file_or_directory)
+        => $excluded_paths->has(fn (Path $excluded) => $excluded->string() === $file_or_directory->string()));
 }
 
-function file_needs_modification(File $file, Config $config): bool
+function file_needs_modification(Path $file, Config $config): bool
 {
     return str_ends_with($file, '.php')
-        || $config->entry_points->has(fn (Filename $entry_point) => $entry_point->string() === $file->leaf())
-        || $config->executables->has(fn (LinkPair $executable) => $executable->source()->string() === $file->leaf());
+        || $config->entry_points->has(fn (Filename $entry_point) => $entry_point->string() === $file->leaf()->string())
+        || $config->executables->has(fn (LinkPair $executable) => $executable->source()->string() === $file->leaf()->string());
 }
 
-function add_autoloads(Build $build, File $target): void
+function add_autoloads(Build $build, Path $target): void
 {
     $content = <<<'EOD'
 spl_autoload_register(function ($class) {
@@ -307,7 +306,7 @@ EOD;
 });
 EOD;
 
-    $php_file = PhpFile::from_content($target->content());
+    $php_file = PhpFile::from_content(File\content($target));
     $php_file = $php_file->add_after_opening_tag(PHP_EOL . $content . PHP_EOL);
-    $target->modify($php_file->code());
+    File\modify($target, $php_file->code());
 }

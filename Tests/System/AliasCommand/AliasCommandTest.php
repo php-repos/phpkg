@@ -3,7 +3,7 @@
 namespace Tests\System\AliasCommand\AliasCommandTest;
 
 use function PhpRepos\FileManager\Directory\clean;
-use function PhpRepos\FileManager\FileType\Json\to_array;
+use function PhpRepos\FileManager\JsonFile\to_array;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;

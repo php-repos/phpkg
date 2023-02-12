@@ -2,7 +2,10 @@
 
 namespace Tests\System\BuildCommand\BuildComposerProjectTest;
 
-use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Path;
+use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Directory\make_recursive;
+use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
@@ -21,12 +24,12 @@ test(
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject --packages-directory=vendor');
-        $project_directory = Directory::from_string(root() . '/TestRequirements/Fixtures/EmptyProject');
-        $project_directory->subdirectory('vendor/composer/package')->make_recursive();
-        $file = $project_directory->file('vendor/composer/package/file.php');
-        $file->create("");
+        $project_directory = Path::from_string(root() . '/TestRequirements/Fixtures/EmptyProject');
+        make_recursive($project_directory->append('vendor/composer/package'));
+        $file = $project_directory->append('vendor/composer/package/file.php');
+        create($file, '');
     },
     after: function () {
-        Directory::from_string(root() . 'TestRequirements/Fixtures/EmptyProject')->clean();
+        clean(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
     }
 );

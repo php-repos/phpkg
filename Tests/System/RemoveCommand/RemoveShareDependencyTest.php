@@ -2,7 +2,7 @@
 
 namespace Tests\System\RemoveCommand\RemoveShareDependencyTest;
 
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -40,7 +40,7 @@ function assert_desired_data_in_packages_directory($message)
 
 function assert_config_file_is_clean($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true(
         isset($config['packages']['git@github.com:php-repos/simple-package.git'])
@@ -51,7 +51,7 @@ function assert_config_file_is_clean($message)
 
 function assert_meta_is_clean($message)
 {
-    $config = Json\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true(isset($config['packages']['git@github.com:php-repos/simple-package.git']), $message);
     assert_true(! isset($config['packages']['git@github.com:php-repos/complex-package.git']), $message);

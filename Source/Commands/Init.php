@@ -7,8 +7,10 @@ use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Environment\Environment;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
-use PhpRepos\FileManager\Filesystem\Filename;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\Directory;
+use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\Filename;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
@@ -16,9 +18,9 @@ use function PhpRepos\Cli\IO\Write\success;
 function run(Environment $environment): void
 {
     line('Init project...');
-    $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
+    $project = new Project($environment->pwd->append(parameter('project', '')));
 
-    if ($project->config_file->exists()) {
+    if (File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('The project is already initialized.');
     }
 
@@ -33,10 +35,10 @@ function run(Environment $environment): void
     $project->config($config);
     $project->meta = $meta;
 
-    Json\write($project->config_file, $project->config->to_array());
-    Json\write($project->meta_file, $project->meta->to_array());
+    JsonFile\write($project->config_file, $project->config->to_array());
+    JsonFile\write($project->meta_file, $project->meta->to_array());
 
-    $project->packages_directory->exists_or_create();
+    Directory\exists_or_create($project->packages_directory);
 
     success('Project has been initialized.');
 }

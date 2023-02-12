@@ -10,27 +10,28 @@ use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\Cli\IO\Write;
 use PhpRepos\Datatype\Map;
-use PhpRepos\FileManager\Filesystem\Filename;
-use PhpRepos\FileManager\FileType\Json;
+use PhpRepos\FileManager\Filename;
+use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\Cli\IO\Read\parameter;
 
 function run(Environment $environment): void
 {
-    $project = new Project($environment->pwd->subdirectory(parameter('project', '')));
+    $project = new Project($environment->pwd->append(parameter('project', '')));
 
-    $composer_file = $project->root->file('composer.json');
-    $composer_lock_file = $project->root->file('composer.lock');
+    $composer_file = $project->root->append('composer.json');
+    $composer_lock_file = $project->root->append('composer.lock');
 
-    if (! $composer_file->exists()) {
+    if (! File\exists($composer_file)) {
         throw new PreRequirementsFailedException('There is no composer.json file.');
     }
 
-    if (! $composer_lock_file->exists()) {
+    if (! File\exists($composer_lock_file)) {
         throw new PreRequirementsFailedException('There is no composer.lock file.');
     }
 
-    $composer_setting = Json\to_array($composer_file);
-    $composer_lock_setting = Json\to_array($composer_lock_file);
+    $composer_setting = JsonFile\to_array($composer_file);
+    $composer_lock_setting = JsonFile\to_array($composer_lock_file);
 
     $config = Config::init();
     $config->packages_directory = new Filename('vendor');
@@ -41,8 +42,8 @@ function run(Environment $environment): void
 
     migrate($project, $composer_setting, $composer_lock_setting);
 
-    Json\write($project->config_file, $project->config->to_array());
-    Json\write($project->meta_file, $project->meta->to_array());
+    JsonFile\write($project->config_file, $project->config->to_array());
+    JsonFile\write($project->meta_file, $project->meta->to_array());
 
     Write\success('Migration has been finished successfully.');
 }

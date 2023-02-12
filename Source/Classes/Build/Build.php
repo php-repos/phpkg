@@ -7,7 +7,7 @@ use Phpkg\Classes\Config\NamespacePathPair;
 use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use PhpRepos\Datatype\Map;
-use PhpRepos\FileManager\Filesystem\Directory;
+use PhpRepos\FileManager\Path;
 
 class Build
 {
@@ -22,19 +22,19 @@ class Build
         $this->import_map = new Map();
     }
 
-    public function root(): Directory
+    public function root(): Path
     {
-        return $this->project->root->subdirectory('builds')->subdirectory($this->environment);
+        return $this->project->root->append('builds')->append($this->environment);
     }
 
-    public function packages_directory(): Directory
+    public function packages_directory(): Path
     {
-        return $this->root()->subdirectory($this->project->config->packages_directory);
+        return $this->root()->append($this->project->config->packages_directory);
     }
 
-    public function package_root(Package $package): Directory
+    public function package_root(Package $package): Path
     {
-        return $this->packages_directory()->subdirectory("{$package->repository->owner}/{$package->repository->repo}");
+        return $this->packages_directory()->append("{$package->repository->owner}/{$package->repository->repo}");
     }
 
     public function load_namespace_map(): static
