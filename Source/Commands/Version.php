@@ -6,5 +6,5 @@ use PhpRepos\Cli\IO\Write;
 
 function run(): void
 {
-    Write\success('phpkg version 1.0.0');
+    Write\success('phpkg version 1.1.0');
 }

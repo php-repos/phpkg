@@ -52,7 +52,7 @@ work with packages
 work on an existing project
     build [{dev}|production]
                     Builds project and adds built files to environment's build directory under the `build` directory. By
-                    default environment will be `development`. You can pass the environment argument as `production` 
+                    default, environment will be `development`. You can pass the environment argument as `production` 
                     when you want to build the production environment.
     watch
                     By running this command, phpkg builds your file while you are doing your development. This command
@@ -61,9 +61,14 @@ work on an existing project
                     If you need to delete any built files, running this command will give you a fresh `builds` directory.
 
 global access
-    run <package>
+    run <package> <entrypoint>
                     Downloads, builds and runs the given package on the fly. You need to pass a valid git URL (SSH or HTTPS)
-                    to this command.
+                    to this command. If the package has more than one entrypoint, you can specify the entrypoint as the
+                    second argument.
+    serve <package> <entrypoint>
+                    Downloads, builds and serves the given package on the fly. You need to pass a valid git URL (SSH or HTTPS)
+                    to this command. If the package has more than one entrypoint, you can specify the entrypoint as the
+                    second argument.
     version
                     Prints current version number.
 EOD;
