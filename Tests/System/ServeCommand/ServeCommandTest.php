@@ -103,7 +103,7 @@ function assert_project_is_working(): void
     $response = get();
 
     assert_true(empty($response['error']), $response['error']);
-    assert_true(str_contains($response['response'], '<title>Daily Routine</title>'), 'Application\'s response is not correct.');
+    assert_true(str_contains($response['response'], '<title>Daily Routine</title>'), 'Application\'s response is not correct.' . $response['response']);
 }
 
 function assert_kill_works_for_webserver($process): void
