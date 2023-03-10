@@ -31,6 +31,7 @@ work on an existing project
 
 global access
     run                 Run a project on the fly
+    serve               Serve a project on the fly
     version             Print current version number
 EOD;
 

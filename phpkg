@@ -14,6 +14,7 @@ require realpath(__DIR__ . '/Source/Commands/Man.php');
 require realpath(__DIR__ . '/Source/Commands/Migrate.php');
 require realpath(__DIR__ . '/Source/Commands/Remove.php');
 require realpath(__DIR__ . '/Source/Commands/Run.php');
+require realpath(__DIR__ . '/Source/Commands/Serve.php');
 require realpath(__DIR__ . '/Source/Commands/Update.php');
 require realpath(__DIR__ . '/Source/Commands/Version.php');
 require realpath(__DIR__ . '/Source/Commands/Watch.php');
@@ -52,6 +53,7 @@ match ($command) {
     'migrate' => \Phpkg\Commands\Migrate\run($environment),
     'remove' => \phpkg\Commands\Remove\run($environment),
     'run' => \phpkg\Commands\Run\run($environment),
+    'serve' => \phpkg\Commands\Serve\run($environment),
     'update' => \Phpkg\Commands\Update\run($environment),
     'version' => \Phpkg\Commands\Version\run(),
     'watch' => \Phpkg\Commands\Watch\run(),
