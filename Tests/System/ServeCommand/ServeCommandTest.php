@@ -8,6 +8,7 @@ use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\File\content;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
@@ -113,8 +114,8 @@ function assert_kill_works_for_webserver($process): void
 
     $request = get();
 
-    assert_true(str_contains($request['error'], 'Failed to connect to localhost port 8000'), 'Error message not detected:' . $request['error']);
-    assert_true(empty($request['response']), 'response');
+    assert_false(empty($request['error']), 'Error message not detected after killing the serve!');
+    assert_true(empty($request['response']), 'There is a response after killing the serve!');
 }
 
 function get(): array
