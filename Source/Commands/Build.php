@@ -71,6 +71,7 @@ function run(Environment $environment): void
 
     Write\line('Building the project...');
     compile_project_files($build);
+    create_import_file($build);
 
     Write\line('Building entry points...');
     $project->config->entry_points->each(function (Filename $entry_point) use ($build) {
@@ -254,7 +255,20 @@ function file_needs_modification(Path $file, Config $config): bool
 
 function add_autoloads(Build $build, Path $target): void
 {
+    $import_path = $build->import_path();
+
+    $line = "require_once '$import_path';";
+
+    $php_file = PhpFile::from_content(File\content($target));
+    $php_file = $php_file->add_after_opening_tag(PHP_EOL . $line . PHP_EOL);
+    File\modify($target, $php_file->code());
+}
+
+function create_import_file(Build $build): void
+{
     $content = <<<'EOD'
+<?php
+
 spl_autoload_register(function ($class) {
     $classes = [
 
@@ -304,9 +318,8 @@ EOD;
         }
     }
 });
+
 EOD;
 
-    $php_file = PhpFile::from_content(File\content($target));
-    $php_file = $php_file->add_after_opening_tag(PHP_EOL . $content . PHP_EOL);
-    File\modify($target, $php_file->code());
+    File\create($build->import_path(), $content);
 }

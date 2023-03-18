@@ -22,6 +22,7 @@ use function Phpkg\Commands\Build\add_autoloads;
 use function Phpkg\Commands\Build\add_executables;
 use function Phpkg\Commands\Build\compile_packages;
 use function Phpkg\Commands\Build\compile_project_files;
+use function Phpkg\Commands\Build\create_import_file;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Write\line;
 
@@ -112,6 +113,7 @@ function build(Project $project, Build $build): void
     });
 
     compile_project_files($build);
+    create_import_file($build);
 
     $project->config->entry_points->each(function (Filename $entry_point) use ($build) {
         add_autoloads($build, $build->root()->append($entry_point));
