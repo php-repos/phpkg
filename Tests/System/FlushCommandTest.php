@@ -4,6 +4,7 @@ namespace Tests\System\FlushCommandTest;
 
 use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -25,6 +26,8 @@ test(
     },
     after: function () {
         delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
+        delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
     }
 );
 
