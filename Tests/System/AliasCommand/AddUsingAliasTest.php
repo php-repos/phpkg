@@ -2,11 +2,10 @@
 
 namespace Tests\System\AliasCommand\AddUsingAliasTest;
 
-use function PhpRepos\FileManager\Directory\clean;
-use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should add package using alias',
@@ -37,6 +36,6 @@ EOD;
         shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );

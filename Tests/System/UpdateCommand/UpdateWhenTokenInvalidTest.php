@@ -3,11 +3,10 @@
 namespace Tests\System\UpdateCommand\UpdateWhenTokenInvalidTest;
 
 use function Phpkg\Providers\GitHub\github_token;
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
-use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should show error message when token is invalid',
@@ -33,7 +32,7 @@ EOD;
         github_token('');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
         rename(root() . 'credentials.json.back', root() . 'credentials.json');
     }
 );

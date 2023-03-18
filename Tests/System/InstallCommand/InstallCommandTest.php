@@ -9,6 +9,7 @@ use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should show error message when the project is not initialized',
@@ -42,7 +43,7 @@ test(
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     },
 );
 

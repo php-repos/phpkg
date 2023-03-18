@@ -8,6 +8,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should show error message when the project is not initialized',
@@ -48,7 +49,7 @@ EOD;
         clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -82,7 +83,7 @@ EOD;
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 

@@ -3,11 +3,11 @@
 namespace Tests\System\RemoveCommand\RemoveShareDependencyTest;
 
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should remove the package but leave used subpackage',
@@ -24,7 +24,7 @@ test(
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/complex-package.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 

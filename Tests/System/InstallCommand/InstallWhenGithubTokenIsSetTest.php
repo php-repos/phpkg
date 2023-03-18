@@ -9,6 +9,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
 
 test(
@@ -40,7 +41,7 @@ EOD;
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
         rename(root() . 'credentials.json.back', root() . 'credentials.json');
     },
 );
