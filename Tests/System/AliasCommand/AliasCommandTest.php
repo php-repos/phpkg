@@ -2,13 +2,12 @@
 
 namespace Tests\System\AliasCommand\AliasCommandTest;
 
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\JsonFile\to_array;
-use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should add the given alias to the config file',
@@ -30,7 +29,7 @@ EOD;
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -70,7 +69,7 @@ EOD;
         shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -95,7 +94,7 @@ EOD;
         shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/cli.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -120,6 +119,6 @@ EOD;
         shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );

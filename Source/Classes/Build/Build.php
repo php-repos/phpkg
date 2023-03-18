@@ -27,6 +27,11 @@ class Build
         return $this->project->root->append('builds')->append($this->environment);
     }
 
+    public function import_path(): Path
+    {
+        return $this->root()->append('phpkg.imports.php');
+    }
+
     public function packages_directory(): Path
     {
         return $this->root()->append($this->project->config->packages_directory);

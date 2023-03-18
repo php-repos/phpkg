@@ -4,11 +4,11 @@ namespace Tests\System\AddCommand\AddCommandTest;
 
 use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Providers\GitHub\github_token;
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
 
 test(
@@ -45,7 +45,7 @@ EOD;
         github_token('');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
         rename(root() . 'credentials.json.back', root() . 'credentials.json');
     }
 );
@@ -79,7 +79,7 @@ EOD;
         rename(root() . 'credentials.json', root() . 'credentials.json.back');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
         rename(root() . 'credentials.json.back', root() . 'credentials.json');
     }
 );
@@ -108,7 +108,7 @@ EOD;
         github_token('');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
         rename(root() . 'credentials.json.back', root() . 'credentials.json');
     }
 );
@@ -129,7 +129,7 @@ test(
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -144,7 +144,7 @@ test(
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -174,7 +174,7 @@ EOD;
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 

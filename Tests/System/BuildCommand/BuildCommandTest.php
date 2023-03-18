@@ -38,6 +38,7 @@ test(
         assert_tests_has_been_built('Test files has not been built properly!' . $output);
         assert_file_permissions_are_same('Files permission are not same!' . $output);
         assert_git_directory_excluded('Build copied the git directory!' . $output);
+        assert_import_file_created($output);
         assert_executables_are_linked('Executable files did not linked' . $output);
         assert_build_for_project_entry_points('Project entry point does not built properly!' . $output);
         assert_build_for_packages_entry_points('Packages entry point does not built properly!' . $output);
@@ -224,6 +225,19 @@ function assert_git_directory_excluded($message)
             ! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/php-repos/simple-package/.git'))
         ),
         $message
+    );
+}
+
+function assert_import_file_created($output)
+{
+    $environment_build_path = root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development';
+    assert_true(file_exists($environment_build_path. '/phpkg.imports.php'), 'import file not found');
+
+    assert_true(
+        file_get_contents($environment_build_path . '/phpkg.imports.php')
+        ===
+        str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(root() . 'TestRequirements/Stubs/ProjectWithTests/Imports.stub')),
+        'The Import file content is not correct'
     );
 }
 

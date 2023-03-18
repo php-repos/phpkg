@@ -1,0 +1,75 @@
+<?php
+
+spl_autoload_register(function ($class) {
+    $classes = [
+        'PhpRepos\ComplexPackage\Models\User' => '$environment_build_path/Packages/php-repos/complex-package/src/Models/User.php',
+        'PhpRepos\SimplePackage\SimpleClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/SimpleClass.php',
+        'PhpRepos\ComplexPackage\Controllers\HomeController' => '$environment_build_path/Packages/php-repos/complex-package/src/Controllers/HomeController.php',
+        'Tests\TestHelper' => '$environment_build_path/Tests/TestHelper.php',
+        'PhpRepos\SimplePackage\ImaginaryClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/ImaginaryClass.php',
+        'ProjectWithTests\CompoundNamespace\Foo' => '$environment_build_path/Source/CompoundNamespace/Foo.php',
+        'ProjectWithTests\SubDirectory\SimpleClass' => '$environment_build_path/Source/SubDirectory/SimpleClass.php',
+        'PhpRepos\SimplePackage\AUsefulClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/AUsefulClass.php',
+        'ProjectWithTests\SubDirectory\ClassUseAnotherClass' => '$environment_build_path/Source/SubDirectory/ClassUseAnotherClass.php',
+        'ProjectWithTests\TypeClasses\InjectedClassInConstructor' => '$environment_build_path/Source/TypeClasses/InjectedClassInConstructor.php',
+        'ProjectWithTests\TypeClasses\InjectedPublicClassInConstructor' => '$environment_build_path/Source/TypeClasses/InjectedPublicClassInConstructor.php',
+        'PhpRepos\SimplePackage\TypeClasses\InjectedClassFromPackageToConstructor' => '$environment_build_path/Packages/php-repos/simple-package/Source/TypeClasses/InjectedClassFromPackageToConstructor.php',
+        'ProjectWithTests\TypeClasses\InjectedParameterClass' => '$environment_build_path/Source/TypeClasses/InjectedParameterClass.php',
+        'ProjectWithTests\TypeClasses\OtherInjectedParameterClass' => '$environment_build_path/Source/TypeClasses/OtherInjectedParameterClass.php',
+        'ProjectWithTests\TypeClasses\ReturnTypeClassA' => '$environment_build_path/Source/TypeClasses/ReturnTypeClassA.php',
+        'ProjectWithTests\TypeClasses\MultipleTypeA' => '$environment_build_path/Source/TypeClasses/MultipleTypeA.php',
+        'ProjectWithTests\TypeClasses\MultipleTypeB' => '$environment_build_path/Source/TypeClasses/MultipleTypeB.php',
+        'ProjectWithTests\TypeClasses\ReturnTypeClassB' => '$environment_build_path/Source/TypeClasses/ReturnTypeClassB.php',
+        'ProjectWithTests\TypeClasses\ReturnTypeClassC' => '$environment_build_path/Source/TypeClasses/ReturnTypeClassC.php',
+        'ProjectWithTests\ClassName\ClassA' => '$environment_build_path/Source/ClassName/ClassA.php',
+        'ProjectWithTests\ClassName\ClassB' => '$environment_build_path/Source/ClassName/ClassB.php',
+        'ProjectWithTests\Classes\NewInstanceClassA' => '$environment_build_path/Source/Classes/NewInstanceClassA.php',
+        'PhpRepos\SimplePackage\Classes\PackageClass' => '$environment_build_path/Packages/php-repos/simple-package/Source/Classes/PackageClass.php',
+        'ProjectWithTests\Classes\NewInstanceClassB' => '$environment_build_path/Source/Classes/NewInstanceClassB.php',
+        'ProjectWithTests\Classes\NewInstanceClassC' => '$environment_build_path/Source/Classes/NewInstanceClassC.php',
+        'ProjectWithTests\Classes\StaticClassA' => '$environment_build_path/Source/Classes/StaticClassA.php',
+        'ProjectWithTests\Classes\StaticClassB' => '$environment_build_path/Source/Classes/StaticClassB.php',
+        'ProjectWithTests\Classes\StaticClassC' => '$environment_build_path/Source/Classes/StaticClassC.php',
+        'ProjectWithTests\Classes\ClassWithConstant' => '$environment_build_path/Source/Classes/ClassWithConstant.php',
+        'ProjectWithTests\AnyNamespace' => '$environment_build_path/Source/AnyNamespace.php',
+        'ProjectWithTests\Attributes\SetUp' => '$environment_build_path/Source/Attributes/SetUp.php',
+        'ProjectWithTests\Parents\ParentClass' => '$environment_build_path/Source/Parents/ParentClass.php',
+        'ProjectWithTests\Interfaces\ClassInterface' => '$environment_build_path/Source/Interfaces/ClassInterface.php',
+        'ProjectWithTests\ClassWithConstants' => '$environment_build_path/Source/ClassWithConstants.php',
+        'ProjectWithTests\InterfaceExamples\InnerInterfaces\InnerInterface' => '$environment_build_path/Source/InterfaceExamples/InnerInterfaces/InnerInterface.php',
+        'ProjectWithTests\InterfaceExamples\InnerInterfaces\OtherInnerInterface' => '$environment_build_path/Source/InterfaceExamples/InnerInterfaces/OtherInnerInterface.php',
+        'ProjectWithTests\InterfaceExamples\InnerInterfaces\ExtendableInterface' => '$environment_build_path/Source/InterfaceExamples/InnerInterfaces/ExtendableInterface.php',
+        'ProjectWithTests\ProjectWithTests\ProjectWithTests' => '$environment_build_path/Source/ProjectWithTests/ProjectWithTests.php',
+        'ProjectWithTests\SimpleTrait' => '$environment_build_path/Source/SimpleTrait.php',
+    ];
+
+    if (array_key_exists($class, $classes)) {
+        require $classes[$class];
+    }
+
+}, true, true);
+
+spl_autoload_register(function ($class) {
+    $namespaces = [
+        'PhpRepos\ComplexPackage' => '$environment_build_path/Packages/php-repos/complex-package/src',
+        'Tests' => '$environment_build_path/Tests',
+        'PhpRepos\SimplePackage' => '$environment_build_path/Packages/php-repos/simple-package/Source',
+        'ProjectWithTests' => '$environment_build_path/Source',
+        'ProjectWithTests\Service\helper' => '$environment_build_path/Services/Functions.php',
+        'ProjectWithTests\Service\HELPER_CONST' => '$environment_build_path/Services/Constants.php',
+    ];
+
+    $realpath = null;
+
+    foreach ($namespaces as $namespace => $path) {
+        if (str_starts_with($class, $namespace)) {
+            $pos = strpos($class, $namespace);
+            if ($pos !== false) {
+                $realpath = substr_replace($class, $path, $pos, strlen($namespace));
+            }
+            $realpath = str_replace("\\", DIRECTORY_SEPARATOR, $realpath) . '.php';
+            require $realpath;
+            return ;
+        }
+    }
+});

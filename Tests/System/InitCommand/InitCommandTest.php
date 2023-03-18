@@ -2,11 +2,10 @@
 
 namespace Tests\System\InitCommand\InitCommandTest;
 
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
-use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 $initial_content = <<<EOD
 {
@@ -61,7 +60,7 @@ EOD;
         assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
 
@@ -80,6 +79,6 @@ test(
         assert_true(file_get_contents($config_path) === $initial_content_with_packages_directory, 'Config file content is not correct after running init!');
     },
     after: function () {
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        reset_empty_project();
     }
 );
