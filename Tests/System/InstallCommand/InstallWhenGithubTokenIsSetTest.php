@@ -23,9 +23,6 @@ test(
 \e[39mSetting env credential...
 \e[39mLoading configs...
 \e[39mDownloading packages...
-\e[39mDownloading package git@github.com:php-repos/released-package.git to {$packages}php-repos/released-package
-\e[39mDownloading package git@github.com:php-repos/complex-package to {$packages}php-repos/complex-package
-\e[39mDownloading package git@github.com:php-repos/simple-package.git to {$packages}php-repos/simple-package
 \e[92mPackages has been installed successfully.\e[39m
 
 EOD;

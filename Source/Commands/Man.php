@@ -4,7 +4,7 @@ namespace Phpkg\Commands\Man;
 
 use PhpRepos\Cli\IO\Write;
 
-function run(): void
+return function (): void
 {
     $content = <<<EOD
 usage: phpkg [-v | --version] [-h | --help] [--man]
@@ -74,4 +74,4 @@ global access
 EOD;
 
     Write\line($content);
-}
+};

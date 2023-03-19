@@ -2,26 +2,25 @@
 
 namespace Phpkg\Commands\Add;
 
+use Phpkg\Application\Credentials;
+use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Config\PackageAlias;
-use Phpkg\Classes\Config\Config;
 use Phpkg\Classes\Config\Library;
 use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Meta\Meta;
 use Phpkg\Classes\Meta\Dependency;
-use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
-use Phpkg\PackageManager;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
-use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
+use function PhpRepos\ControlFlow\Conditional\unless;
+use function PhpRepos\ControlFlow\Conditional\when_exists;
 
-function run(Environment $environment): void
+return function (Environment $environment): void
 {
     $package_url = argument(2);
     $version = parameter('version');
@@ -35,11 +34,10 @@ function run(Environment $environment): void
     }
 
     line('Setting env credential...');
-    set_credentials($environment);
+    Credentials\set_credentials($environment);
 
     line('Loading configs...');
-    $project->config(Config::from_array(JsonFile\to_array($project->config_file)));
-    $project->meta = File\exists($project->meta_file) ? Meta::from_array(JsonFile\to_array($project->meta_file)) : Meta::init();
+    $project = PackageManager\load_config($project);
 
     $package_url = when_exists(
         $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $package_url),
@@ -65,32 +63,14 @@ function run(Environment $environment): void
 
     line('Downloading the package...');
     $dependency = new Dependency($package_url, $library->meta());
-    add($project, $dependency);
+    PackageManager\add($project, $dependency);
 
     line('Updating configs...');
     $project->config->repositories->push($library);
 
     line('Committing configs...');
-    JsonFile\write($project->config_file, $project->config->to_array());
-    JsonFile\write($project->meta_file, $project->meta->to_array());
+
+    PackageManager\commit($project);
 
     success("Package $package_url has been added successfully.");
-}
-
-function add(Project $project, Dependency $dependency): void
-{
-    $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-
-    unless(Directory\exists($package->root), fn () => PackageManager\download($package->repository, $package->root) && $project->meta->dependencies->push($dependency));
-
-    $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
-
-    $package->config->repositories
-        ->except(fn (Library $library)
-            => $project->meta->dependencies->has(fn (Dependency $dependency)
-                => $dependency->repository()->is($library->repository())))
-        ->each(function (Library $library) use ($project) {
-            $library->repository()->hash(PackageManager\detect_hash($library->repository()));
-            add($project, new Dependency($library->key, $library->meta()));
-        });
-}
+};

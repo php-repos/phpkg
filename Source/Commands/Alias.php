@@ -2,19 +2,18 @@
 
 namespace Phpkg\Commands\Alias;
 
+use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Config\PackageAlias;
-use Phpkg\Classes\Config\Config;
 use Phpkg\Classes\Environment\Environment;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\FileManager\File;
-use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 
-function run(Environment $environment): void
+return function (Environment $environment): void
 {
     $alias = argument(2);
     $package_url = argument(3);
@@ -27,7 +26,7 @@ function run(Environment $environment): void
         throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
     }
 
-    $project->config(Config::from_array(JsonFile\to_array($project->config_file)));
+    $project = PackageManager\load_config($project);
 
     $registered_alias = $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $alias);
 
@@ -37,7 +36,7 @@ function run(Environment $environment): void
 
     $project->config->aliases->push(new PackageAlias($alias, $package_url));
 
-    JsonFile\write($project->config_file, $project->config->to_array());
+    PackageManager\commit($project);
 
     success("Alias $alias has been registered for $package_url.");
-}
+};

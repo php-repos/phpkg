@@ -10,7 +10,7 @@ use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Write\success;
 
-function run(Environment $environment): void
+return function (Environment $environment): void
 {
     $provider = argument(2);
     $token = argument(3);
@@ -24,4 +24,4 @@ function run(Environment $environment): void
     JsonFile\write($environment->credential_file, $credentials->to_array());
 
     success("Credential for $provider has been set successfully.");
-}
+};

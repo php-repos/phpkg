@@ -10,3 +10,6 @@
 [submodule "Packages/php-repos/file-manager"]
 	path = Packages/php-repos/file-manager
 	url = git@github.com:php-repos/file-manager.git
+[submodule "Packages/php-repos/control-flow"]
+	path = Packages/php-repos/control-flow
+	url = git@github.com:php-repos/control-flow.git

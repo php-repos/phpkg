@@ -9,7 +9,7 @@ use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Write\success;
 use function PhpRepos\FileManager\Directory\renew_recursive;
 
-function run(Environment $environment): void
+return function (Environment $environment): void
 {
     $project = new Project($environment->pwd->append(parameter('project', '')));
 
@@ -20,4 +20,4 @@ function run(Environment $environment): void
     renew_recursive($production_build->root());
 
     success('Build directory has been flushed.');
-}
+};

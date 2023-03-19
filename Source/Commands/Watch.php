@@ -4,7 +4,7 @@ namespace Phpkg\Commands\Watch;
 
 use function PhpRepos\Cli\IO\Read\parameter;
 
-function run(): void
+return function (): void
 {
     global $argv;
 
@@ -18,4 +18,4 @@ function run(): void
 
         sleep($seconds);
     }
-}
+};
