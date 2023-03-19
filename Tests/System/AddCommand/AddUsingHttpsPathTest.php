@@ -3,7 +3,6 @@
 namespace Tests\System\AddCommand\AddUsingHttpsPath;
 
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -37,11 +36,10 @@ test(
         assert_http_package_cloned('Http package does not cloned!' . $output);
     },
     before: function () {
-        clean(root() . 'TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        clean(root() . 'TestRequirements/Fixtures/EmptyProject');
+        reset_empty_project();
     }
 );
 
