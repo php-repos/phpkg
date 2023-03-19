@@ -11,7 +11,7 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg -v');
 
-        assert_success('phpkg version 1.2.0', $output);
+        assert_success('phpkg version 1.2.1', $output);
     }
 );
 
@@ -20,6 +20,6 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg --version');
 
-        assert_success('phpkg version 1.2.0', $output);
+        assert_success('phpkg version 1.2.1', $output);
     }
 );

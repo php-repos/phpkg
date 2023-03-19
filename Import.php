@@ -37,6 +37,8 @@ spl_autoload_register(function ($class) {
 
 require realpath(__DIR__ . '/Packages/php-repos/cli/Source/IO/Read.php');
 require realpath(__DIR__ . '/Packages/php-repos/cli/Source/IO/Write.php');
+require realpath(__DIR__ . '/Packages/php-repos/control-flow/Source/Conditional.php');
+require realpath(__DIR__ . '/Packages/php-repos/control-flow/Source/Transformation.php');
 require realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Arr.php');
 require realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Str.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Resolver.php');
@@ -46,4 +48,7 @@ require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Directory.ph
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/JsonFile.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
-require realpath(__DIR__ . '/Source/PackageManager.php');
+require realpath(__DIR__ . '/Source/Application/Builder.php');
+require realpath(__DIR__ . '/Source/Application/Credentials.php');
+require realpath(__DIR__ . '/Source/Application/PackageManager.php');
+require realpath(__DIR__ . '/Source/Application/Migrator.php');
