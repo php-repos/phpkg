@@ -3,6 +3,7 @@
 namespace Tests\System\RunCommand\RunCommandTest;
 
 use PhpRepos\FileManager\Path;
+use function PhpRepos\Cli\IO\Write\assert_error;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\File\content;
@@ -28,12 +29,9 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git not-exists.php');
 
-        $expected = <<<EOD
-\e[91mEntry point not-exists.php is not defined in the package.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_error("Entry point not-exists.php is not defined in the package.", $lines[0] . PHP_EOL);
     },
     after: function () {
         delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris'));

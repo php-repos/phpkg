@@ -2,6 +2,9 @@
 
 namespace Tests\System\BuildCommand\BuildCommandTest;
 
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
@@ -14,13 +17,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/ProjectWithTests');
 
-        $expected = <<<EOD
-\e[39mStart building...
-\e[91mProject is not initialized. Please try to initialize using the init command.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Start building...", $lines[0] . PHP_EOL);
+        assert_error("Project is not initialized. Please try to initialize using the init command.", $lines[1] . PHP_EOL);
     }
 );
 
@@ -67,16 +68,14 @@ test(
 
 function assert_output($output)
 {
-    $expected = <<<EOD
-\e[39mStart building...
-\e[39mLoading configs...
-\e[39mChecking packages...
-\e[39mBuilding...
-\e[92mBuild finished successfully.\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($output === $expected, 'Command output is not correct.' . PHP_EOL . $output . PHP_EOL . $expected);
+    assert_true(5 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Start building...", $lines[0] . PHP_EOL);
+    assert_line("Loading configs...", $lines[1] . PHP_EOL);
+    assert_line("Checking packages...", $lines[2] . PHP_EOL);
+    assert_line("Building...", $lines[3] . PHP_EOL);
+    assert_success("Build finished successfully.", $lines[4] . PHP_EOL);
 }
 
 function delete_build_directory()

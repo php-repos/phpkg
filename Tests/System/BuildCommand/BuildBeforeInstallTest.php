@@ -2,6 +2,8 @@
 
 namespace Tests\System\BuildCommand\BuildBeforeInstallTest;
 
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
@@ -33,20 +35,13 @@ test(
 
 function assert_output($output)
 {
-    $expected = <<<EOD
-\e[39mStart building...
-\e[39mLoading configs...
-\e[39mChecking packages...
-\e[91mIt seems you didn't run the install command. Please make sure you installed your required packages.\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($output === $expected, 'Command output is not correct.' . PHP_EOL . $output . PHP_EOL . $expected);
-}
-
-function delete_build_directory()
-{
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds'));
+    assert_true(4 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Start building...", $lines[0] . PHP_EOL);
+    assert_line("Loading configs...", $lines[1] . PHP_EOL);
+    assert_line("Checking packages...", $lines[2] . PHP_EOL);
+    assert_error("It seems you didn't run the install command. Please make sure you installed your required packages.", $lines[3] . PHP_EOL);
 }
 
 function delete_packages_directory()

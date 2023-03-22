@@ -3,6 +3,8 @@
 namespace Tests\System\InstallCommand\InstallWhenCredentialNotExistsTest;
 
 use function Phpkg\Providers\GitHub\github_token;
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -15,14 +17,12 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mInstalling packages...
-\e[39mSetting env credential...
-\e[91mThere is no credential file. Please use the `credential` command to add your token.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(3 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Installing packages...", $lines[0] . PHP_EOL);
+        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+        assert_error("There is no credential file. Please use the `credential` command to add your token.", $lines[2] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');

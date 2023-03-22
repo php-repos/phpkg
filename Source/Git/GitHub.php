@@ -171,7 +171,6 @@ function download(string $destination, string $owner, string $repo, string $vers
 function clone_to(string $destination, string $owner, string $repo): bool
 {
     $github_ssh_url = GITHUB_SSH_URL;
-    $output = passthru("git clone $github_ssh_url$owner/$repo.git $destination");
 
-    return  $output === null;
+    return exec("git clone $github_ssh_url$owner/$repo.git $destination") !== false;
 }

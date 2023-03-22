@@ -2,6 +2,8 @@
 
 namespace Tests\System\InitCommand\InitCommandTest;
 
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
@@ -52,12 +54,12 @@ test(
         assert_true(file_exists($packages_directory), 'Packages directory is not created: ' . $output);
         assert_true(file_get_contents($config_path) === $initial_content, 'Config file content is not correct after running init!');
         assert_true(file_get_contents($meta_file_path) === $meta_content, 'Lock file content is not correct after running init!');
-        $expected = <<<EOD
-\e[39mInit project...
-\e[92mProject has been initialized.\e[39m
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        $lines = explode("\n", trim($output));
+
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Init project...", $lines[0] . PHP_EOL);
+        assert_success("Project has been initialized.", $lines[1] . PHP_EOL);
     },
     after: function () {
         reset_empty_project();

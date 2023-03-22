@@ -13,3 +13,23 @@ function reset_empty_project()
     clean($path);
     create($path->append('.gitignore'), '*' . PHP_EOL);
 }
+
+function replace_newlines_with_phpeol(string $str): string
+{
+    return str_replace("\n", PHP_EOL, $str);
+}
+
+function add_info(string $message): string
+{
+    return "\033[39m$message" . PHP_EOL;
+}
+
+function add_error(string $message): string
+{
+    return "\033[91m$message\033[39m" . PHP_EOL;
+}
+
+function add_success(string $message): string
+{
+    return "\033[92m$message\033[39m" . PHP_EOL;
+}

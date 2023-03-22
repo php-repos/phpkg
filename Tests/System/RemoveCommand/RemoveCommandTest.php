@@ -3,6 +3,9 @@
 namespace Tests\System\RemoveCommand\RemoveCommandTest;
 
 use PhpRepos\FileManager\JsonFile;
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -14,13 +17,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg remove git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mRemoving package git@github.com:php-repos/simple-package.git
-\e[91mProject is not initialized. Please try to initialize using the init command.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Removing package git@github.com:php-repos/simple-package.git", $lines[0] . PHP_EOL);
+        assert_error("Project is not initialized. Please try to initialize using the init command.", $lines[1] . PHP_EOL);
     }
 );
 
@@ -49,31 +50,27 @@ test(
 
 function assert_success_output($output)
 {
-    $expected = <<<EOD
-\e[39mRemoving package git@github.com:php-repos/complex-package.git
-\e[39mLoading configs...
-\e[39mFinding package in configs...
-\e[39mLoading package's config...
-\e[39mRemoving package from config...
-\e[39mCommitting configs...
-\e[92mPackage git@github.com:php-repos/complex-package.git has been removed successfully.\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+    assert_true(7 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Removing package git@github.com:php-repos/complex-package.git", $lines[0] . PHP_EOL);
+    assert_line("Loading configs...", $lines[1] . PHP_EOL);
+    assert_line("Finding package in configs...", $lines[2] . PHP_EOL);
+    assert_line("Loading package's config...", $lines[3] . PHP_EOL);
+    assert_line("Removing package from config...", $lines[4] . PHP_EOL);
+    assert_line("Committing configs...", $lines[5] . PHP_EOL);
+    assert_success("Package git@github.com:php-repos/complex-package.git has been removed successfully.", $lines[6] . PHP_EOL);
 }
 
 function assert_error_output($output)
 {
-    $expected = <<<EOD
-\e[39mRemoving package git@github.com:php-repos/complex-package.git
-\e[39mLoading configs...
-\e[39mFinding package in configs...
-\e[91mPackage git@github.com:php-repos/complex-package.git does not found in your project!\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+    assert_true(4 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Removing package git@github.com:php-repos/complex-package.git", $lines[0] . PHP_EOL);
+    assert_line("Loading configs...", $lines[1] . PHP_EOL);
+    assert_line("Finding package in configs...", $lines[2] . PHP_EOL);
+    assert_error("Package git@github.com:php-repos/complex-package.git does not found in your project!", $lines[3] . PHP_EOL);
 }
 
 function assert_desired_data_in_packages_directory($message)

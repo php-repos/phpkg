@@ -2,6 +2,9 @@
 
 namespace Tests\System\AliasCommand\AliasCommandTest;
 
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\JsonFile\to_array;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
@@ -14,12 +17,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mRegistering alias test-runner for git@github.com:php-repos/test-runner.git...
-\e[92mAlias test-runner has been registered for git@github.com:php-repos/test-runner.git.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Registering alias test-runner for git@github.com:php-repos/test-runner.git...", $lines[0] . PHP_EOL);
+        assert_success("Alias test-runner has been registered for git@github.com:php-repos/test-runner.git.", $lines[1] . PHP_EOL);
 
         $config = to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
 
@@ -37,13 +39,12 @@ test(
     title: 'it should show error message when the project is not initialized',
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
-        $expected = <<<EOD
-\e[39mRegistering alias test-runner for git@github.com:php-repos/test-runner.git...
-\e[91mProject is not initialized. Please try to initialize using the init command.\e[39m
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        $lines = explode("\n", trim($output));
 
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Registering alias test-runner for git@github.com:php-repos/test-runner.git...", $lines[0] . PHP_EOL);
+        assert_error("Project is not initialized. Please try to initialize using the init command.", $lines[1] . PHP_EOL);
         assert_false(file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
     }
 );
@@ -53,12 +54,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mRegistering alias test-runner for git@github.com:php-repos/test-runner.git...
-\e[91mThe alias is already registered for git@github.com:php-repos/test-runner.git.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Registering alias test-runner for git@github.com:php-repos/test-runner.git...", $lines[0] . PHP_EOL);
+        assert_error("The alias is already registered for git@github.com:php-repos/test-runner.git.", $lines[1] . PHP_EOL);
 
         $config = to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
 
@@ -78,12 +78,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mRegistering alias test-runner for git@github.com:php-repos/test-runner.git...
-\e[91mThe alias is already registered for git@github.com:php-repos/cli.git.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Registering alias test-runner for git@github.com:php-repos/test-runner.git...", $lines[0] . PHP_EOL);
+        assert_error("The alias is already registered for git@github.com:php-repos/cli.git.", $lines[1] . PHP_EOL);
 
         $config = to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
 
@@ -103,12 +102,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg alias test-runner https://github.com/php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mRegistering alias test-runner for https://github.com/php-repos/test-runner.git...
-\e[91mThe alias is already registered for git@github.com:php-repos/test-runner.git.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Registering alias test-runner for https://github.com/php-repos/test-runner.git...", $lines[0] . PHP_EOL);
+        assert_error("The alias is already registered for git@github.com:php-repos/test-runner.git.", $lines[1] . PHP_EOL);
 
         $config = to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
 

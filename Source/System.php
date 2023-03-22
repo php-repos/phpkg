@@ -4,5 +4,5 @@ namespace Phpkg\System;
 
 function is_windows(): bool
 {
-    return PHP_OS === 'winnt';
+    return PHP_OS === 'WINNT';
 }
