@@ -46,6 +46,7 @@ require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/File.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Symlink.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Directory.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/JsonFile.php');
+require realpath(__DIR__ . '/Source/System.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
 require realpath(__DIR__ . '/Source/Application/Builder.php');
