@@ -142,7 +142,8 @@ test(
 test(
     title: 'it should clone given repository',
     case: function (Path $packages_directory) {
-        assert_true(clone_to($packages_directory, 'php-repos', 'simple-package'));
+        clone_to($packages_directory, 'php-repos', 'simple-package');
+
         // Assert latest changes on the latest commit
         assert_true(true ===
             str_contains(

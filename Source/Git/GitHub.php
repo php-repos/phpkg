@@ -168,9 +168,32 @@ function download(string $destination, string $owner, string $repo, string $vers
     return preserve_copy_recursively($unzip_directory, $destination) && delete_recursive($unzip_directory);
 }
 
-function clone_to(string $destination, string $owner, string $repo): bool
+function clone_to(string $destination, string $owner, string $repo): void
 {
     $github_ssh_url = GITHUB_SSH_URL;
 
-    return exec("git clone $github_ssh_url$owner/$repo.git $destination") !== false;
+    $descriptorspec = array(
+        0 => array("pipe", "r"), // stdin
+        1 => array("pipe", "w"), // stdout
+        2 => array("pipe", "w"), // stderr
+    );
+
+    $command = "git clone $github_ssh_url$owner/$repo.git $destination";
+    $process = proc_open($command, $descriptorspec, $pipes);
+
+    if (is_resource($process)) {
+        fclose($pipes[0]); // close stdin
+        $stdout = stream_get_contents($pipes[1]); // get stdout
+        $stderr = stream_get_contents($pipes[2]); // get stderr
+        fclose($pipes[1]); // close stdout
+        fclose($pipes[2]); // close stderr
+
+        $status = proc_close($process); // get the exit code
+
+        if ($status !== 0) {
+            throw new Exception("Failed to clone repository: $stderr");
+        }
+    } else {
+        throw new Exception("Failed to run command: $command");
+    }
 }

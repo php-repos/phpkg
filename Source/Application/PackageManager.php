@@ -18,6 +18,7 @@ use function Phpkg\Providers\GitHub\find_latest_version;
 use function Phpkg\Providers\GitHub\find_version_hash;
 use function Phpkg\Providers\GitHub\has_release;
 use function PhpRepos\ControlFlow\Conditional\unless;
+use function PhpRepos\ControlFlow\Conditional\when;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
 
 const DEVELOPMENT_VERSION = 'development';
@@ -36,20 +37,23 @@ function detect_hash(Repository $repository): string
         : find_latest_commit_hash($repository->owner, $repository->repo);
 }
 
-function download(Repository $repository, string $destination): bool
+function download(Repository $repository, string $destination): void
 {
-    if ($repository->version === DEVELOPMENT_VERSION) {
-        return clone_to($destination, $repository->owner, $repository->repo);
-    }
-
-    return \Phpkg\Providers\GitHub\download($destination, $repository->owner, $repository->repo, $repository->version);
+    when(
+        $repository->version === DEVELOPMENT_VERSION,
+        fn () => clone_to($destination, $repository->owner, $repository->repo),
+        fn () => \Phpkg\Providers\GitHub\download($destination, $repository->owner, $repository->repo, $repository->version),
+    );
 }
 
 function add(Project $project, Dependency $dependency): void
 {
     $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
 
-    unless(Directory\exists($package->root), fn () => download($package->repository, $package->root) && $project->meta->dependencies->push($dependency));
+    unless(Directory\exists($package->root), function () use ($project, $package, $dependency) {
+        download($package->repository, $package->root);
+        $project->meta->dependencies->push($dependency);
+    });
 
     $package->config = File\exists($package->config_file) ? Config::from_array(JsonFile\to_array($package->config_file)) : Config::init();
 
