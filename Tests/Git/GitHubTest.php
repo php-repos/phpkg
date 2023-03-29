@@ -15,7 +15,7 @@ use function Phpkg\Providers\GitHub\find_version_hash;
 use function Phpkg\Providers\GitHub\github_token;
 use function Phpkg\Providers\GitHub\has_release;
 use function Phpkg\Providers\GitHub\is_ssh;
-use function PhpRepos\FileManager\Directory\delete_recursive;
+use function Phpkg\System\random_temp_directory;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -132,10 +132,7 @@ test(
         $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
 
-        return Path::from_string(root() . 'Tests/PlayGround/downloads/package');
-    },
-    after: function (Path $packages_directory) {
-        delete_recursive($packages_directory->parent());
+        return Path::from_string(random_temp_directory());
     }
 );
 
@@ -155,12 +152,9 @@ test(
         return $packages_directory;
     },
     before: function () {
-        $packages_directory = Path::from_string(root() . 'Tests/PlayGround/downloads/package');
+        $packages_directory = Path::from_string(random_temp_directory());
         mkdir($packages_directory, 0777, true);
 
         return $packages_directory;
-    },
-    after: function (Path $packages_directory) {
-        delete_recursive($packages_directory->parent());
     }
 );
