@@ -3,33 +3,37 @@
 namespace Tests\Helper;
 
 use PhpRepos\FileManager\Path;
+use function Phpkg\System\is_windows;
 use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 
 function reset_empty_project()
 {
     $path = Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject');
+
+    if (is_windows()) {
+        ls_recursively($path)
+            ->vertices()
+            ->each(fn ($filename) => \chmod($filename, 0777));
+    }
+
     clean($path);
     create($path->append('.gitignore'), '*' . PHP_EOL);
 }
 
-function replace_newlines_with_phpeol(string $str): string
+function force_delete(string $path): bool
 {
-    return str_replace("\n", PHP_EOL, $str);
+    if (is_windows()) {
+        ls_recursively($path)->vertices()->each(fn ($filename) => chmod($filename, 0777));
+    }
+
+    return delete_recursive($path);
 }
 
-function add_info(string $message): string
+function CRLF_to_EOL(string $str): string
 {
-    return "\033[39m$message" . PHP_EOL;
-}
-
-function add_error(string $message): string
-{
-    return "\033[91m$message\033[39m" . PHP_EOL;
-}
-
-function add_success(string $message): string
-{
-    return "\033[92m$message\033[39m" . PHP_EOL;
+    return str_replace("\r\n", "\n", $str);
 }

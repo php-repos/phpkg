@@ -17,6 +17,7 @@ use function Phpkg\Providers\GitHub\find_latest_commit_hash;
 use function Phpkg\Providers\GitHub\find_latest_version;
 use function Phpkg\Providers\GitHub\find_version_hash;
 use function Phpkg\Providers\GitHub\has_release;
+use function Phpkg\System\is_windows;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
@@ -83,7 +84,7 @@ function delete(Project $project, Dependency $dependency): void
         );
     });
 
-    Directory\delete_recursive($package->root);
+    delete_package($package);
     $project->meta->dependencies->forget(fn (Dependency $meta_dependency)
     => $meta_dependency->repository()->is($dependency->repository()));
 }
@@ -107,10 +108,19 @@ function remove(Project $project, Dependency $dependency): void
     unless(
         $project->packages->has(fn (Package $package)
         => $package->repository->is($dependency->repository())),
-        fn () => Directory\delete_recursive($package->root)
+        fn () => delete_package($package)
             && $project->meta->dependencies->forget(fn (Dependency $meta_dependency)
             => $meta_dependency->repository()->is($dependency->repository()))
     );
+}
+
+function delete_package(Package $package): bool
+{
+    if (is_windows()) {
+        Directory\ls_recursively($package->root)->vertices()->each(fn ($filename) => \chmod($filename, 0777));
+    }
+
+    return Directory\delete_recursive($package->root);
 }
 
 function install(Project $project): void

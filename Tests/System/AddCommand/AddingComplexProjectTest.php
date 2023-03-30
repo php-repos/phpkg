@@ -3,7 +3,9 @@
 namespace Tests\System\AddCommand\AddingComplexProjectTest;
 
 use PhpRepos\FileManager\JsonFile;
+use PhpRepos\FileManager\Path;
 use function PhpRepos\FileManager\Directory\delete_recursive;
+use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -64,7 +66,9 @@ function delete_meta_file()
 
 function delete_packages_directory()
 {
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages'));
+    $path = Path::from_string(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages');
+    ls_recursively($path)->vertices()->each(fn($filename) => chmod($filename, 0777));
+    delete_recursive($path);
 }
 
 function assert_packages_added_to_packages_directory($message)

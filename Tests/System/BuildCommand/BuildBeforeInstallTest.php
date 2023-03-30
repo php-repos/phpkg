@@ -4,12 +4,12 @@ namespace Tests\System\BuildCommand\BuildBeforeInstallTest;
 
 use function PhpRepos\Cli\IO\Write\assert_error;
 use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\force_delete;
 
 test(
     title: 'it should show error message when project packages are not installed',
@@ -24,7 +24,7 @@ test(
             realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json')
         );
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
-        delete_recursive(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/simple-package');
+        force_delete(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/simple-package');
     },
     after: function () {
         delete_packages_directory();
@@ -46,5 +46,5 @@ function assert_output($output)
 
 function delete_packages_directory()
 {
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages'));
+    force_delete(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages');
 }
