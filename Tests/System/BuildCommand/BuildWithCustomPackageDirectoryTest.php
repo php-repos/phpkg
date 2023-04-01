@@ -2,12 +2,12 @@
 
 namespace Tests\System\BuildCommand\BuildWithCustomPackageDirectoryTest;
 
-use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\force_delete;
 
 test(
     title: 'it should build the project with custom packages directory',
@@ -34,12 +34,12 @@ test(
 
 function delete_build_directory()
 {
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds'));
+    force_delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds'));
 }
 
 function delete_packages_directory()
 {
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/vendor'));
+    force_delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/vendor'));
 }
 
 function assert_file_with_package_dependency_has_been_built($message)
