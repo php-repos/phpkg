@@ -207,13 +207,8 @@ function assert_file_permissions_are_same($message)
 
 function assert_git_directory_excluded($message)
 {
-    assert_true((
-            ! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/.git'))
-            &&
-            ! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/php-repos/simple-package/.git'))
-        ),
-        $message
-    );
+    assert_true(! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/.git')), $message . ': .git directory in the project is not excluded!');
+    assert_true(! file_exists(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds/development/Packages/php-repos/simple-package/.git')), $message . ': .git directory in the installed package is not excluded!');
 }
 
 function assert_import_file_created($output)

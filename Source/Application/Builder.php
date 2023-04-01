@@ -179,7 +179,7 @@ function package_compilable_files_and_directories(Package $package): FilesystemC
     $excluded_paths = new FilesystemCollection();
     $excluded_paths->push($package->root->append('.git'));
     $package->config->excludes
-        ->each(fn (Filename $exclude) => $excluded_paths->push($this->root->subdirectory($exclude)));
+        ->each(fn (Filename $exclude) => $excluded_paths->push($package->root->append($exclude)));
 
     return Directory\ls_all($package->root)
         ->except(fn (Path $file_or_directory)
