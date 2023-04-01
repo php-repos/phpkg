@@ -201,8 +201,7 @@ function package_compilable_files_and_directories(Package $package): FilesystemC
         ->each(fn (Filename $exclude) => $excluded_paths->push($package->root->append($exclude)));
 
     return Directory\ls_all($package->root)
-        ->except(fn (Path $file_or_directory)
-        => $excluded_paths->has(fn (Path $excluded) => $excluded->string() === $file_or_directory->string()));
+        ->except(fn (Path $file_or_directory) => $excluded_paths->has(fn (Path $excluded) => $excluded->string() === $file_or_directory->string()));
 }
 
 function compilable_files_and_directories(Project $project): FilesystemCollection
@@ -248,7 +247,12 @@ spl_autoload_register(function ($class) {
 
 EOD;
 
-    foreach ($build->import_map as $namespace_path) {
+
+    $import_map = iterator_to_array($build->import_map);
+    usort($import_map, function (NamespacePathPair $namespace_path_pair1, NamespacePathPair $namespace_path_pair2) {
+        return strcmp($namespace_path_pair1->namespace(), $namespace_path_pair2->namespace());
+    });
+    foreach ($import_map as $namespace_path) {
         $content .= <<<EOD
         '{$namespace_path->namespace()}' => '{$namespace_path->path()}',
 
