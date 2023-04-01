@@ -8,6 +8,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\force_delete;
+use function Tests\System\BuildCommand\BuildHelper\replace_build_vars;
 
 test(
     title: 'it should build the project',
@@ -70,9 +71,9 @@ function assert_source_has_been_built($message)
             file_exists(realpath($environment_build_path . '/Source/SubDirectory/ClassUseAnotherClass.php'))
             && file_exists(realpath($environment_build_path . '/Source/SubDirectory/SimpleClass.php'))
             && file_exists(realpath($environment_build_path . '/Source/SampleFile.php'))
-            && file_get_contents(realpath($environment_build_path . '/Source/SubDirectory/ClassUseAnotherClass.php')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/Source/SubDirectory/ClassUseAnotherClass.stub')))
-            && file_get_contents(realpath($environment_build_path . '/Source/SubDirectory/SimpleClass.php')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/Source/SubDirectory/SimpleClass.stub')))
-            && file_get_contents(realpath($environment_build_path . '/Source/SampleFile.php')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/Source/SampleFile.stub')))
+            && file_get_contents(realpath($environment_build_path . '/Source/SubDirectory/ClassUseAnotherClass.php')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/Source/SubDirectory/ClassUseAnotherClass.stub'))
+            && file_get_contents(realpath($environment_build_path . '/Source/SubDirectory/SimpleClass.php')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/Source/SubDirectory/SimpleClass.stub'))
+            && file_get_contents(realpath($environment_build_path . '/Source/SampleFile.php')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/Source/SampleFile.stub'))
         ),
         $message
     );
@@ -84,7 +85,7 @@ function assert_none_php_files_has_not_been_built($message)
 
     assert_true((
             file_exists(realpath($environment_build_path . '/Source/SubDirectory/FileDontNeedBuild.txt'))
-            && file_get_contents(realpath($environment_build_path . '/Source/SubDirectory/FileDontNeedBuild.txt')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/Source/SubDirectory/FileDontNeedBuild.txt')))
+            && file_get_contents(realpath($environment_build_path . '/Source/SubDirectory/FileDontNeedBuild.txt')) === replace_build_vars(realpath($environment_build_path), realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/Source/SubDirectory/FileDontNeedBuild.txt'))
         ),
         $message
     );
@@ -97,7 +98,7 @@ function assert_tests_has_been_built($message)
 
     assert_true((
             file_exists(realpath($environment_build_path . '/Tests/SampleTest.php'))
-            && file_get_contents(realpath($environment_build_path . '/Tests/SampleTest.php')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/Tests/SampleTest.stub')))
+            && file_get_contents(realpath($environment_build_path . '/Tests/SampleTest.php')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/Tests/SampleTest.stub'))
         ),
         $message
     );
@@ -110,7 +111,7 @@ function assert_file_with_package_dependency_has_been_built($message)
 
     assert_true((
             file_exists(realpath($environment_build_path . '/Source/FileWithPackageDependency.php'))
-            && file_get_contents(realpath($environment_build_path . '/Source/FileWithPackageDependency.php')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/Source/FileWithPackageDependency.stub')))
+            && file_get_contents(realpath($environment_build_path . '/Source/FileWithPackageDependency.php')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/Source/FileWithPackageDependency.stub'))
         ),
         $message
     );
@@ -166,7 +167,7 @@ function assert_build_for_project_entry_points($message)
 
     assert_true((
             file_exists(realpath($environment_build_path . '/entry-point'))
-            && file_get_contents(realpath($environment_build_path . '/entry-point')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/entry-point.stub')))
+            && file_get_contents(realpath($environment_build_path . '/entry-point')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/entry-point.stub'))
         ),
         $message
     );
@@ -179,7 +180,7 @@ function assert_build_for_packages_entry_points($message)
 
     assert_true((
             file_exists(realpath($environment_build_path . '/Packages/php-repos/simple-package/entry-point'))
-            && file_get_contents(realpath($environment_build_path . '/Packages/php-repos/simple-package/entry-point')) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/entry-point.stub')))
+            && file_get_contents(realpath($environment_build_path . '/Packages/php-repos/simple-package/entry-point')) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/entry-point.stub'))
         ),
         $message
     );

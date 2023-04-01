@@ -8,6 +8,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\force_delete;
+use function Tests\System\BuildCommand\BuildHelper\replace_build_vars;
 
 test(
     title: 'it should build project with complex package',
@@ -76,7 +77,7 @@ function assert_build_for_dependency_packages($message)
     $stubs_directory = root() . 'TestRequirements/Stubs/BuildForComplexPackage';
     assert_true(
         file_get_contents(realpath($environment_build_path . '/Packages/php-repos/simple-package/run.php'))
-        === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/' . 'simple-package.run.php.stub')))
+        === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/' . 'simple-package.run.php.stub'))
         ,
         $message
     );
@@ -89,7 +90,7 @@ function build_exists_and_same_as_stub($file)
 
     return
         file_exists(realpath($environment_build_path . '/Packages/php-repos/complex-package/' . $file))
-        && file_get_contents(realpath($environment_build_path . '/Packages/php-repos/complex-package/' . $file)) === str_replace('$environment_build_path', realpath($environment_build_path), file_get_contents(realpath($stubs_directory . '/' . $file . '.stub')));
+        && file_get_contents(realpath($environment_build_path . '/Packages/php-repos/complex-package/' . $file)) === replace_build_vars(realpath($environment_build_path), realpath($stubs_directory . '/' . $file . '.stub'));
 }
 
 function assert_executable_file_added($message)

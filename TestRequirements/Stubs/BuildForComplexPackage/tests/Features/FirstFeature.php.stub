@@ -2,7 +2,7 @@
 
 namespace Tests\Features;
 
-require_once '$environment_build_path/Packages/php-repos/complex-package/src/Helpers.php';
+require_once '$environment_build_path$DSPackages$DSphp-repos$DScomplex-package$DSsrc$DSHelpers.php';
 
 use PhpRepos\ComplexPackage\Controllers\HomeController;
 use PhpRepos\ComplexPackage\Models\User;

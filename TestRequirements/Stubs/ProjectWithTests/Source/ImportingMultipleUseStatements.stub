@@ -2,7 +2,7 @@
 
 namespace ProjectWithTests;
 
-require_once '$environment_build_path/Source/SampleFile.php';
+require_once '$environment_build_path$DSSource$DSSampleFile.php';
 
 use ProjectWithTests\SampleFile as AnotherFile, ProjectWithTests\SubDirectory\SimpleClass;
 

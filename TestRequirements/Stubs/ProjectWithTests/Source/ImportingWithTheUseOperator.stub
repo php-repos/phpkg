@@ -2,10 +2,10 @@
 
 namespace ProjectWithTests;
 
-require_once '$environment_build_path/Source/SubDirectory/Constants.php';
-require_once '$environment_build_path/Source/SubDirectory/OtherConstants.php';
-require_once '$environment_build_path/Source/SampleFile.php';
-require_once '$environment_build_path/Source/SubDirectory/Helper.php';
+require_once '$environment_build_path$DSSource$DSSubDirectory$DSConstants.php';
+require_once '$environment_build_path$DSSource$DSSubDirectory$DSOtherConstants.php';
+require_once '$environment_build_path$DSSource$DSSampleFile.php';
+require_once '$environment_build_path$DSSource$DSSubDirectory$DSHelper.php';
 
 use ProjectWithTests\SubDirectory\SimpleClass;
 use ProjectWithTests\SubDirectory\ClassUseAnotherClass as Another;
