@@ -5,8 +5,9 @@ namespace Tests\System\HelpCommandTest;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\CRLF_to_EOL;
 
-$help_content = <<<'EOD'
+$help_content = CRLF_to_EOL(<<<'EOD'
 usage: phpkg [-v | --version] [-h | --help] [--man]
            <command> [<args>]
 
@@ -33,7 +34,7 @@ global access
     run                 Run a project on the fly
     serve               Serve a project on the fly
     version             Print current version number
-EOD;
+EOD);
 
 test(
     title: 'it should show help output',
