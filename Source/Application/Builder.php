@@ -18,6 +18,7 @@ use PhpRepos\FileManager\FilesystemCollection;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\Symlink;
 use function PhpRepos\ControlFlow\Conditional\unless;
+use function PhpRepos\ControlFlow\Conditional\when;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
 
 function build(Project $project, Build $build): void
@@ -25,7 +26,25 @@ function build(Project $project, Build $build): void
     Directory\renew_recursive($build->root());
     Directory\exists_or_create($build->packages_directory());
 
-    Directory\preserve_copy_recursively($project->packages_directory, $build->packages_directory());
+    $is_composer_package = function (Path $package_path) use ($project) {
+        return ! $project->packages->has(fn (Package $package) => $package->root->string() === $package_path->string());
+    };
+
+    Directory\ls_all($project->packages_directory)->each(function (Path $owner) use ($build, $is_composer_package) {
+        Directory\ls_all($owner)->each(function (Path $package) use ($owner, $build, $is_composer_package) {
+            when(
+                $is_composer_package($package),
+                fn () =>
+                    Directory\make_recursive($build->packages_directory()->append($owner->leaf())->append($package->leaf())) &&
+                    Directory\preserve_copy_recursively(
+                        $package,
+                        $build->packages_directory()->append($owner->leaf())->append($package->leaf())
+                    ),
+            );
+        });
+    });
+
+
 
     $build->load_namespace_map();
 
