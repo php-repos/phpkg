@@ -233,6 +233,7 @@ function assert_executables_are_linked($message)
 
     assert_true((is_link(realpath($link_file)) && readlink(realpath($link_file)) === realpath($link_source)), $message);
     clearstatcache();
+    var_dump(decoct(fileperms(realpath($link_source)) & 0777));
     assert_true(774 == decoct(fileperms(realpath($link_source)) & 0777), 'executable file permission is not correct');
     assert_true((replace_build_vars(realpath($environment_build_path), realpath($stub)) === file_get_contents(realpath($link_source))), 'Executable content is not correct! ' . $message);
 }

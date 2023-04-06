@@ -6,12 +6,12 @@ use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\Cli\IO\Write\assert_error;
 use function PhpRepos\Cli\IO\Write\assert_line;
 use function PhpRepos\Cli\IO\Write\assert_success;
-use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\force_delete;
 use function Tests\Helper\reset_empty_project;
 
 test(
@@ -41,7 +41,7 @@ test(
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
+        force_delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
     },
     after: function () {
         reset_empty_project();
