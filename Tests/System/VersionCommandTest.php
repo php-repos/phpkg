@@ -4,6 +4,7 @@ namespace Tests\System\VersionCommandTest;
 
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(
@@ -11,7 +12,9 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg -v');
 
-        assert_success('phpkg version 1.2.1', $output);
+        $lines = explode("\n", trim($output));
+        assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
+        assert_success('phpkg version 1.2.1', $lines[0] . PHP_EOL);
     }
 );
 
@@ -20,6 +23,8 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg --version');
 
-        assert_success('phpkg version 1.2.1', $output);
+        $lines = explode("\n", trim($output));
+        assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
+        assert_success('phpkg version 1.2.1', $lines[0] . PHP_EOL);
     }
 );

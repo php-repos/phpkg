@@ -17,7 +17,9 @@ test(
 
         assert_development_build_is_empty('Development build directory is not empty.' . $output);
         assert_production_build_is_empty('Production build directory is not empty.' . $output);
-        assert_success('Build directory has been flushed.', $output);
+        $lines = explode("\n", trim($output));
+        assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
+        assert_success('Build directory has been flushed.', $lines[0] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/ProjectWithTests');
