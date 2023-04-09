@@ -8,7 +8,9 @@ use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\File\content;
 use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\File\exists;
 use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
@@ -50,7 +52,7 @@ test(
         $proc = proc_open('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git', $descriptor_spec, $pipes);
         proc_close($proc);
 
-        assert_true(str_starts_with(content($output), "PHP Warning:  file_get_contents({$path->string()}/phpkg.config.json): Failed to open stream"));
+        assert_false(exists($path->append('phpkg.config.json')));
 
         return $output;
     },
