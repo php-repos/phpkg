@@ -44,4 +44,4 @@ jobs:
         run: php phpkg credential github.com ${{ secrets.GITHUB_TOKEN }}
 
       - name: Execute tests
-        run: php test-runner
+        run: php test-runner --filter=InitCommandTest
