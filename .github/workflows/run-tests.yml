@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest, macos-latest]
         php: [8.2, 8.1]
 
     name: P${{ matrix.php }} - ${{ matrix.os }}
@@ -44,4 +44,4 @@ jobs:
         run: php phpkg credential github.com ${{ secrets.GITHUB_TOKEN }}
 
       - name: Execute tests
-        run: php test-runner --filter=RunCommand
+        run: php test-runner

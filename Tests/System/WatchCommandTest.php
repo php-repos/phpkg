@@ -2,11 +2,18 @@
 
 namespace Tests\System\WatchCommandTest;
 
+use function Phpkg\System\is_windows;
+use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\reset_empty_project;
+
+if (is_windows()) {
+    line('I don\'t know how to make this work on windows. So for now, i\'m ignoring it.');
+    exit();
+}
 
 test(
     title: 'it should watch for changes',

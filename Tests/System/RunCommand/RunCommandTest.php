@@ -6,7 +6,6 @@ use PhpRepos\FileManager\Path;
 use function PhpRepos\Cli\IO\Write\assert_error;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
-use function PhpRepos\FileManager\File\content;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\File\exists;
 use function PhpRepos\FileManager\Resolver\root;
@@ -57,7 +56,7 @@ test(
         return $output;
     },
     before: function () {
-        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris/v1.0.0');
+        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris/v1.0.1');
         make_recursive($path);
 
         return $path;

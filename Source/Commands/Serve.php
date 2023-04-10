@@ -13,12 +13,18 @@ use Phpkg\Git\Repository;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\Path;
+use function Phpkg\System\is_windows;
 use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\ControlFlow\Conditional\unless;
 
 return function (Environment $environment): void
 {
+    if (is_windows()) {
+        line('Unfortunately, the pcntl extension that is required to use the "run" command, is not supported on windows.');
+        return;
+    }
+
     $package_url = argument(2);
 
     line("Serving $package_url on http://localhost:8000");
