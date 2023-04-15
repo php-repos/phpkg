@@ -12,7 +12,7 @@ use function Tests\Helper\reset_empty_project;
 
 if (is_windows()) {
     line('I don\'t know how to make this work on windows. So for now, i\'m ignoring it.');
-    exit();
+    return;
 }
 
 test(
