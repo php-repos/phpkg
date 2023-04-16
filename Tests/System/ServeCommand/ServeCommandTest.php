@@ -4,14 +4,24 @@ namespace Tests\System\ServeCommand\ServeCommandTest;
 
 use Exception;
 use PhpRepos\FileManager\Path;
+use function Phpkg\System\is_windows;
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
-use function PhpRepos\FileManager\File\content;
 use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\File\exists;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+
+if (is_windows()) {
+    line('pcntl is not supported in windows. Ignoring serve tests.');
+
+    return;
+}
 
 test(
     title: 'it should serve the given application',
@@ -58,13 +68,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg serve https://github.com/php-repos/daily-routine.git not-exists.php');
 
-        $expected = <<<EOD
-\e[39mServing https://github.com/php-repos/daily-routine.git on http://localhost:8000
-\e[91mEntry point not-exists.php is not defined in the package.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Serving https://github.com/php-repos/daily-routine.git on http://localhost:8000", $lines[0] . PHP_EOL);
+        assert_error("Entry point not-exists.php is not defined in the package.", $lines[1] . PHP_EOL);
     },
     after: function () {
         delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/daily-routine'));
@@ -83,7 +91,7 @@ test(
         $proc = proc_open('php ' . root() . 'phpkg serve https://github.com/php-repos/daily-routine.git', $descriptor_spec, $pipes);
         proc_close($proc);
 
-        assert_true(str_contains(content($output), "PHP Warning:  file_get_contents({$path->string()}/phpkg.config.json): Failed to open stream"));
+        assert_false(exists($path->append('phpkg.config.json')));
 
         return $output;
     },

@@ -3,6 +3,8 @@
 namespace Tests\System\AddCommand\AddPackagesWithSameSubPackagesTest;
 
 use PhpRepos\FileManager\JsonFile;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
@@ -43,20 +45,18 @@ test(
 
 function assert_output($output)
 {
-    $expected = <<<EOD
-\e[39mAdding package git@github.com:php-repos/cli.git latest version...
-\e[39mSetting env credential...
-\e[39mLoading configs...
-\e[39mChecking installed packages...
-\e[39mSetting package version...
-\e[39mCreating package directory...
-\e[39mDetecting version hash...
-\e[39mDownloading the package...
-\e[39mUpdating configs...
-\e[39mCommitting configs...
-\e[92mPackage git@github.com:php-repos/cli.git has been added successfully.\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+    assert_true(11 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Adding package git@github.com:php-repos/cli.git latest version...", $lines[0] . PHP_EOL);
+    assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+    assert_line("Loading configs...", $lines[2] . PHP_EOL);
+    assert_line("Checking installed packages...", $lines[3] . PHP_EOL);
+    assert_line("Setting package version...", $lines[4] . PHP_EOL);
+    assert_line("Creating package directory...", $lines[5] . PHP_EOL);
+    assert_line("Detecting version hash...", $lines[6] . PHP_EOL);
+    assert_line("Downloading the package...", $lines[7] . PHP_EOL);
+    assert_line("Updating configs...", $lines[8] . PHP_EOL);
+    assert_line("Committing configs...", $lines[9] . PHP_EOL);
+    assert_success("Package git@github.com:php-repos/cli.git has been added successfully.", $lines[10] . PHP_EOL);
 }

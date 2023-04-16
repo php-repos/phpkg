@@ -2,9 +2,11 @@
 
 namespace Phpkg\Providers\GitHub;
 
+use Exception;
 use Phpkg\Git\Exception\InvalidTokenException;
 use PhpRepos\FileManager\Path;
 use ZipArchive;
+use function Phpkg\System\is_windows;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\ls;
 use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
@@ -72,8 +74,18 @@ function get_json(string $api_sub_url): array
         "Authorization: Bearer $token",
     ]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    if (is_windows()) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    }
+
     $output = curl_exec($ch);
+    $error = curl_error($ch);
     curl_close($ch);
+
+    if (curl_errno($ch) > 0) {
+        throw new Exception('Git curl error: ' . $error);
+    }
 
     $response = json_decode($output, true);
 
@@ -127,6 +139,9 @@ function download(string $destination, string $owner, string $repo, string $vers
     curl_setopt($ch, CURLOPT_FILE, $fp);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $token"]);
+    if (is_windows()) {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    }
     curl_exec($ch);
     curl_close($ch);
     fclose($fp);
@@ -150,13 +165,35 @@ function download(string $destination, string $owner, string $repo, string $vers
 
     renew_recursive($destination);
 
-    return  preserve_copy_recursively($unzip_directory, $destination) && delete_recursive($unzip_directory);
+    return preserve_copy_recursively($unzip_directory, $destination) && delete_recursive($unzip_directory);
 }
 
-function clone_to(string $destination, string $owner, string $repo): bool
+function clone_to(string $destination, string $owner, string $repo): void
 {
     $github_ssh_url = GITHUB_SSH_URL;
-    $output = passthru("git clone $github_ssh_url$owner/$repo.git $destination");
 
-    return  $output === null;
+    $descriptorspec = array(
+        0 => array("pipe", "r"), // stdin
+        1 => array("pipe", "w"), // stdout
+        2 => array("pipe", "w"), // stderr
+    );
+
+    $command = "git clone $github_ssh_url$owner/$repo.git $destination";
+    $process = proc_open($command, $descriptorspec, $pipes);
+
+    if (is_resource($process)) {
+        fclose($pipes[0]); // close stdin
+        $stdout = stream_get_contents($pipes[1]); // get stdout
+        $stderr = stream_get_contents($pipes[2]); // get stderr
+        fclose($pipes[1]); // close stdout
+        fclose($pipes[2]); // close stderr
+
+        $status = proc_close($process); // get the exit code
+
+        if ($status !== 0) {
+            throw new Exception("Failed to clone repository: $stderr");
+        }
+    } else {
+        throw new Exception("Failed to run command: $command");
+    }
 }

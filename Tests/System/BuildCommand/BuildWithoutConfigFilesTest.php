@@ -4,11 +4,11 @@ namespace Tests\System\BuildCommand\BuildWithoutConfigFilesTest;
 
 use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\Datatype\Arr\last;
-use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\force_delete;
 
 test(
     title: 'it should build project without config files',
@@ -35,10 +35,10 @@ test(
 
 function delete_build_directory()
 {
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds'));
+    force_delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/builds'));
 }
 
 function delete_packages_directory()
 {
-    delete_recursive(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages'));
+    force_delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages'));
 }

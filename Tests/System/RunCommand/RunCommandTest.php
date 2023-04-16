@@ -3,11 +3,13 @@
 namespace Tests\System\RunCommand\RunCommandTest;
 
 use PhpRepos\FileManager\Path;
+use function PhpRepos\Cli\IO\Write\assert_error;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
-use function PhpRepos\FileManager\File\content;
 use function PhpRepos\FileManager\File\delete;
+use function PhpRepos\FileManager\File\exists;
 use function PhpRepos\FileManager\Resolver\root;
+use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
@@ -28,12 +30,9 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git not-exists.php');
 
-        $expected = <<<EOD
-\e[91mEntry point not-exists.php is not defined in the package.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_error("Entry point not-exists.php is not defined in the package.", $lines[0] . PHP_EOL);
     },
     after: function () {
         delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris'));
@@ -52,12 +51,12 @@ test(
         $proc = proc_open('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git', $descriptor_spec, $pipes);
         proc_close($proc);
 
-        assert_true(str_starts_with(content($output), "PHP Warning:  file_get_contents({$path->string()}/phpkg.config.json): Failed to open stream"));
+        assert_false(exists($path->append('phpkg.config.json')));
 
         return $output;
     },
     before: function () {
-        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris/v1.0.0');
+        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris/v1.0.1');
         make_recursive($path);
 
         return $path;

@@ -2,7 +2,7 @@
 
 namespace ProjectWithTests\SampleFile;
 
-require_once '$environment_build_path/Packages/php-repos/simple-package/Source/Classes/PackageConst.php';
+require_once '$environment_build_path$DSPackages$DSphp-repos$DSsimple-package$DSSource$DSClasses$DSPackageConst.php';
 
 use ProjectWithTests\Parents\ParentClass;
 use ProjectWithTests\Interfaces\ClassInterface;

@@ -2,8 +2,8 @@
 
 namespace Tests\SampleTest;
 
-require_once '$environment_build_path/Source/SampleFile.php';
-require_once '$environment_build_path/Tests/Helper.php';
+require_once '$environment_build_path$DSSource$DSSampleFile.php';
+require_once '$environment_build_path$DSTests$DSHelper.php';
 
 use ProjectWithTests\SampleFile;
 use Tests\Helper;

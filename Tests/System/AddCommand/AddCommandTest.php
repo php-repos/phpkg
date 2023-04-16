@@ -4,6 +4,9 @@ namespace Tests\System\AddCommand\AddCommandTest;
 
 use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Providers\GitHub\github_token;
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -15,13 +18,12 @@ test(
     title: 'it should show error message when project is not initialized',
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
-        $expected = <<<EOD
-\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
-\e[91mProject is not initialized. Please try to initialize using the init command.\e[39m
 
-EOD;
+        $lines = explode("\n", trim($output));
 
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match: ' . $output);
+        assert_line("Adding package git@github.com:php-repos/simple-package.git latest version...", $lines[0] . PHP_EOL);
+        assert_error("Project is not initialized. Please try to initialize using the init command.", $lines[1] . PHP_EOL);
     }
 );
 
@@ -30,14 +32,12 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
-\e[39mSetting env credential...
-\e[91mThere is no credential file. Please use the `credential` command to add your token.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(3 === count($lines), 'Number of output lines do not match');
+        assert_line("Adding package git@github.com:php-repos/simple-package.git latest version...", $lines[0] . PHP_EOL);
+        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+        assert_error("There is no credential file. Please use the `credential` command to add your token.", $lines[2] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
@@ -54,23 +54,7 @@ test(
     title: 'it should not show error message when there is no credential files but GITHUB_TOKEN is set',
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
-
-        $expected = <<<EOD
-\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
-\e[39mSetting env credential...
-\e[39mLoading configs...
-\e[39mChecking installed packages...
-\e[39mSetting package version...
-\e[39mCreating package directory...
-\e[39mDetecting version hash...
-\e[39mDownloading the package...
-\e[39mUpdating configs...
-\e[39mCommitting configs...
-\e[92mPackage git@github.com:php-repos/simple-package.git has been added successfully.\e[39m
-
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_output($output);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
@@ -89,17 +73,15 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
-\e[39mSetting env credential...
-\e[39mLoading configs...
-\e[39mChecking installed packages...
-\e[39mSetting package version...
-\e[91mThe GitHub token is not valid. Either, you didn't set one yet, or it is not valid. Please use the `credential` command to set a valid token.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(6 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Adding package git@github.com:php-repos/simple-package.git latest version...", $lines[0] . PHP_EOL);
+        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+        assert_line("Loading configs...", $lines[2] . PHP_EOL);
+        assert_line("Checking installed packages...", $lines[3] . PHP_EOL);
+        assert_line("Setting package version...", $lines[4] . PHP_EOL);
+        assert_error("The GitHub token is not valid. Either, you didn't set one yet, or it is not valid. Please use the `credential` command to set a valid token.", $lines[5] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
@@ -153,16 +135,14 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mAdding package https://github.com/php-repos/simple-package.git latest version...
-\e[39mSetting env credential...
-\e[39mLoading configs...
-\e[39mChecking installed packages...
-\e[91mPackage https://github.com/php-repos/simple-package.git is already exists.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(5 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Adding package https://github.com/php-repos/simple-package.git latest version...", $lines[0] . PHP_EOL);
+        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+        assert_line("Loading configs...", $lines[2] . PHP_EOL);
+        assert_line("Checking installed packages...", $lines[3] . PHP_EOL);
+        assert_error("Package https://github.com/php-repos/simple-package.git is already exists.", $lines[4] . PHP_EOL);
 
         $config = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
         $meta = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
@@ -180,22 +160,20 @@ EOD;
 
 function assert_output($output)
 {
-    $expected = <<<EOD
-\e[39mAdding package git@github.com:php-repos/simple-package.git latest version...
-\e[39mSetting env credential...
-\e[39mLoading configs...
-\e[39mChecking installed packages...
-\e[39mSetting package version...
-\e[39mCreating package directory...
-\e[39mDetecting version hash...
-\e[39mDownloading the package...
-\e[39mUpdating configs...
-\e[39mCommitting configs...
-\e[92mPackage git@github.com:php-repos/simple-package.git has been added successfully.\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+    assert_true(11 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Adding package git@github.com:php-repos/simple-package.git latest version...", $lines[0] . PHP_EOL);
+    assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+    assert_line("Loading configs...", $lines[2] . PHP_EOL);
+    assert_line("Checking installed packages...", $lines[3] . PHP_EOL);
+    assert_line("Setting package version...", $lines[4] . PHP_EOL);
+    assert_line("Creating package directory...", $lines[5] . PHP_EOL);
+    assert_line("Detecting version hash...", $lines[6] . PHP_EOL);
+    assert_line("Downloading the package...", $lines[7] . PHP_EOL);
+    assert_line("Updating configs...", $lines[8] . PHP_EOL);
+    assert_line("Committing configs...", $lines[9] . PHP_EOL);
+    assert_success("Package git@github.com:php-repos/simple-package.git has been added successfully.", $lines[10] . PHP_EOL);
 }
 
 function assert_config_file_created_for_simple_project($message)

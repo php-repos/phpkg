@@ -2,42 +2,17 @@
 
 namespace Tests\System\InitCommand\InitCommandTest;
 
+use PhpRepos\FileManager\JsonFile;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\reset_empty_project;
 
-$initial_content = <<<EOD
-{
-    "map": [],
-    "entry-points": [],
-    "excludes": [],
-    "executables": [],
-    "packages-directory": "Packages",
-    "packages": []
-}
-
-EOD;
-
-$initial_content_with_packages_directory = <<<EOD
-{
-    "map": [],
-    "entry-points": [],
-    "excludes": [],
-    "executables": [],
-    "packages-directory": "vendor",
-    "packages": []
-}
-
-EOD;
-
-$meta_content = <<<EOD
-{
-    "packages": []
-}
-
-EOD;
-
+$initial_content = JsonFile\to_array(__DIR__ . DIRECTORY_SEPARATOR . 'initial-config.json');
+$initial_content_with_packages_directory = JsonFile\to_array(__DIR__ . DIRECTORY_SEPARATOR . 'initial-with-custom-packages.config.json');
+$meta_content = JsonFile\to_array(__DIR__ . DIRECTORY_SEPARATOR . 'initial-meta.json');
 
 test(
     title: 'it makes a new default config file',
@@ -50,14 +25,14 @@ test(
 
         assert_true(file_exists($config_path), 'Config file does not exists: ' . $output);
         assert_true(file_exists($packages_directory), 'Packages directory is not created: ' . $output);
-        assert_true(file_get_contents($config_path) === $initial_content, 'Config file content is not correct after running init!');
-        assert_true(file_get_contents($meta_file_path) === $meta_content, 'Lock file content is not correct after running init!');
-        $expected = <<<EOD
-\e[39mInit project...
-\e[92mProject has been initialized.\e[39m
+        assert_true(JsonFile\to_array($config_path) === $initial_content, 'Config file content is not correct after running init!');
+        assert_true(JsonFile\to_array($meta_file_path) === $meta_content, 'Lock file content is not correct after running init!');
 
-EOD;
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        $lines = explode("\n", trim($output));
+
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Init project...", $lines[0] . PHP_EOL);
+        assert_success("Project has been initialized.", $lines[1] . PHP_EOL);
     },
     after: function () {
         reset_empty_project();
@@ -76,7 +51,7 @@ test(
         assert_true(file_exists($packages_directory), 'packages directory has not been created: ' . $output);
         assert_true(file_exists($config_path), 'Config file does not exists: ' . $output);
         assert_true(file_exists($meta_file_path), 'Config lock file does not exists: ' . $output);
-        assert_true(file_get_contents($config_path) === $initial_content_with_packages_directory, 'Config file content is not correct after running init!');
+        assert_true(JsonFile\to_array($config_path) === $initial_content_with_packages_directory, 'Config file content is not correct after running init!');
     },
     after: function () {
         reset_empty_project();

@@ -3,12 +3,15 @@
 namespace Tests\System\InstallCommand\InstallCommandTest;
 
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\FileManager\Directory\clean;
+use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\IO\Write\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\force_delete;
 use function Tests\Helper\reset_empty_project;
 
 test(
@@ -16,13 +19,11 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
 
-        $expected = <<<EOD
-\e[39mInstalling packages...
-\e[91mProject is not initialized. Please try to initialize using the init command.\e[39m
+        $lines = explode("\n", trim($output));
 
-EOD;
-
-        assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
+        assert_line("Installing packages...", $lines[0] . PHP_EOL);
+        assert_error("Project is not initialized. Please try to initialize using the init command.", $lines[1] . PHP_EOL);
     }
 );
 
@@ -40,7 +41,7 @@ test(
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        clean(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
+        force_delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
     },
     after: function () {
         reset_empty_project();
@@ -49,17 +50,14 @@ test(
 
 function assert_output($output)
 {
-    $packages = root() . 'TestRequirements/Fixtures/EmptyProject/Packages/';
-    $expected = <<<EOD
-\e[39mInstalling packages...
-\e[39mSetting env credential...
-\e[39mLoading configs...
-\e[39mDownloading packages...
-\e[92mPackages has been installed successfully.\e[39m
+    $lines = explode("\n", trim($output));
 
-EOD;
-
-    assert_true($expected === $output, 'Output is not correct:' . PHP_EOL . $expected . PHP_EOL . $output);
+    assert_true(5 === count($lines), 'Number of output lines do not match' . $output);
+    assert_line("Installing packages...", $lines[0] . PHP_EOL);
+    assert_line("Setting env credential...", $lines[1] . PHP_EOL);
+    assert_line("Loading configs...", $lines[2] . PHP_EOL);
+    assert_line("Downloading packages...", $lines[3] . PHP_EOL);
+    assert_success("Packages has been installed successfully.", $lines[4] . PHP_EOL);
 }
 
 function assert_config_file_content_not_changed($message)

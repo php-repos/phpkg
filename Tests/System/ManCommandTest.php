@@ -5,8 +5,9 @@ namespace Tests\System\ManCommandTest;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\CRLF_to_EOL;
 
-$man_content = <<<EOD
+$man_content = CRLF_to_EOL(<<<EOD
 usage: phpkg [-v | --version] [-h | --help] [--man]
            <command> [<args>]
 
@@ -71,7 +72,7 @@ global access
                     second argument.
     version
                     Prints current version number.
-EOD;
+EOD);
 
 
 test(

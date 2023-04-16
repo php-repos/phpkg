@@ -15,7 +15,9 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg migrate --project=TestRequirements/Fixtures/composer-package');
 
-        assert_success('Migration has been finished successfully.', $output);
+        $lines = explode("\n", trim($output));
+        assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
+        assert_success('Migration has been finished successfully.', $lines[0] . PHP_EOL);
         assert_config_file();
         assert_config_lock_file();
     },

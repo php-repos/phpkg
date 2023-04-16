@@ -8,6 +8,7 @@ use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\CRLF_to_EOL;
 use function Tests\Helper\reset_empty_project;
 
 test(
@@ -82,17 +83,17 @@ function assert_released_package_cloned($message)
         $message
     );
 
-    assert_true(
-        file_get_contents(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/release-file.txt'))
-        === <<<EOD
+    $sample_file = file_get_contents(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/release-file.txt'));
+
+    $expected_output = CRLF_to_EOL(<<<EOD
 This is a specific file.
 v1.0.0
 v1.0.1
 v1.1.0
 
-EOD,
-        'release file content is not correct'
-    );
+EOD);
+
+    assert_true($sample_file === $expected_output, 'release file content is not correct');
 }
 
 function assert_released_package_added_to_config($message)

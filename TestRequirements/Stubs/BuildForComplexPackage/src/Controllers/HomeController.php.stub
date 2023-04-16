@@ -2,7 +2,7 @@
 
 namespace PhpRepos\ComplexPackage\Controllers;
 
-require_once '$environment_build_path/Packages/php-repos/complex-package/src/Helpers.php';
+require_once '$environment_build_path$DSPackages$DSphp-repos$DScomplex-package$DSsrc$DSHelpers.php';
 
 use PhpRepos\ComplexPackage\Models\User;
 use function PhpRepos\ComplexPackage\Helpers\helper1;

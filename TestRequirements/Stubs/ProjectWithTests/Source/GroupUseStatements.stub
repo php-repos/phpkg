@@ -2,8 +2,8 @@
 
 namespace ProjectWithTests;
 
-require_once '$environment_build_path/Source/SubDirectory/Constants.php';
-require_once '$environment_build_path/Source/SubDirectory/Helper.php';
+require_once '$environment_build_path$DSSource$DSSubDirectory$DSConstants.php';
+require_once '$environment_build_path$DSSource$DSSubDirectory$DSHelper.php';
 
 use ProjectWithTests\SubDirectory\{SimpleClass, ClassUseAnotherClass as Another};
 use function ProjectWithTests\SubDirectory\Helper\{helper1 as anotherFunction, helper2};
