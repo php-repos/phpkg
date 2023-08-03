@@ -30,21 +30,34 @@ function build(Project $project, Build $build): void
         return ! $project->packages->has(fn (Package $package) => $package->root->string() === $package_path->string());
     };
 
-    Directory\ls_all($project->packages_directory)->each(function (Path $owner) use ($build, $is_composer_package) {
-        Directory\ls_all($owner)->each(function (Path $package) use ($owner, $build, $is_composer_package) {
+    $copy_package = fn (Path $package, Path $destination) =>
+        when(
+            $is_composer_package($package),
+            fn () =>
             when(
-                $is_composer_package($package),
-                fn () =>
-                    Directory\make_recursive($build->packages_directory()->append($owner->leaf())->append($package->leaf())) &&
-                    Directory\preserve_copy_recursively(
-                        $package,
-                        $build->packages_directory()->append($owner->leaf())->append($package->leaf())
-                    ),
-            );
+                is_dir($package),
+                fn () => Directory\make_recursive($destination) && Directory\preserve_copy_recursively($package, $destination),
+                fn () => File\preserve_copy($package, $destination)
+            )
+        );
+
+    $copy_owner = fn (Path $owner) =>
+        when(
+            is_dir($owner),
+            fn () => Directory\make_recursive($build->packages_directory()->append($owner->leaf()))
+                && Directory\ls_all($owner)->each(
+                    function (Path $package) use ($owner, $build, $is_composer_package, $copy_package) {
+                        $destination = $build->packages_directory()->append($owner->leaf())->append($package->leaf());
+                        $copy_package($package, $destination);
+                    }
+                ),
+            fn () => File\preserve_copy($owner, $build->packages_directory()->append($owner->leaf()))
+        );
+
+    Directory\ls_all($project->packages_directory)
+        ->each(function (Path $owner) use ($build, $is_composer_package, $copy_owner) {
+            $copy_owner($owner);
         });
-    });
-
-
 
     $build->load_namespace_map();
 
