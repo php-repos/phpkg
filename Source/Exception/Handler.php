@@ -7,7 +7,7 @@ use Throwable;
 use function PhpRepos\Cli\IO\Write\error;
 use function PhpRepos\Cli\IO\Write\line;
 
-function register_exception_handler()
+function register_exception_handler(): void
 {
     set_exception_handler(function (Throwable $exception) {
         if ($exception instanceof InvalidTokenException) {

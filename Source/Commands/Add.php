@@ -1,7 +1,5 @@
 <?php
 
-namespace Phpkg\Commands\Add;
-
 use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Config\PackageAlias;
@@ -11,23 +9,38 @@ use Phpkg\Classes\Meta\Dependency;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
+use PhpRepos\Console\Attributes\Description;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
-use function PhpRepos\Cli\IO\Read\parameter;
-use function PhpRepos\Cli\IO\Read\argument;
+use PhpRepos\Console\Attributes\Argument;
+use PhpRepos\Console\Attributes\LongOption;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
 
-return function (Environment $environment): void
-{
-    $package_url = argument(2);
-    $version = parameter('version');
+/**
+ * Adds the specified package to your project.
+ * This command requires a mandatory package argument, which should be a valid git URL (SSH or HTTPS) or a registered
+ * alias created using the alias command.
+ */
+return function(
+    #[Argument]
+    #[Description("The Git URL (SSH or HTTPS) of the package you want to add. Alternatively, if you have defined an alias for the package, you can use the alias instead.")]
+    string $package_url,
+    #[Argument]
+    #[LongOption('version')]
+    #[Description("The version number of the package you want to add. If not provided, the command will add the latest available version.")]
+    string $version = null,
+    #[LongOption('project')]
+    #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
+    string $project = ''
+) {
+    $environment = Environment::for_project();
 
     line('Adding package ' . $package_url . ($version ? ' version ' . $version : ' latest version') . '...');
 
-    $project = new Project($environment->pwd->append(parameter('project', '')));
+    $project = new Project($environment->pwd->append($project));
 
     if (! File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');

@@ -1,7 +1,5 @@
 <?php
 
-namespace Phpkg\Commands\Build;
-
 use Phpkg\Application\Builder;
 use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Build\Build;
@@ -11,15 +9,30 @@ use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\Cli\IO\Write;
+use PhpRepos\Console\Attributes\Argument;
+use PhpRepos\Console\Attributes\Description;
+use PhpRepos\Console\Attributes\LongOption;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
-use function PhpRepos\Cli\IO\Read\argument;
-use function PhpRepos\Cli\IO\Read\parameter;
 
-return function (Environment $environment): void
-{
+/**
+ * Compiles and adds project files to the build directory.
+ * Builds the project and places the resulting files in the build directory within the designated environment's folder,
+ * typically named `build`. By default, the environment is set to `development`. If you wish to build the production
+ * environment, you can specify the environment argument as `production`.
+ */
+return function (
+    #[Argument]
+    #[Description('The environment for which you want to build your project. If not provided, the default is `development`')]
+    ?string $env = 'development',
+    #[LongOption('project')]
+    #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
+    ?string $project = '',
+) {
+    $environment = Environment::for_project();
+
     Write\line('Start building...');
-    $project = new Project($environment->pwd->append(parameter('project', '')));
+    $project = new Project($environment->pwd->append($project));
 
     if (! File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
@@ -41,7 +54,7 @@ return function (Environment $environment): void
     $project = PackageManager\load_packages($project);
 
     Write\line('Building...');
-    $build = new Build($project, argument(2, 'development'));
+    $build = new Build($project, $env);
 
     Builder\build($project, $build);
 

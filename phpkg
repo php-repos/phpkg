@@ -3,28 +3,26 @@
 
 require realpath(__DIR__ . '/Import.php');
 
-use Phpkg\Classes\Environment\Environment;
-use PhpRepos\Cli\IO\Read;
-use PhpRepos\FileManager\Path;
+use PhpRepos\Cli\IO\Write;
+use PhpRepos\Console\Config;
+use PhpRepos\FileManager\Resolver;
 use function Phpkg\Exception\register_exception_handler;
-use function PhpRepos\FileManager\File\exists;
+
+if (! empty(getopt('v::', ['version::']))) {
+    Write\success('phpkg version 1.3.0');
+    exit(0);
+}
 
 register_exception_handler();
 
-$command = Read\command() ?? Read\parameter('command');
+$console_config = new Config(
+    main_command_name: 'phpkg',
+    default_commands_directory: 'Source\Commands',
+    commands_file_suffix: '.php',
+    help_text: <<<EOD
+Usage: phpkg [-v | --version] [-h | --help]
+               <command> [<options>] [<args>]
+EOD,
+);
 
-if (is_null($command)) {
-    $command = Read\option('v') || Read\option('version') ? 'version' : (Read\option('man') ? 'man' : 'help');
-}
-
-$environment = new Environment(Path::from_string(__DIR__));
-
-$command = ucfirst($command);
-
-if (exists(__DIR__ . "/Source/Commands/$command.php")) {
-    $command = require realpath(__DIR__ . "/Source/Commands/$command.php");
-} else {
-    $command = require realpath(__DIR__ . '/Source/Commands/Help.php');
-}
-
-$command($environment);
+require Resolver\realpath(__DIR__ . '/Packages/php-repos/console/console');

@@ -1,7 +1,5 @@
 <?php
 
-namespace Phpkg\Commands\Migrate;
-
 use Phpkg\Application\Migrator;
 use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Config\Config;
@@ -10,14 +8,23 @@ use Phpkg\Classes\Environment\Environment;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\Cli\IO\Write;
+use PhpRepos\Console\Attributes\Description;
+use PhpRepos\Console\Attributes\LongOption;
 use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\Cli\IO\Read\parameter;
 
-return function (Environment $environment): void
-{
-    $project = new Project($environment->pwd->append(parameter('project', '')));
+/**
+ * The `migrate` command is used to migrate from a Composer project to a `phpkg` project.
+ */
+return function (
+    #[LongOption('project')]
+    #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
+    ?string $project = '',
+) {
+    $environment = Environment::for_project();
+
+    $project = new Project($environment->pwd->append($project));
 
     $composer_file = $project->root->append('composer.json');
     $composer_lock_file = $project->root->append('composer.lock');
