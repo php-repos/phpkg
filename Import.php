@@ -21,15 +21,28 @@ spl_autoload_register(function ($class) {
         'Phpkg\Git\Repository' => realpath(__DIR__ . '/Source/Git/Repository.php'),
         'Phpkg\Git\Exception\InvalidTokenException' => realpath(__DIR__ . '/Source/Git/Exception/InvalidTokenException.php'),
         'Phpkg\PhpFile' => realpath(__DIR__ . '/Source/PhpFile.php'),
+        // Datatype classes
         'PhpRepos\Datatype\Collection' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Collection.php'),
         'PhpRepos\Datatype\Map' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Map.php'),
         'PhpRepos\Datatype\Pair' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Pair.php'),
         'PhpRepos\Datatype\Text' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Text.php'),
         'PhpRepos\Datatype\Tree' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Tree.php'),
+        // File manager classes
         'PhpRepos\FileManager\Filename' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Filename.php'),
         'PhpRepos\FileManager\FilesystemCollection' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/FilesystemCollection.php'),
         'PhpRepos\FileManager\FilesystemTree' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/FilesystemTree.php'),
         'PhpRepos\FileManager\Path' => realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Path.php'),
+        // Console classes
+        'PhpRepos\Console\Arguments' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Arguments.php'),
+        'PhpRepos\Console\Attributes\Argument' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/Argument.php'),
+        'PhpRepos\Console\Attributes\Description' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/Description.php'),
+        'PhpRepos\Console\Attributes\LongOption' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/LongOption.php'),
+        'PhpRepos\Console\Attributes\ShortOption' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/ShortOption.php'),
+        'PhpRepos\Console\CommandParameter' => realpath(__DIR__ . '/Packages/php-repos/console/Source/CommandParameter.php'),
+        'PhpRepos\Console\Config' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Config.php'),
+        'PhpRepos\Console\Exceptions\InvalidCommandDefinitionException' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Exceptions/InvalidCommandDefinitionException.php'),
+        'PhpRepos\Console\Exceptions\InvalidCommandPromptException' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Exceptions/InvalidCommandPromptException.php'),
+        'PhpRepos\Console\ParamCollection' => realpath(__DIR__ . '/Packages/php-repos/console/Source/ParamCollection.php'),
     ];
 
     require_once $class_map[$class];
@@ -46,6 +59,8 @@ require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/File.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Symlink.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Directory.php');
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/JsonFile.php');
+require realpath(__DIR__ . '/Packages/php-repos/console/Source/Reflection.php');
+require realpath(__DIR__ . '/Packages/php-repos/console/Source/Runner.php');
 require realpath(__DIR__ . '/Source/System.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');

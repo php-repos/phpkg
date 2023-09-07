@@ -1,7 +1,5 @@
 <?php
 
-namespace Phpkg\Commands\Remove;
-
 use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Config\PackageAlias;
 use Phpkg\Classes\Config\Library;
@@ -11,20 +9,33 @@ use Phpkg\Classes\Package\Package;
 use Phpkg\Classes\Project\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
+use PhpRepos\Console\Attributes\Argument;
+use PhpRepos\Console\Attributes\Description;
+use PhpRepos\Console\Attributes\LongOption;
 use PhpRepos\FileManager\File;
-use function PhpRepos\Cli\IO\Read\argument;
-use function PhpRepos\Cli\IO\Read\parameter;
 use function PhpRepos\Cli\IO\Write\line;
 use function PhpRepos\Cli\IO\Write\success;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
 
-return function (Environment $environment): void
-{
-    $package_url = argument(2);
+/**
+ * Removes the specified package from your project.
+ * This command requires a mandatory package argument, which should be a valid git URL (SSH or HTTPS) or a registered
+ * alias created using the alias command.
+ */
+return function (
+    #[Argument]
+    #[Description("The Git URL (SSH or HTTPS) of the package you wish to remove. Alternatively, if you have previously\n defined an alias for the package using the alias command, you can use the alias instead.")]
+    string $package_url,
+    #[LongOption('project')]
+    #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
+    string $project = ''
+) {
+    $environment = Environment::for_project();
+
     line('Removing package ' . $package_url);
 
-    $project = new Project($environment->pwd->append(parameter('project', '')));
+    $project = new Project($environment->pwd->append($project));
 
     if (! File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
@@ -53,13 +64,13 @@ return function (Environment $environment): void
     line('Removing package from config...');
     unless(
         $project->packages->has(fn (Package $package)
-            => $package->config->repositories->has(fn (Library $library)
-                => $library->repository()->is($dependency->repository()))),
+        => $package->config->repositories->has(fn (Library $library)
+        => $library->repository()->is($dependency->repository()))),
         fn () => PackageManager\remove($project, $dependency)
     );
 
     $project->config->repositories->forget(fn (Library $installed_library)
-        => $installed_library->repository()->is($library->repository()));
+    => $installed_library->repository()->is($library->repository()));
 
     line('Committing configs...');
     PackageManager\commit($project);

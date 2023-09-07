@@ -5,15 +5,25 @@ namespace Phpkg\Commands\Credential;
 use Phpkg\Classes\Credential\Credential;
 use Phpkg\Classes\Credential\Credentials;
 use Phpkg\Classes\Environment\Environment;
+use PhpRepos\Console\Attributes\Argument;
+use PhpRepos\Console\Attributes\Description;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\Cli\IO\Read\argument;
 use function PhpRepos\Cli\IO\Write\success;
 
-return function (Environment $environment): void
-{
-    $provider = argument(2);
-    $token = argument(3);
+/**
+ * The `credential` command is used to add a security token for a specified Git provider to the credential file.
+ * This security token is essential for accessing package metadata from the desired Git repository securely.
+ */
+return function (
+    #[Argument]
+    #[Description("The domain name of the Git provider for which you want to add a security credential.\n For example github.com")]
+    string $provider,
+    #[Argument]
+    #[Description('The security token that will be used to authenticate your access to the provider\'s services.')]
+    string $token,
+) {
+    $environment = Environment::for_project();
 
     $credentials = File\exists($environment->credential_file)
         ? Credentials::from_array(JsonFile\to_array($environment->credential_file))

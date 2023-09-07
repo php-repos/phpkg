@@ -13,3 +13,6 @@
 [submodule "Packages/php-repos/control-flow"]
 	path = Packages/php-repos/control-flow
 	url = git@github.com:php-repos/control-flow.git
+[submodule "Packages/php-repos/console"]
+	path = Packages/php-repos/console
+	url = git@github.com:php-repos/console.git

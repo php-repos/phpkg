@@ -2,38 +2,30 @@
 
 namespace Tests\System\HelpCommandTest;
 
+use function PhpRepos\Cli\IO\Write\assert_output;
 use function PhpRepos\FileManager\Resolver\root;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\CRLF_to_EOL;
 
-$help_content = CRLF_to_EOL(<<<'EOD'
-usage: phpkg [-v | --version] [-h | --help] [--man]
-           <command> [<args>]
+$help_content = CRLF_to_EOL(<<<EOD
+\e[39mUsage: phpkg [-v | --version] [-h | --help]
+               <command> [<options>] [<args>]
 
-These are common phpkg commands used in various situations:
+Here you can see a list of available commands:
+\e[39m    add           Adds the specified package to your project.
+\e[39m    alias         Defines the provided alias for a given package, allowing you to use the alias in other commands where a package URL is required.
+\e[39m    build         Compiles and adds project files to the build directory.
+\e[39m    credential    The `credential` command is used to add a security token for a specified Git provider to the credential file.
+\e[39m    flush         If you need to remove any built files, running this command will create a fresh builds directory.
+\e[39m    init          This command initializes the project by adding the necessary files and directories.
+\e[39m    install       Downloads and installs added packages into your project's directory.
+\e[39m    migrate       The `migrate` command is used to migrate from a Composer project to a `phpkg` project.
+\e[39m    remove        Removes the specified package from your project.
+\e[39m    run           Allows you to execute a project on-the-fly.
+\e[39m    serve         Serves an external project using PHP's built-in server on-the-fly.
+\e[39m    update        Allows you to update the version of a specified package in your PHP project.
+\e[39m    watch         Enables you to monitor file changes in your project and automatically build the project for each change.
 
-start a working area
-    init                Initialize an empty project or reinitialize an existing one
-    migrate             Migrate from a composer project
-
-work with packages
-    credential          Add credential for given provider
-    alias               Define an alias for a package 
-    add                 Add a git repository as a package
-    remove              Remove a git repository from packages
-    update              Update the version of given package
-    install             Installs package dependencies
-    
-work on an existing project
-    build               Build the project
-    watch               Watch file changes and build the project for each change
-    flush               Flush files in build directory
-
-global access
-    run                 Run a project on the fly
-    serve               Serve a project on the fly
-    version             Print current version number
 EOD);
 
 test(
@@ -41,7 +33,7 @@ test(
     case: function () use ($help_content) {
         $output = shell_exec('php ' . root() . 'phpkg -h');
 
-        assert_true(str_contains($output, $help_content), 'Help output is not what we want!' . $output);
+        assert_output($help_content, $output);
     }
 );
 
@@ -50,7 +42,7 @@ test(
     case: function () use ($help_content) {
         $output = shell_exec('php ' . root() . 'phpkg --help');
 
-        assert_true(str_contains($output, $help_content), 'Help output is not what we want!' . $output);
+        assert_output($help_content, $output);
     }
 );
 
@@ -59,6 +51,19 @@ test(
     case: function () use ($help_content) {
         $output = shell_exec('php ' . root() . 'phpkg');
 
-        assert_true(str_contains($output, $help_content), 'Help output is not what we want!' . $output);
+        assert_output($help_content, $output);
     }
 );
+
+function findFirstDifferenceIndex($str1, $str2) {
+    $minLength = min(strlen($str1), strlen($str2));
+
+    for ($i = 0; $i < $minLength; $i++) {
+        if ($str1[$i] !== $str2[$i]) {
+            return $i;
+        }
+    }
+
+    // If all characters up to the minimum length are the same, return the length of the shorter string.
+    return $minLength;
+}
