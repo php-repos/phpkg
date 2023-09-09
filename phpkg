@@ -5,6 +5,7 @@ require realpath(__DIR__ . '/Import.php');
 
 use PhpRepos\Cli\IO\Write;
 use PhpRepos\Console\Config;
+use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\Resolver;
 use function Phpkg\Exception\register_exception_handler;
 
@@ -15,14 +16,10 @@ if (! empty(getopt('v::', ['version::']))) {
 
 register_exception_handler();
 
-$console_config = new Config(
-    main_command_name: 'phpkg',
-    default_commands_directory: 'Source\Commands',
+$custom_console_config = new Config(
+    commands_directory: Path::from_string(__DIR__ )->append('Source\Commands'),
     commands_file_suffix: '.php',
-    help_text: <<<EOD
-Usage: phpkg [-v | --version] [-h | --help]
-               <command> [<options>] [<args>]
-EOD,
+    additional_supported_options: '[-v | --version] ',
 );
 
 require Resolver\realpath(__DIR__ . '/Packages/php-repos/console/console');
