@@ -39,6 +39,7 @@ spl_autoload_register(function ($class) {
         'PhpRepos\Console\Attributes\LongOption' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/LongOption.php'),
         'PhpRepos\Console\Attributes\ShortOption' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/ShortOption.php'),
         'PhpRepos\Console\CommandParameter' => realpath(__DIR__ . '/Packages/php-repos/console/Source/CommandParameter.php'),
+        'PhpRepos\Console\Environment' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Environment.php'),
         'PhpRepos\Console\Config' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Config.php'),
         'PhpRepos\Console\Exceptions\InvalidCommandDefinitionException' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Exceptions/InvalidCommandDefinitionException.php'),
         'PhpRepos\Console\Exceptions\InvalidCommandPromptException' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Exceptions/InvalidCommandPromptException.php'),

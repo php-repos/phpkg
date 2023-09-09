@@ -13,7 +13,9 @@ class Environment
 
     public static function for_project(): static
     {
-        $root = Path::from_string($_SERVER['PWD']);
-        return new static($root, $root->append('credentials.json'));
+        return new static(
+            Path::from_string($_SERVER['PWD']),
+            Path::from_string($_SERVER['SCRIPT_FILENAME'])->sibling('credentials.json')
+        );
     }
 }
