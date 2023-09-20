@@ -3,14 +3,14 @@
 
 require realpath(__DIR__ . '/Import.php');
 
-use PhpRepos\Cli\IO\Write;
+use PhpRepos\Cli\Output;
 use PhpRepos\Console\Config;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\Resolver;
 use function Phpkg\Exception\register_exception_handler;
 
 if (! empty(getopt('v::', ['version::']))) {
-    Write\success('phpkg version 1.3.0');
+    Output\success('phpkg version 1.4.0');
     exit(0);
 }
 

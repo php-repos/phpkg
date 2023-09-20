@@ -2,21 +2,18 @@
 
 use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Config\PackageAlias;
-use Phpkg\Classes\Config\Library;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Meta\Dependency;
-use Phpkg\Classes\Package\Package;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\Dependency;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\Package;
+use Phpkg\Classes\PackageAlias;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use PhpRepos\FileManager\Directory;
-use PhpRepos\FileManager\File;
-use function PhpRepos\Cli\IO\Write\line;
-use function PhpRepos\Cli\IO\Write\success;
+use function PhpRepos\Cli\Output\line;
+use function PhpRepos\Cli\Output\success;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
 
 /**
@@ -30,73 +27,52 @@ return function (
     #[Argument]
     #[Description("The Git URL (SSH or HTTPS) of the package you want to update. Alternatively, if you have defined an alias for the package, you can use the alias instead.")]
     string $package_url,
+    #[Argument]
     #[LongOption('version')]
     #[Description("The version number of the package you want to update to. If not provided, the command will update to the latest available version.")]
     ?string $version = null,
+    #[LongOption('force')]
+    #[Description('Use this option to forcefully update the specified package, ignoring version compatibility checks.')]
+    ?bool $force = false,
     #[LongOption('project')]
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = ''
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
     line('Updating package ' . $package_url . ' to ' . ($version ? 'version ' . $version : 'latest version') . '...');
 
-    $project = new Project($environment->pwd->append($project));
-
-    if (! File\exists($project->config_file)) {
-        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
-    }
+    $project = Project::installed($environment, $environment->pwd->append($project));
+    $project->check_semantic_versioning = ! $force;
 
     line('Setting env credential...');
     Credentials\set_credentials($environment);
 
-    line('Loading configs...');
-    $project = PackageManager\load_config($project);
-
     $package_url = when_exists(
-        $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $package_url),
-        fn (PackageAlias $package_alias) => $package_alias->package_url(),
+        $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $package_url),
+        fn (PackageAlias $package_alias) => $package_alias->value,
         fn () => $package_url
     );
     $repository = Repository::from_url($package_url);
 
     line('Finding package in configs...');
-    $library = $project->config->repositories->first(fn (Library $library) => $library->repository()->is($repository));
-    $dependency = when_exists($library, fn (Library $library)
-        => $project->meta->dependencies->first(fn (Dependency $dependency)
-            => $dependency->repository()->is($library->repository())));
-
-    if (! $library instanceof Library || ! $dependency instanceof Dependency) {
+    if (! $project->config->packages->first(fn (Dependency $dependency) => $dependency->value->repository->is($repository))) {
         throw new PreRequirementsFailedException("Package $package_url does not found in your project!");
     }
 
     line('Setting package version...');
-    $library->repository()->version($version ?? PackageManager\get_latest_version($library->repository()));
+    $version = $version ?? PackageManager\get_latest_version($repository);
 
-    line('Loading package\'s config...');
-    $packages_installed = $project->meta->dependencies->every(function (Dependency $dependency) use ($project) {
-        $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-        return Directory\exists($package->root);
-    });
+    line('Updating package...');
+    $package = new Package($repository);
+    $package->repository->version($version);
+    $package->repository->hash(PackageManager\detect_hash($package->repository));
+    $dependency = new Dependency($package_url, $package);
 
-    if (! $packages_installed) {
-        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
-    }
-
-    $project = PackageManager\load_packages($project);
-
-    line('Deleting package\'s files...');
-    PackageManager\delete($project, $dependency);
-
-    line('Detecting version hash...');
-    $library->repository()->hash(PackageManager\detect_hash($library->repository()));
-
-    line('Downloading the package with new version...');
-    $dependency = new Dependency($package_url, $library->meta());
-    PackageManager\add($project, $dependency);
+    PackageManager\update($project, $dependency);
 
     line('Updating configs...');
-    $project->config->repositories->push($library);
+    $project->config->packages->push($dependency);
 
     line('Committing new configs...');
     PackageManager\commit($project);

@@ -2,7 +2,7 @@
 
 namespace Tests\System\BuildCommand\BuildWithoutConfigFilesTest;
 
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\Datatype\Arr\last;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;

@@ -3,10 +3,10 @@
 namespace Tests\System\BuildCommand\BuildCommandTest;
 
 use function Phpkg\System\is_windows;
-use function PhpRepos\Cli\IO\Write\assert_error;
-use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\Cli\IO\Write\assert_success;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\assert_error;
+use function PhpRepos\Cli\Output\assert_line;
+use function PhpRepos\Cli\Output\assert_success;
+use function PhpRepos\Cli\Output\line;
 use function PhpRepos\ControlFlow\Conditional\when;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
@@ -74,12 +74,11 @@ function assert_output($output)
 {
     $lines = explode("\n", trim($output));
 
-    assert_true(5 === count($lines), 'Number of output lines do not match' . $output);
+    assert_true(4 === count($lines), 'Number of output lines do not match' . $output);
     assert_line("Start building...", $lines[0] . PHP_EOL);
-    assert_line("Loading configs...", $lines[1] . PHP_EOL);
-    assert_line("Checking packages...", $lines[2] . PHP_EOL);
-    assert_line("Building...", $lines[3] . PHP_EOL);
-    assert_success("Build finished successfully.", $lines[4] . PHP_EOL);
+    assert_line("Checking packages...", $lines[1] . PHP_EOL);
+    assert_line("Building...", $lines[2] . PHP_EOL);
+    assert_success("Build finished successfully.", $lines[3] . PHP_EOL);
 }
 
 function delete_build_directory()

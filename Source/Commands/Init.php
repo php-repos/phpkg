@@ -1,18 +1,19 @@
 <?php
 
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Config\Config;
-use Phpkg\Classes\Meta\Meta;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\Config;
+use Phpkg\Classes\Dependencies;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\Meta;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\Filename;
-use function PhpRepos\Cli\IO\Write\line;
-use function PhpRepos\Cli\IO\Write\success;
+use function PhpRepos\Cli\Output\line;
+use function PhpRepos\Cli\Output\success;
 use function PhpRepos\ControlFlow\Transformation\pipe;
 
 /**
@@ -28,14 +29,14 @@ return function(
     #[Description("Specify a custom directory where `phpkg` will save your libraries or packages. This allows you to\n structure your project with a different directory name instead of the default `Packages` directory.")]
     string $packages_directory = null,
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
     line('Init project...');
-    $project = new Project($environment->pwd->append($project));
-
-    if (File\exists($project->config_file)) {
+    if (File\exists($environment->pwd->append($project)->append(Project::CONFIG_FILENAME))) {
         throw new PreRequirementsFailedException('The project is already initialized.');
     }
+
+    $project = new Project($environment, $environment->pwd->append($project));
 
     $config = pipe(Config::init(), function (Config $config) use ($packages_directory) {
         $packages_directory = $packages_directory ?: $config->packages_directory->string();
@@ -45,7 +46,8 @@ return function(
     });
 
     $project->config($config);
-    $project->meta = Meta::init();;
+    $project->meta = Meta::init();
+    $project->dependencies = new Dependencies();
 
     PackageManager\commit($project);
 

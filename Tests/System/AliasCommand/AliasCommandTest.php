@@ -2,9 +2,9 @@
 
 namespace Tests\System\AliasCommand\AliasCommandTest;
 
-use function PhpRepos\Cli\IO\Write\assert_error;
-use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_error;
+use function PhpRepos\Cli\Output\assert_line;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\JsonFile\to_array;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;

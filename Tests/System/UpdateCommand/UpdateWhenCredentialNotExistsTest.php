@@ -3,8 +3,8 @@
 namespace Tests\System\UpdateCommand\UpdateWhenCredentialNotExistsTest;
 
 use function Phpkg\Providers\GitHub\github_token;
-use function PhpRepos\Cli\IO\Write\assert_error;
-use function PhpRepos\Cli\IO\Write\assert_line;
+use function PhpRepos\Cli\Output\assert_error;
+use function PhpRepos\Cli\Output\assert_line;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;

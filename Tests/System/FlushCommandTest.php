@@ -2,7 +2,7 @@
 
 namespace Tests\System\FlushCommandTest;
 
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;

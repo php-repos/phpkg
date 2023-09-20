@@ -1,21 +1,17 @@
 <?php
 
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Config\PackageAlias;
-use Phpkg\Classes\Config\Library;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Meta\Dependency;
-use Phpkg\Classes\Package\Package;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\Dependency;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\PackageAlias;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use PhpRepos\FileManager\File;
-use function PhpRepos\Cli\IO\Write\line;
-use function PhpRepos\Cli\IO\Write\success;
-use function PhpRepos\ControlFlow\Conditional\unless;
+use function PhpRepos\Cli\Output\line;
+use function PhpRepos\Cli\Output\success;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
 
 /**
@@ -31,46 +27,29 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     string $project = ''
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
     line('Removing package ' . $package_url);
 
-    $project = new Project($environment->pwd->append($project));
-
-    if (! File\exists($project->config_file)) {
-        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
-    }
-
-    line('Loading configs...');
-    $project = PackageManager\load_config($project);
+    $project = Project::installed($environment, $environment->pwd->append($project));
 
     $package_url = when_exists(
-        $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $package_url),
-        fn (PackageAlias $package_alias) => $package_alias->package_url(),
+        $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $package_url),
+        fn (PackageAlias $package_alias) => $package_alias->value,
         fn () => $package_url
     );
     $repository = Repository::from_url($package_url);
 
     line('Finding package in configs...');
-    $library = $project->config->repositories->first(fn (Library $library) => $library->repository()->is($repository));
-    $dependency = $project->meta->dependencies->first(fn (Dependency $dependency) => $dependency->repository()->is($library->repository()));
-    if (! $library instanceof Library || ! $dependency instanceof Dependency) {
+    if (! $project->config->packages->first(fn (Dependency $dependency) => $dependency->value->repository->is($repository))) {
         throw new PreRequirementsFailedException("Package $package_url does not found in your project!");
     }
 
-    line('Loading package\'s config...');
-    $project = PackageManager\load_packages($project);
-
     line('Removing package from config...');
-    unless(
-        $project->packages->has(fn (Package $package)
-        => $package->config->repositories->has(fn (Library $library)
-        => $library->repository()->is($dependency->repository()))),
-        fn () => PackageManager\remove($project, $dependency)
-    );
-
-    $project->config->repositories->forget(fn (Library $installed_library)
-    => $installed_library->repository()->is($library->repository()));
+    $project->config->packages->forget(fn (Dependency $dependency) => $dependency->value->repository->is($repository));
+    /** @var Dependency $dependency */
+    $dependency = $project->dependencies->first(fn (Dependency $dependency) => $dependency->value->repository->is($repository));
+    PackageManager\remove($project, $dependency);
 
     line('Committing configs...');
     PackageManager\commit($project);

@@ -2,7 +2,7 @@
 
 namespace Tests\System\CredentialCommand\CredentialCommandTest;
 
-use PhpRepos\Cli\IO\Write;
+use PhpRepos\Cli\Output;
 use PhpRepos\FileManager\JsonFile;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\realpath;
@@ -19,7 +19,7 @@ test(
 
         $lines = explode("\n", trim($output));
         assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
-        Write\assert_success('Credential for github.com has been set successfully.', $lines[0] . PHP_EOL);
+        Output\assert_success('Credential for github.com has been set successfully.', $lines[0] . PHP_EOL);
 
         assert_true(
             ['github.com' => ['token' => $token]]
@@ -49,7 +49,7 @@ test(
 
         $lines = explode("\n", trim($output));
         assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
-        Write\assert_success('Credential for github.com has been set successfully.', $lines[0] . PHP_EOL);
+        Output\assert_success('Credential for github.com has been set successfully.', $lines[0] . PHP_EOL);
 
         assert_true(
             ['gitlab.com' => ['token' => 'gitlab-token'], 'github.com' => ['token' => $token]]

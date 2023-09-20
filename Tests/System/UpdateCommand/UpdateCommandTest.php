@@ -3,9 +3,9 @@
 namespace Tests\System\UpdateCommand\UpdateCommandTest;
 
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\Cli\IO\Write\assert_error;
-use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_error;
+use function PhpRepos\Cli\Output\assert_line;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -27,20 +27,15 @@ test(
 );
 
 test(
-    title: 'it should show error message when project is not installed',
+    title: 'it should not update and show error message when project is not installed',
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         $lines = explode("\n", trim($output));
 
-        assert_true(7 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(2 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Updating package git@github.com:php-repos/released-package.git to latest version...", $lines[0] . PHP_EOL);
-        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Loading configs...", $lines[2] . PHP_EOL);
-        assert_line("Finding package in configs...", $lines[3] . PHP_EOL);
-        assert_line("Setting package version...", $lines[4] . PHP_EOL);
-        assert_line("Loading package's config...", $lines[5] . PHP_EOL);
-        assert_error("It seems you didn't run the install command. Please make sure you installed your required packages.", $lines[6] . PHP_EOL);
+        assert_error("It seems you didn't run the install command. Please make sure you installed your required packages.", $lines[1] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
@@ -59,19 +54,15 @@ test(
 
         $lines = explode("\n", trim($output));
 
-        assert_true(12 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(8 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Updating package git@github.com:php-repos/released-package.git to latest version...", $lines[0] . PHP_EOL);
         assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Loading configs...", $lines[2] . PHP_EOL);
-        assert_line("Finding package in configs...", $lines[3] . PHP_EOL);
-        assert_line("Setting package version...", $lines[4] . PHP_EOL);
-        assert_line("Loading package's config...", $lines[5] . PHP_EOL);
-        assert_line("Deleting package's files...", $lines[6] . PHP_EOL);
-        assert_line("Detecting version hash...", $lines[7] . PHP_EOL);
-        assert_line("Downloading the package with new version...", $lines[8] . PHP_EOL);
-        assert_line("Updating configs...", $lines[9] . PHP_EOL);
-        assert_line("Committing new configs...", $lines[10] . PHP_EOL);
-        assert_success("Package git@github.com:php-repos/released-package.git has been updated.", $lines[11] . PHP_EOL);
+        assert_line("Finding package in configs...", $lines[2] . PHP_EOL);
+        assert_line("Setting package version...", $lines[3] . PHP_EOL);
+        assert_line("Updating package...", $lines[4] . PHP_EOL);
+        assert_line("Updating configs...", $lines[5] . PHP_EOL);
+        assert_line("Committing new configs...", $lines[6] . PHP_EOL);
+        assert_success("Package git@github.com:php-repos/released-package.git has been updated.", $lines[7] . PHP_EOL);
 
         assert_version_upgraded_in_config_file($output);
         assert_meta_updated($output);

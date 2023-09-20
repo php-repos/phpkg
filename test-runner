@@ -6,5 +6,6 @@ require_once realpath(__DIR__ . '/Tests/Helper.php');
 require_once realpath(__DIR__ . '/Tests/System/BuildCommand/BuildHelper.php');
 require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/Source/Assertions/Boolean.php');
 require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/Source/Assertions/Str.php');
+require_once realpath(__DIR__ . '/Tests/System/Assertions.php');
 require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/Source/Runner.php');
 require_once realpath(__DIR__ . '/Packages/php-repos/test-runner/run');

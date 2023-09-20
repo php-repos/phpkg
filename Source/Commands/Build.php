@@ -1,19 +1,13 @@
 <?php
 
 use Phpkg\Application\Builder;
-use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Build\Build;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Meta\Dependency;
-use Phpkg\Classes\Package\Package;
-use Phpkg\Classes\Project\Project;
-use Phpkg\Exception\PreRequirementsFailedException;
-use PhpRepos\Cli\IO\Write;
+use Phpkg\Classes\BuildMode;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\Project;
+use PhpRepos\Cli\Output;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use PhpRepos\FileManager\Directory;
-use PhpRepos\FileManager\File;
 
 /**
  * Compiles and adds project files to the build directory.
@@ -29,34 +23,16 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
-    Write\line('Start building...');
-    $project = new Project($environment->pwd->append($project));
+    Output\line('Start building...');
+    $project = Project::installed($environment, $environment->pwd->append($project), BuildMode::from($env));
 
-    if (! File\exists($project->config_file)) {
-        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
-    }
+    Output\line('Checking packages...');
 
-    Write\line('Loading configs...');
-    $project = PackageManager\load_config($project);
+    Output\line('Building...');
 
-    Write\line('Checking packages...');
-    $packages_installed = $project->meta->dependencies->every(function (Dependency $dependency) use ($project) {
-        $package = new Package($project->package_directory($dependency->repository()), $dependency->repository());
-        return Directory\exists($package->root);
-    });
+    Builder\build($project);
 
-    if (! $packages_installed) {
-        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
-    }
-
-    $project = PackageManager\load_packages($project);
-
-    Write\line('Building...');
-    $build = new Build($project, $env);
-
-    Builder\build($project, $build);
-
-    Write\success('Build finished successfully.');
+    Output\success('Build finished successfully.');
 };

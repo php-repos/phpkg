@@ -3,7 +3,7 @@
 namespace Tests\System\WatchCommandTest;
 
 use function Phpkg\System\is_windows;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\line;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;

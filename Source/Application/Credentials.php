@@ -2,9 +2,9 @@
 
 namespace Phpkg\Application\Credentials;
 
-use Phpkg\Classes\Credential\Credential;
-use Phpkg\Classes\Credential\Credentials;
-use Phpkg\Classes\Environment\Environment;
+use Phpkg\Classes\Credential;
+use Phpkg\Classes\Credentials;
+use Phpkg\Classes\Environment;
 use Phpkg\Exception\CredentialCanNotBeSetException;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
@@ -25,7 +25,7 @@ function set_credentials(Environment $environment): void
 
     /** @var Credential $github_credential */
     $github_credential = Credentials::from_array(JsonFile\to_array($environment->credential_file))
-        ->first(fn (Credential $credential) => $credential->provider() === GITHUB_DOMAIN);
+        ->first(fn (Credential $credential) => $credential->key === GITHUB_DOMAIN);
 
-    github_token(is_null($github_credential) ? '' : $github_credential->token());
+    github_token(is_null($github_credential) ? '' : $github_credential->value);
 }

@@ -2,16 +2,16 @@
 
 use Phpkg\Application\Migrator;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Config\Config;
-use Phpkg\Classes\Meta\Meta;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\Config;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\Meta;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
-use PhpRepos\Cli\IO\Write;
+use PhpRepos\Cli\Output;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\JsonFile;
 
 /**
@@ -22,9 +22,9 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
-    $project = new Project($environment->pwd->append($project));
+    $project = new Project($environment, $environment->pwd->append($project));
 
     $composer_file = $project->root->append('composer.json');
     $composer_lock_file = $project->root->append('composer.lock');
@@ -51,5 +51,5 @@ return function (
 
     PackageManager\commit($project);
 
-    Write\success('Migration has been finished successfully.');
+    Output\success('Migration has been finished successfully.');
 };

@@ -4,7 +4,7 @@ namespace Tests\System\MigrateCommandTest\MigrateFromComposerTest;
 
 use PhpRepos\FileManager\JsonFile;
 use PhpRepos\FileManager\Path;
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;

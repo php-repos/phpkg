@@ -2,8 +2,8 @@
 
 namespace Phpkg\Application\Migrator;
 
-use Phpkg\Classes\Config\NamespaceFilePair;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\NamespaceFilePair;
+use Phpkg\Classes\Project;
 use PhpRepos\Datatype\Map;
 use PhpRepos\FileManager\Filename;
 use function PhpRepos\ControlFlow\Conditional\unless;
@@ -23,9 +23,9 @@ function migrate(Project $project, array $composer_setting, array $composer_lock
     foreach ($installed_packages as $package_meta) {
         psr4_to_map($package_meta['autoload']['psr-4'] ?? [])
             ->each(function (NamespaceFilePair $namespace_file_pair) use ($project, $package_meta) {
-                $package_namespace_filename = $namespace_file_pair->value(new Filename('vendor/' . $package_meta['name'] . '/' . $namespace_file_pair->filename()));
+                $package_namespace_filename = $namespace_file_pair->value(new Filename('vendor/' . $package_meta['name'] . '/' . $namespace_file_pair->value));
                 unless(
-                    $project->config->map->has(fn (NamespaceFilePair $map) => $map->namespace() === $namespace_file_pair->namespace()),
+                    $project->config->map->has(fn (NamespaceFilePair $map) => $map->key === $namespace_file_pair->key),
                     fn () => $project->config->map->push($package_namespace_filename)
                 );
             });
