@@ -10,20 +10,31 @@ use function Phpkg\System\is_windows;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\ls;
 use function PhpRepos\FileManager\Directory\preserve_copy_recursively;
-use function PhpRepos\FileManager\Directory\renew_recursive;
 use function PhpRepos\FileManager\File\delete;
-use function PhpRepos\FileManager\Resolver\realpath;
 
+// Constants for GitHub-related URLs and domain information
 const GITHUB_DOMAIN = 'github.com';
 const GITHUB_URL = 'https://github.com/';
 const GITHUB_API_URL = 'https://api.github.com/';
 const GITHUB_SSH_URL = 'git@github.com:';
 
+/**
+ * Check if a package URL is in SSH format.
+ *
+ * @param string $package_url The package URL to check.
+ * @return bool True if the package URL is in SSH format, false otherwise.
+ */
 function is_ssh(string $package_url): bool
 {
     return str_starts_with($package_url, 'git@');
 }
 
+/**
+ * Extract the owner (username or organization) from a GitHub repository URL.
+ *
+ * @param string $package_url The GitHub repository URL.
+ * @return string The owner (username or organization).
+ */
 function extract_owner(string $package_url): string
 {
     if (is_ssh($package_url)) {
@@ -39,6 +50,12 @@ function extract_owner(string $package_url): string
     return explode('/', $owner_and_repo)[0];
 }
 
+/**
+ * Extract the repository name from a GitHub repository URL.
+ *
+ * @param string $package_url The GitHub repository URL.
+ * @return string The repository name.
+ */
 function extract_repo(string $package_url): string
 {
     if (is_ssh($package_url)) {
@@ -54,6 +71,12 @@ function extract_repo(string $package_url): string
     return explode('/', $owner_and_repo)[1];
 }
 
+/**
+ * Retrieve or set the GitHub token used for authentication in API requests.
+ *
+ * @param string|null $token (Optional) The GitHub token to set.
+ * @return string The GitHub token.
+ */
 function github_token(?string $token = null): string
 {
     if (! is_null($token)) {
@@ -63,6 +86,14 @@ function github_token(?string $token = null): string
     return getenv('GITHUB_TOKEN', true);
 }
 
+/**
+ * Send an HTTP GET request to the GitHub API and return the response as an array.
+ *
+ * @param string $api_sub_url The API sub-URL to request.
+ * @return array The JSON response as an array.
+ * @throws Exception If there's a network or API error.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ */
 function get_json(string $api_sub_url): array
 {
     $token = github_token();
@@ -96,6 +127,15 @@ function get_json(string $api_sub_url): array
     return $response;
 }
 
+/**
+ * Check if a GitHub repository has a release.
+ *
+ * @param string $owner The owner (username or organization) of the repository.
+ * @param string $repo The name of the repository.
+ * @return bool True if the repository has a release, false otherwise.
+ * @throws Exception If there's a network or API error.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ */
 function has_release(string $owner, string $repo): bool
 {
     $json = get_json("repos/$owner/$repo/releases/latest");
@@ -103,6 +143,15 @@ function has_release(string $owner, string $repo): bool
     return isset($json['tag_name']);
 }
 
+/**
+ * Find the latest version (tag) of a GitHub repository.
+ *
+ * @param string $owner The owner (username or organization) of the repository.
+ * @param string $repo The name of the repository.
+ * @return string The latest version (tag) of the repository.
+ * @throws Exception If there's a network or API error.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ */
 function find_latest_version(string $owner, string $repo): string
 {
     $json = get_json("repos/$owner/$repo/releases/latest");
@@ -110,6 +159,16 @@ function find_latest_version(string $owner, string $repo): string
     return $json['tag_name'];
 }
 
+/**
+ * Find the hash (SHA) of a specific version (tag) of a GitHub repository.
+ *
+ * @param string $owner The owner (username or organization) of the repository.
+ * @param string $repo The name of the repository.
+ * @param string $version The version (tag) to find.
+ * @return string The hash (SHA) of the specified version.
+ * @throws Exception If there's a network or API error.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ */
 function find_version_hash(string $owner, string $repo, string $version): string
 {
     $json = get_json("repos/$owner/$repo/git/ref/tags/$version");
@@ -117,6 +176,15 @@ function find_version_hash(string $owner, string $repo, string $version): string
     return $json['object']['sha'];
 }
 
+/**
+ * Find the hash (SHA) of the latest commit in a GitHub repository.
+ *
+ * @param string $owner The owner (username or organization) of the repository.
+ * @param string $repo The name of the repository.
+ * @return string The hash (SHA) of the latest commit.
+ * @throws Exception If there's a network or API error.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ */
 function find_latest_commit_hash(string $owner, string $repo): string
 {
     $json = get_json("repos/$owner/$repo/commits");
@@ -124,17 +192,24 @@ function find_latest_commit_hash(string $owner, string $repo): string
     return $json[0]['sha'];
 }
 
-function download(string $destination, string $owner, string $repo, string $version): bool
+/**
+ * Download a specific version (tag) of a GitHub repository as a zip file.
+ *
+ * @param string $destination The destination directory to save the zip file.
+ * @param string $owner The owner (username or organization) of the repository.
+ * @param string $repo The name of the repository.
+ * @param string $hash The hash (SHA) of the version to download.
+ * @return bool True if the download and extraction were successful, false otherwise.
+ * @throws Exception
+ */
+function download(string $destination, string $owner, string $repo, string $hash): bool
 {
     $token = github_token();
-    $temp = realpath(sys_get_temp_dir(). "/phpkg/installer/cache/$owner/$repo/") . DIRECTORY_SEPARATOR;
 
-    renew_recursive($temp);
-
-    $zip_file = $temp . $repo . '.zip';
+    $zip_file = Path::from_string($destination)->append("$hash.zip");
 
     $fp = fopen ($zip_file, 'w+');
-    $ch = curl_init(GITHUB_URL . "$owner/$repo/zipball/$version");
+    $ch = curl_init(GITHUB_URL . "$owner/$repo/zipball/$hash");
     curl_setopt($ch, CURLOPT_TIMEOUT, 600);
     curl_setopt($ch, CURLOPT_FILE, $fp);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -150,50 +225,15 @@ function download(string $destination, string $owner, string $repo, string $vers
     $res = $zip->open($zip_file);
 
     if ($res === TRUE) {
-        $zip->extractTo($temp);
+        $zip->extractTo($zip_file->parent());
         $zip->close();
     } else {
-        var_dump($res);
+        throw new Exception('Failed to extract the archive zip file!');
     }
 
     delete($zip_file);
 
-    $unzip_directory = ls($temp)
-        ->reduce(function ($carry, Path $path) use ($owner, $repo) {
-            return str_starts_with($path->leaf(), "$owner-$repo-") ? $path : $carry;
-        });
-
-    renew_recursive($destination);
+    $unzip_directory = ls($zip_file->parent())->first();
 
     return preserve_copy_recursively($unzip_directory, $destination) && delete_recursive($unzip_directory);
-}
-
-function clone_to(string $destination, string $owner, string $repo): void
-{
-    $github_ssh_url = GITHUB_SSH_URL;
-
-    $descriptorspec = array(
-        0 => array("pipe", "r"), // stdin
-        1 => array("pipe", "w"), // stdout
-        2 => array("pipe", "w"), // stderr
-    );
-
-    $command = "git clone $github_ssh_url$owner/$repo.git $destination";
-    $process = proc_open($command, $descriptorspec, $pipes);
-
-    if (is_resource($process)) {
-        fclose($pipes[0]); // close stdin
-        $stdout = stream_get_contents($pipes[1]); // get stdout
-        $stderr = stream_get_contents($pipes[2]); // get stderr
-        fclose($pipes[1]); // close stdout
-        fclose($pipes[2]); // close stderr
-
-        $status = proc_close($process); // get the exit code
-
-        if ($status !== 0) {
-            throw new Exception("Failed to clone repository: $stderr");
-        }
-    } else {
-        throw new Exception("Failed to run command: $command");
-    }
 }

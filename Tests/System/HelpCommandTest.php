@@ -2,7 +2,7 @@
 
 namespace Tests\System\HelpCommandTest;
 
-use function PhpRepos\Cli\IO\Write\assert_output;
+use function PhpRepos\Cli\Output\assert_output;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\CRLF_to_EOL;

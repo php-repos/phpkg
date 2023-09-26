@@ -1,8 +1,7 @@
 <?php
 
-namespace Phpkg\Classes\Config;
+namespace Phpkg\Classes;
 
-use Phpkg\Git\Repository;
 use PhpRepos\Datatype\Collection;
 use PhpRepos\Datatype\Map;
 use PhpRepos\FileManager\Filename;
@@ -15,7 +14,7 @@ class Config
         public Collection $entry_points,
         public Map $executables,
         public Filename $packages_directory,
-        public Map $repositories,
+        public Dependencies $packages,
         public Map $aliases,
     ) {}
 
@@ -27,7 +26,7 @@ class Config
             new Collection(),
             new Map(),
             new Filename('Packages'),
-            new Map(),
+            new Dependencies(),
             new Map(),
         );
     }
@@ -46,7 +45,7 @@ class Config
         $executables = new Map();
         $entry_points = new Collection();
         $packages_directory = new Filename($config['packages-directory'] ?? 'Packages');
-        $repositories = new Map();
+        $packages = new Dependencies();
         $aliases = new Map();
 
         foreach ($config['map'] as $namespace => $path) {
@@ -66,47 +65,13 @@ class Config
         }
         
         foreach ($config['packages'] as $package_url => $version) {
-            $repositories->push(new Library($package_url, Repository::from_url($package_url)->version($version)));
+            $packages->push(new Dependency($package_url, Package::from_config($package_url, $version)));
         }
 
         foreach ($config['aliases'] as $alias => $package_url) {
             $aliases->push(new PackageAlias($alias, $package_url));
         }
 
-        return new static($map, $excludes, $entry_points, $executables, $packages_directory, $repositories, $aliases);
-    }
-
-    public function to_array(): array
-    {
-        $array = [
-            'map' => [],
-            'entry-points' => [],
-            'excludes' => [],
-            'executables' => [],
-            'packages-directory' => 'Packages',
-            'packages' => [],
-        ];
-
-        $this->map->each(function (NamespaceFilePair $namespace_file) use (&$array) {
-            $array['map'][$namespace_file->namespace()] = $namespace_file->filename()->string();
-        });
-        $this->entry_points->each(function (Filename $filename) use (&$array) {
-            $array['entry-points'][] = $filename->string();
-        });
-        $this->excludes->each(function (Filename $filename) use (&$array) {
-            $array['excludes'][] = $filename->string();
-        });
-        $this->executables->each(function (LinkPair $link) use (&$array) {
-            $array['executables'][$link->symlink()->string()] = $link->source()->string();
-        });
-        $array['packages-directory'] = $this->packages_directory->string();
-        $this->repositories->each(function (Library $library) use (&$array) {
-            $array['packages'][$library->key] = $library->repository()->version;
-        });
-        $this->aliases->each(function (PackageAlias $package_alias) use (&$array) {
-            $array['aliases'][$package_alias->alias()] = $package_alias->package_url();
-        });
-            
-        return $array;
+        return new static($map, $excludes, $entry_points, $executables, $packages_directory, $packages, $aliases);
     }
 }

@@ -203,8 +203,8 @@ test(
 <?php
 
 use function PhpRepos\Cli\IO\Read\parameter;
-use function PhpRepos\Cli\IO\Write\error;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\error;
+use function PhpRepos\Cli\Output\line;
 
 EOD;
         assert_true(
@@ -212,8 +212,8 @@ EOD;
                 'constants' => [],
                 'functions' => [
                     'PhpRepos\Cli\IO\Read\parameter' => 'parameter',
-                    'PhpRepos\Cli\IO\Write\error' => 'error',
-                    'PhpRepos\Cli\IO\Write\line' => 'line',
+                    'PhpRepos\Cli\Output\error' => 'error',
+                    'PhpRepos\Cli\Output\line' => 'line',
                 ],
                 'classes' => [],
             ]

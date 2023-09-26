@@ -4,8 +4,8 @@ namespace Tests\System\InstallCommand\InstallWhenGithubTokenIsSetTest;
 
 use PhpRepos\FileManager\JsonFile;
 use function Phpkg\Providers\GitHub\github_token;
-use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_line;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -21,12 +21,11 @@ test(
 
         $lines = explode("\n", trim($output));
 
-        assert_true(5 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(4 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Installing packages...", $lines[0] . PHP_EOL);
         assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Loading configs...", $lines[2] . PHP_EOL);
-        assert_line("Downloading packages...", $lines[3] . PHP_EOL);
-        assert_success("Packages has been installed successfully.", $lines[4] . PHP_EOL);
+        assert_line("Downloading packages...", $lines[2] . PHP_EOL);
+        assert_success("Packages has been installed successfully.", $lines[3] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');

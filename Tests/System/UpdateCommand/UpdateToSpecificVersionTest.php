@@ -3,8 +3,8 @@
 namespace Tests\System\UpdateCommand\UpdateToSpecificVersionTest;
 
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\Cli\IO\Write\assert_success;
+use function PhpRepos\Cli\Output\assert_line;
+use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -18,19 +18,15 @@ test(
 
         $lines = explode("\n", trim($output));
 
-        assert_true(12 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(8 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Updating package git@github.com:php-repos/released-package.git to version v1.0.1...", $lines[0] . PHP_EOL);
         assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Loading configs...", $lines[2] . PHP_EOL);
-        assert_line("Finding package in configs...", $lines[3] . PHP_EOL);
-        assert_line("Setting package version...", $lines[4] . PHP_EOL);
-        assert_line("Loading package's config...", $lines[5] . PHP_EOL);
-        assert_line("Deleting package's files...", $lines[6] . PHP_EOL);
-        assert_line("Detecting version hash...", $lines[7] . PHP_EOL);
-        assert_line("Downloading the package with new version...", $lines[8] . PHP_EOL);
-        assert_line("Updating configs...", $lines[9] . PHP_EOL);
-        assert_line("Committing new configs...", $lines[10] . PHP_EOL);
-        assert_success("Package git@github.com:php-repos/released-package.git has been updated.", $lines[11] . PHP_EOL);
+        assert_line("Finding package in configs...", $lines[2] . PHP_EOL);
+        assert_line("Setting package version...", $lines[3] . PHP_EOL);
+        assert_line("Updating package...", $lines[4] . PHP_EOL);
+        assert_line("Updating configs...", $lines[5] . PHP_EOL);
+        assert_line("Committing new configs...", $lines[6] . PHP_EOL);
+        assert_success("Package git@github.com:php-repos/released-package.git has been updated.", $lines[7] . PHP_EOL);
 
         assert_given_version_added('Package did not updated to given package version. ' . $output);
     },

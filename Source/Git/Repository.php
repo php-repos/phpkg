@@ -10,13 +10,10 @@ class Repository
     public string $version;
     public string $hash;
 
-    /**
-     * $owner and $repo are readonly.
-     *  DO NOT modify them!
-     */
     public function __construct(
-        public string $owner,
-        public string $repo,
+        public readonly string $domain,
+        public readonly string $owner,
+        public readonly string $repo,
     ) {}
 
     public static function from_url(string $package_url): static
@@ -24,12 +21,12 @@ class Repository
         $owner = extract_owner($package_url);
         $repo = extract_repo($package_url);
 
-        return new static($owner, $repo);
+        return new static('github.com', $owner, $repo);
     }
 
     public static function from_meta(array $meta): static
     {
-        return (new static($meta['owner'], $meta['repo']))
+        return (new static('github.com', $meta['owner'], $meta['repo']))
             ->version($meta['version'])
             ->hash($meta['hash']);
     }

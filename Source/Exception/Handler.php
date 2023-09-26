@@ -4,8 +4,8 @@ namespace Phpkg\Exception;
 
 use Phpkg\Git\Exception\InvalidTokenException;
 use Throwable;
-use function PhpRepos\Cli\IO\Write\error;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\error;
+use function PhpRepos\Cli\Output\line;
 
 function register_exception_handler(): void
 {

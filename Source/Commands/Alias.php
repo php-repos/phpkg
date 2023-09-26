@@ -1,16 +1,15 @@
 <?php
 
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Config\PackageAlias;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\PackageAlias;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use PhpRepos\FileManager\File;
-use function PhpRepos\Cli\IO\Write\line;
-use function PhpRepos\Cli\IO\Write\success;
+use function PhpRepos\Cli\Output\line;
+use function PhpRepos\Cli\Output\success;
 
 /**
  * Defines the provided alias for a given package, allowing you to use the alias in other commands where a package URL is required.
@@ -26,19 +25,13 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
     line("Registering alias $alias for $package_url...");
 
-    $project = new Project($environment->pwd->append($project));
+    $project = Project::installed($environment, $environment->pwd->append($project));
 
-    if (! File\exists($project->config_file)) {
-        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
-    }
-
-    $project = PackageManager\load_config($project);
-
-    $registered_alias = $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $alias);
+    $registered_alias = $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $alias);
 
     if ($registered_alias) {
         throw new PreRequirementsFailedException("The alias is already registered for $registered_alias->value.");

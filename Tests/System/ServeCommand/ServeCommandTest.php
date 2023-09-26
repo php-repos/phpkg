@@ -5,9 +5,9 @@ namespace Tests\System\ServeCommand\ServeCommandTest;
 use Exception;
 use PhpRepos\FileManager\Path;
 use function Phpkg\System\is_windows;
-use function PhpRepos\Cli\IO\Write\assert_error;
-use function PhpRepos\Cli\IO\Write\assert_line;
-use function PhpRepos\Cli\IO\Write\line;
+use function PhpRepos\Cli\Output\assert_error;
+use function PhpRepos\Cli\Output\assert_line;
+use function PhpRepos\Cli\Output\line;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\File\delete;
@@ -59,7 +59,7 @@ test(
         assert_kill_works_for_webserver($process);
     },
     after: function () {
-        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/daily-routine'));
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/daily-routine'));
     }
 );
 
@@ -75,7 +75,7 @@ test(
         assert_error("Entry point not-exists.php is not defined in the package.", $lines[1] . PHP_EOL);
     },
     after: function () {
-        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/daily-routine'));
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/daily-routine'));
     }
 );
 
@@ -96,14 +96,14 @@ test(
         return $output;
     },
     before: function () {
-        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/daily-routine/v1.0.0');
+        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/daily-routine/f2ffcee641009d753c72a935a083b2fc650787c1');
         make_recursive($path);
 
         return $path;
     },
     after: function (Path $output) {
         delete($output);
-        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/daily-routine'));
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/daily-routine'));
     }
 );
 

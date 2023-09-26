@@ -2,20 +2,19 @@
 
 use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Config\PackageAlias;
-use Phpkg\Classes\Config\Library;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Meta\Dependency;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\Dependency;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\Package;
+use Phpkg\Classes\PackageAlias;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
-use PhpRepos\Console\Attributes\Description;
-use PhpRepos\FileManager\Directory;
-use PhpRepos\FileManager\File;
 use PhpRepos\Console\Attributes\Argument;
+use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use function PhpRepos\Cli\IO\Write\line;
-use function PhpRepos\Cli\IO\Write\success;
+use PhpRepos\FileManager\Directory;
+use function PhpRepos\Cli\Output\line;
+use function PhpRepos\Cli\Output\success;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
 
@@ -32,54 +31,50 @@ return function(
     #[LongOption('version')]
     #[Description("The version number of the package you want to add. If not provided, the command will add the latest available version.")]
     string $version = null,
+    #[LongOption('force')]
+    #[Description('Use this option to forcefully add the specified package, ignoring version compatibility checks.')]
+    ?bool $force = false,
     #[LongOption('project')]
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     string $project = ''
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
     line('Adding package ' . $package_url . ($version ? ' version ' . $version : ' latest version') . '...');
 
-    $project = new Project($environment->pwd->append($project));
-
-    if (! File\exists($project->config_file)) {
-        throw new PreRequirementsFailedException('Project is not initialized. Please try to initialize using the init command.');
-    }
+    $project = Project::installed($environment, $environment->pwd->append($project));
+    $project->check_semantic_versioning = ! $force;
 
     line('Setting env credential...');
     Credentials\set_credentials($environment);
 
-    line('Loading configs...');
-    $project = PackageManager\load_config($project);
-
     $package_url = when_exists(
-        $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->alias() === $package_url),
-        fn (PackageAlias $package_alias) => $package_alias->package_url(),
+        $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $package_url),
+        fn (PackageAlias $package_alias) => $package_alias->value,
         fn () => $package_url
     );
     $repository = Repository::from_url($package_url);
 
     line('Checking installed packages...');
-    if ($project->config->repositories->has(fn (Library $library) => $library->repository()->is($repository))) {
+    if ($project->config->packages->has(fn (Dependency $dependency) => $dependency->value->repository->is($repository))) {
         throw new PreRequirementsFailedException("Package $package_url is already exists.");
     }
 
     line('Setting package version...');
     $repository->version($version ?? PackageManager\get_latest_version($repository));
-    $library = new Library($package_url, $repository);
+    $package = new Package($repository);
 
-    line('Creating package directory...');
     unless(Directory\exists($project->packages_directory), fn () => Directory\make_recursive($project->packages_directory));
 
     line('Detecting version hash...');
-    $library->repository()->hash(PackageManager\detect_hash($library->repository()));
+    $package->repository->hash(PackageManager\detect_hash($package->repository));
 
-    line('Downloading the package...');
-    $dependency = new Dependency($package_url, $library->meta());
+    line('Adding the package...');
+    $dependency = new Dependency($package_url, $package);
     PackageManager\add($project, $dependency);
 
     line('Updating configs...');
-    $project->config->repositories->push($library);
+    $project->config->packages->push($dependency);
 
     line('Committing configs...');
 

@@ -55,7 +55,7 @@ function assert_development_branch_added($message)
             && 'development' === $meta['packages']['git@github.com:php-repos/released-package.git']['version']
             && 'php-repos' === $meta['packages']['git@github.com:php-repos/released-package.git']['owner']
             && 'released-package' === $meta['packages']['git@github.com:php-repos/released-package.git']['repo']
-            && file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/Tests')
+            && str_contains(file_get_contents(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/release-file.txt'), 'v1.1.0')
         ),
         $message
     );

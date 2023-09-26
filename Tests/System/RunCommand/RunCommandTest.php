@@ -3,7 +3,7 @@
 namespace Tests\System\RunCommand\RunCommandTest;
 
 use PhpRepos\FileManager\Path;
-use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\Output\assert_error;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\File\delete;
@@ -21,7 +21,7 @@ test(
         assert_true(str_contains($output, 'Chuck Norris'));
     },
     after: function () {
-        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris'));
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/chuck-norris'));
     }
 );
 
@@ -35,7 +35,7 @@ test(
         assert_error("Entry point not-exists.php is not defined in the package.", $lines[0] . PHP_EOL);
     },
     after: function () {
-        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris'));
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/chuck-norris'));
     }
 );
 
@@ -56,13 +56,13 @@ test(
         return $output;
     },
     before: function () {
-        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris/v1.0.1');
+        $path = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/chuck-norris/193d86c969b8d1e5ddf1f2d031e0b7cacd19adac');
         make_recursive($path);
 
         return $path;
     },
     after: function (Path $output) {
         delete($output);
-        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/php-repos/chuck-norris'));
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/chuck-norris'));
     }
 );

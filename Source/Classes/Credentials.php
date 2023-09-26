@@ -1,6 +1,6 @@
 <?php
 
-namespace Phpkg\Classes\Credential;
+namespace Phpkg\Classes;
 
 use PhpRepos\Datatype\Collection;
 use function PhpRepos\Datatype\Arr\reduce;
@@ -12,14 +12,5 @@ class Credentials extends Collection
         return reduce($credentials, function (Credentials $carry, array $provider_credentials, string $provider) {
             return $carry->push(new Credential($provider, $provider_credentials['token']));
         }, new static());
-    }
-
-    public function to_array(): array
-    {
-        return $this->reduce(function (array $carry, Credential $credential) {
-            $carry[$credential->provider()] = ['token' => $credential->token()];
-
-            return $carry;
-        }, []);
     }
 }

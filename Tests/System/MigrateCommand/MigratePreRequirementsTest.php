@@ -3,7 +3,7 @@
 namespace Tests\System\MigrateCommand\MigratePreRequirementsTest;
 
 use PhpRepos\FileManager\Path;
-use function PhpRepos\Cli\IO\Write\assert_error;
+use function PhpRepos\Cli\Output\assert_error;
 use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;

@@ -3,16 +3,16 @@
 use Phpkg\Application\Builder;
 use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Build\Build;
-use Phpkg\Classes\Environment\Environment;
-use Phpkg\Classes\Project\Project;
+use Phpkg\Classes\BuildMode;
+use Phpkg\Classes\Environment;
+use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
-use PhpRepos\FileManager\Path;
+use function Phpkg\Providers\GitHub\download;
 use function PhpRepos\ControlFlow\Conditional\unless;
 
 /**
@@ -29,7 +29,7 @@ return function (
     #[Description("The entry point you want to execute within the project. If not provided, it will use the first\navailable entry point.")]
     ?string $entry_point = null
 ) {
-    $environment = Environment::for_project();
+    $environment = Environment::setup();
 
     Credentials\set_credentials($environment);
 
@@ -37,25 +37,21 @@ return function (
     $repository->version(PackageManager\get_latest_version($repository));
     $repository->hash(PackageManager\detect_hash($repository));
 
-    $root = Path::from_string(sys_get_temp_dir())->append('phpkg/runner/' . $repository->owner . '/' . $repository->repo . '/' . $repository->version);
+    $root = $environment->temp->append('runner/github.com/' . $repository->owner . '/' . $repository->repo . '/' . $repository->hash);
 
-    unless(Directory\exists($root), fn () => PackageManager\download($repository, $root));
+    unless(Directory\exists($root), fn () => Directory\make_recursive($root) && download($root, $repository->owner, $repository->repo, $repository->hash));
 
-    $project = new Project($root);
-
-    $project = PackageManager\load_config($project);
+    $project = Project::initialized($environment, $root);
 
     PackageManager\install($project);
 
-    PackageManager\load_packages($project);
+    $project = Project::installed($environment, $root, BuildMode::Production);
 
-    $build = new Build($project, 'production');
-
-    Builder\build($project, $build);
+    Builder\build($project);
 
     $entry_point = $entry_point ?: $project->config->entry_points->first();
 
-    $entry_point_path = $build->root()->append($entry_point);
+    $entry_point_path = PackageManager\build_root($project)->append($entry_point);
 
     if (! File\exists($entry_point_path)) {
         throw new PreRequirementsFailedException("Entry point $entry_point is not defined in the package.");

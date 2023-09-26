@@ -2,20 +2,20 @@
 
 spl_autoload_register(function ($class) {
     $class_map = [
-        'Phpkg\Classes\Build\Build' => realpath(__DIR__ . '/Source/Classes/Build/Build.php'),
-        'Phpkg\Classes\Config\Config' => realpath(__DIR__ . '/Source/Classes/Config/Config.php'),
-        'Phpkg\Classes\Config\Library' => realpath(__DIR__ . '/Source/Classes/Config/Library.php'),
-        'Phpkg\Classes\Config\LinkPair' => realpath(__DIR__ . '/Source/Classes/Config/LinkPair.php'),
-        'Phpkg\Classes\Config\NamespaceFilePair' => realpath(__DIR__ . '/Source/Classes/Config/NamespaceFilePair.php'),
-        'Phpkg\Classes\Config\NamespacePathPair' => realpath(__DIR__ . '/Source/Classes/Config/NamespacePathPair.php'),
-        'Phpkg\Classes\Config\PackageAlias' => realpath(__DIR__ . '/Source/Classes/Config/PackageAlias.php'),
-        'Phpkg\Classes\Credential\Credential' => realpath(__DIR__ . '/Source/Classes/Credential/Credential.php'),
-        'Phpkg\Classes\Credential\Credentials' => realpath(__DIR__ . '/Source/Classes/Credential/Credentials.php'),
-        'Phpkg\Classes\Environment\Environment' => realpath(__DIR__ . '/Source/Classes/Environment/Environment.php'),
-        'Phpkg\Classes\Meta\Dependency' => realpath(__DIR__ . '/Source/Classes/Meta/Dependency.php'),
-        'Phpkg\Classes\Meta\Meta' => realpath(__DIR__ . '/Source/Classes/Meta/Meta.php'),
-        'Phpkg\Classes\Package\Package' => realpath(__DIR__ . '/Source/Classes/Package/Package.php'),
-        'Phpkg\Classes\Project\Project' => realpath(__DIR__ . '/Source/Classes/Project/Project.php'),
+        'Phpkg\Classes\BuildMode' => realpath(__DIR__ . '/Source/Classes/BuildMode.php'),
+        'Phpkg\Classes\Config' => realpath(__DIR__ . '/Source/Classes/Config.php'),
+        'Phpkg\Classes\Credential' => realpath(__DIR__ . '/Source/Classes/Credential.php'),
+        'Phpkg\Classes\Credentials' => realpath(__DIR__ . '/Source/Classes/Credentials.php'),
+        'Phpkg\Classes\Dependencies' => realpath(__DIR__ . '/Source/Classes/Dependencies.php'),
+        'Phpkg\Classes\Dependency' => realpath(__DIR__ . '/Source/Classes/Dependency.php'),
+        'Phpkg\Classes\Environment' => realpath(__DIR__ . '/Source/Classes/Environment.php'),
+        'Phpkg\Classes\LinkPair' => realpath(__DIR__ . '/Source/Classes/LinkPair.php'),
+        'Phpkg\Classes\Meta' => realpath(__DIR__ . '/Source/Classes/Meta.php'),
+        'Phpkg\Classes\NamespaceFilePair' => realpath(__DIR__ . '/Source/Classes/NamespaceFilePair.php'),
+        'Phpkg\Classes\NamespacePathPair' => realpath(__DIR__ . '/Source/Classes/NamespacePathPair.php'),
+        'Phpkg\Classes\Package' => realpath(__DIR__ . '/Source/Classes/Package.php'),
+        'Phpkg\Classes\PackageAlias' => realpath(__DIR__ . '/Source/Classes/PackageAlias.php'),
+        'Phpkg\Classes\Project' => realpath(__DIR__ . '/Source/Classes/Project.php'),
         'Phpkg\Exception\CredentialCanNotBeSetException' => realpath(__DIR__ . '/Source/Exception/CredentialCanNotBeSetException.php'),
         'Phpkg\Exception\PreRequirementsFailedException' => realpath(__DIR__ . '/Source/Exception/PreRequirementsFailedException.php'),
         'Phpkg\Git\Repository' => realpath(__DIR__ . '/Source/Git/Repository.php'),
@@ -49,8 +49,7 @@ spl_autoload_register(function ($class) {
     require_once $class_map[$class];
 });
 
-require realpath(__DIR__ . '/Packages/php-repos/cli/Source/IO/Read.php');
-require realpath(__DIR__ . '/Packages/php-repos/cli/Source/IO/Write.php');
+require realpath(__DIR__ . '/Packages/php-repos/cli/Source/Output.php');
 require realpath(__DIR__ . '/Packages/php-repos/control-flow/Source/Conditional.php');
 require realpath(__DIR__ . '/Packages/php-repos/control-flow/Source/Transformation.php');
 require realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Arr.php');
@@ -65,6 +64,7 @@ require realpath(__DIR__ . '/Packages/php-repos/console/Source/Runner.php');
 require realpath(__DIR__ . '/Source/System.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
+require realpath(__DIR__ . '/Source/Git/Version.php');
 require realpath(__DIR__ . '/Source/Application/Builder.php');
 require realpath(__DIR__ . '/Source/Application/Credentials.php');
 require realpath(__DIR__ . '/Source/Application/PackageManager.php');

@@ -5,7 +5,6 @@ namespace Tests\GitTest\GitHubTest;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\JsonFile;
 use function file_exists;
-use function Phpkg\Providers\GitHub\clone_to;
 use function Phpkg\Providers\GitHub\download;
 use function Phpkg\Providers\GitHub\extract_owner;
 use function Phpkg\Providers\GitHub\extract_repo;
@@ -16,6 +15,7 @@ use function Phpkg\Providers\GitHub\github_token;
 use function Phpkg\Providers\GitHub\has_release;
 use function Phpkg\Providers\GitHub\is_ssh;
 use function Phpkg\System\random_temp_directory;
+use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -113,48 +113,28 @@ test(
 );
 
 test(
-    title: 'it should download given repository',
-    case: function (Path $packages_directory) {
-        assert_true(download($packages_directory, 'saeghe', 'released-package', 'v1.0.5'), 'download failed');
-        // Assert latest changes on the latest commit
+    title: 'it should download given repository to the given destination',
+    case: function (Path $destination) {
+        assert_true(download($destination, 'saeghe', 'released-package', '5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01'), 'download failed');
+        // Assert latest changes on the commit
         assert_true(true ===
             str_contains(
-                file_get_contents($packages_directory->append('saeghe.config-lock.json')),
+                file_get_contents($destination->append('saeghe.config-lock.json')),
                 '080478442a9ef1d19f5966edc9bf3c1eccca4848'
             ),
             'config file does not found'
         );
         assert_false(file_exists(realpath(sys_get_temp_dir(). '/saeghe/installer/cache/saeghe/released-package.zip/')), 'zip file is not deleted');
 
-        return $packages_directory;
+        return $destination;
     },
     before: function () {
         $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
         github_token($credentials[GITHUB_DOMAIN]['token']);
 
-        return Path::from_string(random_temp_directory());
-    }
-);
+        $destination = Path::from_string(random_temp_directory());
+        make_recursive($destination);
 
-test(
-    title: 'it should clone given repository',
-    case: function (Path $packages_directory) {
-        clone_to($packages_directory, 'php-repos', 'simple-package');
-
-        // Assert latest changes on the latest commit
-        assert_true(true ===
-            str_contains(
-                file_get_contents($packages_directory->append('entry-point')),
-                'new ImaginaryClass();'
-            )
-        );
-
-        return $packages_directory;
-    },
-    before: function () {
-        $packages_directory = Path::from_string(random_temp_directory());
-        mkdir($packages_directory, 0777, true);
-
-        return $packages_directory;
+        return $destination;
     }
 );
