@@ -58,10 +58,12 @@ function build(Project $project): void
             fn () => File\preserve_copy($owner, build_packages_directory($project)->append($owner->leaf()))
         );
 
-    Directory\ls_all($project->packages_directory)
-        ->each(function (Path $owner) use ($project, $is_composer_package, $copy_owner) {
-            $copy_owner($owner);
-        });
+    if (Directory\exists($project->packages_directory)) {
+        Directory\ls_all($project->packages_directory)
+            ->each(function (Path $owner) use ($project, $is_composer_package, $copy_owner) {
+                $copy_owner($owner);
+            });
+    }
 
     $project->dependencies->each(function (Dependency $dependency) use ($project) {
         compile_packages($dependency->value, $project);
@@ -183,7 +185,7 @@ function apply_file_modifications(Project $project, Path $origin): string
                 ? $namespace_path->value->append(after_first_occurrence($import, $namespace_path->key) . '.php')
                 : $carry;
         });
-        unless(is_null($path), fn () => $paths->push(new NamespacePathPair($import, $path)));
+        unless(is_null($path) || ! File\exists(str_replace(build_root($project), $project->root, $path)), fn () => $paths->push(new NamespacePathPair($import, $path)));
     });
 
     array_walk($autoload, function ($import) use ($project) {
@@ -248,7 +250,9 @@ function add_autoloads(Project $project, Path $target): void
     $line = "require_once '$import_path';";
 
     $php_file = PhpFile::from_content(File\content($target));
-    $php_file = $php_file->add_after_opening_tag(PHP_EOL . $line . PHP_EOL);
+    $php_file = $php_file->has_strict_type_declaration()
+        ? $php_file->add_after_strict_type_declaration(PHP_EOL . $line . PHP_EOL)
+        : $php_file->add_after_opening_tag(PHP_EOL . $line . PHP_EOL);
     File\modify($target, $php_file->code());
 }
 
@@ -268,10 +272,12 @@ EOD;
         return strcmp($namespace_path_pair1->key, $namespace_path_pair2->key);
     });
     foreach ($import_map as $namespace_path) {
-        $content .= <<<EOD
+        if (File\exists(str_replace(build_root($project), $project->root, $namespace_path->value))) {
+            $content .= <<<EOD
         '$namespace_path->key' => '$namespace_path->value',
 
 EOD;
+        }
     }
 
     $content .= <<<'EOD'
@@ -306,14 +312,42 @@ EOD;
                 $realpath = substr_replace($class, $path, $pos, strlen($namespace));
             }
             $realpath = str_replace("\\", DIRECTORY_SEPARATOR, $realpath) . '.php';
-            require $realpath;
+            if (file_exists($realpath)) {
+                require $realpath;
+            }
+
             return ;
         }
     }
 });
 
 EOD;
+    if (count($project->config->autoloads) > 0) {
+        $content .= PHP_EOL;
+    }
 
-    File\create(import_file_path($project), $content);
+    $project->dependencies->each(function (Dependency $dependency) use ($project, &$content) {
+        $dependency->value->config->autoloads->each(function (Filename $autoload) use ($project, $dependency, &$content) {
+            $file_path = build_package_path($project, $dependency->value->repository)->append($autoload)->string();
+
+            if (File\exists($file_path)) {
+                $content .= "require_once '$file_path';" . PHP_EOL;
+            }
+        });
+    });
+
+    $project->config->autoloads->each(function (Filename $autoload) use ($project, &$content) {
+        $file_path = build_root($project)->append($autoload)->string();
+
+        if (File\exists($file_path)) {
+            $content .= "require_once '$file_path';" . PHP_EOL;
+        }
+    });
+
+    $import_file = import_file_path($project);
+    if (! Directory\exists($import_file->parent())) {
+        Directory\make_recursive($import_file->parent());
+    }
+
+    File\create($import_file, $content);
 }
-

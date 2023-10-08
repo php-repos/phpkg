@@ -32,7 +32,7 @@ function assert_config_file()
     assert_true(
         JsonFile\to_array(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config.json')
         ===
-        JsonFile\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config.json.stub'),
+        JsonFile\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config.json'),
         'Config file is not correct.'
     );
 }
@@ -42,7 +42,7 @@ function assert_config_lock_file()
     assert_true(
         JsonFile\to_array(root() . '/TestRequirements/Fixtures/composer-package/phpkg.config-lock.json')
         ===
-        JsonFile\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config-lock.json.stub'),
+        JsonFile\to_array(root() . '/TestRequirements/Stubs/composer-package/phpkg.config-lock.json'),
         'Config file is not correct.'
     );
 }

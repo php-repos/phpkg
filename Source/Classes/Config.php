@@ -10,9 +10,11 @@ class Config
 {
     public function __construct(
         public Map $map,
+        public Collection $autoloads,
         public Collection $excludes,
         public Collection $entry_points,
         public Map $executables,
+        public Filename $import_file,
         public Filename $packages_directory,
         public Dependencies $packages,
         public Map $aliases,
@@ -24,7 +26,9 @@ class Config
             new Map(),
             new Collection(),
             new Collection(),
+            new Collection(),
             new Map(),
+            new Filename('phpkg.imports.php'),
             new Filename('Packages'),
             new Dependencies(),
             new Map(),
@@ -34,6 +38,7 @@ class Config
     public static function from_array(array $config): static
     {
         $config['map'] = $config['map'] ?? [];
+        $config['autoloads'] = $config['autoloads'] ?? [];
         $config['excludes'] = $config['excludes'] ?? [];
         $config['executables'] = $config['executables'] ?? [];
         $config['entry-points'] = $config['entry-points'] ?? [];
@@ -41,15 +46,21 @@ class Config
         $config['aliases'] = $config['aliases'] ?? [];
 
         $map = new Map();
+        $autoloads = new Collection();
         $excludes = new Collection();
         $executables = new Map();
         $entry_points = new Collection();
+        $import_file = new Filename($config['import-file'] ?? 'phpkg.imports.php');
         $packages_directory = new Filename($config['packages-directory'] ?? 'Packages');
         $packages = new Dependencies();
         $aliases = new Map();
 
         foreach ($config['map'] as $namespace => $path) {
             $map->push(new NamespaceFilePair($namespace, new Filename($path)));
+        }
+
+        foreach ($config['autoloads'] as $autoload) {
+            $autoloads->push(new Filename($autoload));
         }
 
         foreach ($config['excludes'] as $exclude) {
@@ -72,6 +83,16 @@ class Config
             $aliases->push(new PackageAlias($alias, $package_url));
         }
 
-        return new static($map, $excludes, $entry_points, $executables, $packages_directory, $packages, $aliases);
+        return new static(
+            $map,
+            $autoloads,
+            $excludes,
+            $entry_points,
+            $executables,
+            $import_file,
+            $packages_directory,
+            $packages,
+            $aliases
+        );
     }
 }

@@ -3,79 +3,53 @@
 namespace Tests\System\AddCommand\AddingComplexProjectTest;
 
 use PhpRepos\FileManager\JsonFile;
-use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\force_delete;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should add a complex project',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/complex-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/complex-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         assert_packages_added_to_packages_directory('Packages does not added to the packages directory!' . $output);
         assert_config_file_has_desired_data('Config file for adding complex package does not have desired data!' . $output);
         assert_meta_file_has_desired_data('Meta data for adding complex package does not have desired data!' . $output);
     },
     before: function () {
-        copy(
-            realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/phpkg.config.json'),
-            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json')
-        );
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        delete_config_file();
-        delete_meta_file();
-        delete_packages_directory();
+        reset_empty_project();
     }
 );
 
 test(
     title: 'it should add a complex project with http path',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/complex-package.git --project=TestRequirements/Fixtures/ProjectWithTests');
+        $output = shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/complex-package.git --project=TestRequirements/Fixtures/EmptyProject');
 
         assert_packages_added_to_packages_directory('Packages does not added to the packages directory!' . $output);
     },
     before: function () {
-        copy(
-            realpath(root() . 'TestRequirements/Stubs/ProjectWithTests/phpkg.config.json'),
-            realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json')
-        );
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
-        delete_config_file();
-        delete_meta_file();
-        delete_packages_directory();
+        reset_empty_project();
     }
 );
-
-function delete_config_file()
-{
-    delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
-}
-
-function delete_meta_file()
-{
-    delete(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
-}
-
-function delete_packages_directory()
-{
-    force_delete(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages');
-}
 
 function assert_packages_added_to_packages_directory($message)
 {
     assert_true((
-            file_exists(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/simple-package')
-            && file_exists(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/simple-package/phpkg.config.json')
-            && file_exists(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/simple-package/README.md')
-            && file_exists(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/complex-package')
-            && file_exists(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/complex-package/phpkg.config.json')
-            && file_exists(root() . 'TestRequirements/Fixtures/ProjectWithTests/Packages/php-repos/complex-package/phpkg.config-lock.json')
+            file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package')
+            && file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package/phpkg.config.json')
+            && file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package/README.md')
+            && file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/complex-package')
+            && file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/complex-package/phpkg.config.json')
+            && file_exists(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/complex-package/phpkg.config-lock.json')
         ),
         $message
     );
@@ -83,7 +57,7 @@ function assert_packages_added_to_packages_directory($message)
 
 function assert_config_file_has_desired_data($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
     assert_true((
             ! isset($config['packages']['git@github.com:php-repos/simple-package.git'])
@@ -96,7 +70,7 @@ function assert_config_file_has_desired_data($message)
 
 function assert_meta_file_has_desired_data($message)
 {
-    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/ProjectWithTests/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/simple-package.git'])

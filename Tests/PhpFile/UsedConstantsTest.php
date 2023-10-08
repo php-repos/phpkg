@@ -7,7 +7,7 @@ use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(
-    title: 'it should return true when namespace used as constant',
+    title: 'it should return constants when namespace used as alias',
     case: function () {
         $content = <<<'EOD'
 <?php
@@ -39,7 +39,7 @@ EOD;
 );
 
 test(
-    title: 'it should return false when namespace used as compound for classes',
+    title: 'it should return nothing when namespace used as compound for classes',
     case: function () {
         $content = <<<'EOD'
 <?php
@@ -65,7 +65,7 @@ EOD;
 );
 
 test(
-    title: 'it should return false when namespace used as class',
+    title: 'it should return nothing when namespace used as class',
     case: function () {
         $content = <<<'EOD'
 <?php

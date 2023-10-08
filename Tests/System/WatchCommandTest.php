@@ -4,6 +4,7 @@ namespace Tests\System\WatchCommandTest;
 
 use function Phpkg\System\is_windows;
 use function PhpRepos\Cli\Output\line;
+use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
@@ -21,9 +22,22 @@ test(
         $command =  'php ' . root() . 'phpkg watch --wait=1 --project=TestRequirements/Fixtures/EmptyProject > /dev/null 2>&1 & echo $!; ';
         $pid = exec($command, $output);
 
-        copy(
-            realpath(root() . 'TestRequirements/Stubs/EmptyProjectSource/SimpleClassForEmptyProject.php'),
-            realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Source/SimpleClassForEmptyProject.php')
+        $content = <<<'EOD'
+<?php
+
+namespace EmptyProject;
+
+class SimpleClassForEmptyProject
+{
+
+}
+
+EOD;
+
+
+        create(
+            realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Source/SimpleClassForEmptyProject.php'),
+            $content
         );
 
         sleep(2);
