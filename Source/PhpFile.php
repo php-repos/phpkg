@@ -72,9 +72,43 @@ class PhpFile
         ));
     }
 
+    public function add_after_strict_type_declaration(string $addition): static
+    {
+        $declare_tag_position = null;
+        $strict_type_position = null;
+        $addition_position = null;
+        foreach ($this->tokens as $key => $token) {
+            if (is_null($declare_tag_position) && is_array($token) && $token[0] === T_DECLARE) {
+                $declare_tag_position = $key;
+            }
+
+            if (! is_null($declare_tag_position) && is_null($strict_type_position) && is_array($token) && $token[0] === T_STRING && $token[1] === 'strict_types') {
+                $strict_type_position = $key;
+            }
+
+            if (! is_null($declare_tag_position) && ! is_null($strict_type_position) && $token === ';') {
+                $addition_position = $key + 1;
+                break;
+            }
+        }
+
+        return new static(array_merge(
+            array_slice($this->tokens, 0, $addition_position),
+            token_get_all($addition),
+            array_slice($this->tokens, $addition_position),
+        ));
+    }
+
     public function has_namespace(): bool
     {
         return has($this->tokens, fn ($token) => is_array($token) && $token[0] === T_NAMESPACE);
+    }
+
+    public function has_strict_type_declaration(): bool
+    {
+        $whitespace_stripped = $this->ignore(fn (string|array $token) => is_array($token) && $token[0] === T_WHITESPACE);
+
+        return has($whitespace_stripped->tokens, fn (string|array $token) => is_array($token) && $token[0] === T_STRING && $token[1] === 'strict_types');
     }
 
     public function ignore(Closure $filter, ?bool $initial = false): static

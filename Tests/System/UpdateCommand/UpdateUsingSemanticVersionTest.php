@@ -39,7 +39,7 @@ test(
         assert_datatype_1_0_0_installed($project);
         assert_file_manager_1_0_0_installed($project);
         assert_test_runner_1_0_0_installed($project);
-        assert_cli_1_1_0_installed($project);;
+        assert_cli_1_1_0_installed($project);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');

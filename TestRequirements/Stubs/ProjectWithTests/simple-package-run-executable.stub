@@ -1,5 +1,0 @@
-<?php
-
-require_once '$environment_build_path$DSphpkg.imports.php';
-
-// A sample executable file

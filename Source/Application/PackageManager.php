@@ -70,7 +70,7 @@ function build_packages_directory(Project $project): Path
 
 function import_file_path(Project $project): Path
 {
-    return build_root($project)->append('phpkg.imports.php');
+    return build_root($project)->append($project->config->import_file);
 }
 
 /**
@@ -246,9 +246,11 @@ function commit(Project $project): bool
 {
     $config = [
         'map' => [],
-        'entry-points' => [],
+        'autoloads' => [],
         'excludes' => [],
+        'entry-points' => [],
         'executables' => [],
+        'import-file' => 'phpkg.imports.php',
         'packages-directory' => 'Packages',
         'packages' => [],
     ];
@@ -256,11 +258,14 @@ function commit(Project $project): bool
     $project->config->map->each(function (NamespaceFilePair $namespace_file) use (&$config) {
         $config['map'][$namespace_file->key] = $namespace_file->value->string();
     });
-    $project->config->entry_points->each(function (Filename $filename) use (&$config) {
-        $config['entry-points'][] = $filename->string();
+    $project->config->autoloads->each(function (Filename $filename) use (&$config) {
+        $config['autoloads'][] = $filename->string();
     });
     $project->config->excludes->each(function (Filename $filename) use (&$config) {
         $config['excludes'][] = $filename->string();
+    });
+    $project->config->entry_points->each(function (Filename $filename) use (&$config) {
+        $config['entry-points'][] = $filename->string();
     });
     $project->config->executables->each(function (LinkPair $link) use (&$config) {
         $config['executables'][$link->key->string()] = $link->value->string();

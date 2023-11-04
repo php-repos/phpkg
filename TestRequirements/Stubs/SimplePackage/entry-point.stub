@@ -1,5 +1,0 @@
-<?php
-
-use PhpRepos\SimplePackage\ImaginaryClass;
-
-new ImaginaryClass();

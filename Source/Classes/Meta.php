@@ -15,6 +15,8 @@ class Meta
     {
         $dependencies = new Dependencies();
 
+        $meta['packages'] = $meta['packages'] ?? [];
+
         foreach ($meta['packages'] as $package_url => $package_meta) {
             $dependencies->push(new Dependency($package_url, Package::from_meta($package_meta)));
         }
