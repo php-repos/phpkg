@@ -2,11 +2,10 @@
 
 use Phpkg\Application\PackageManager;
 use Phpkg\Classes\Config;
-use Phpkg\Classes\Dependencies;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Meta;
 use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
+use Phpkg\System;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
 use PhpRepos\FileManager\Directory;
@@ -29,14 +28,13 @@ return function(
     #[Description("Specify a custom directory where `phpkg` will save your libraries or packages. This allows you to\n structure your project with a different directory name instead of the default `Packages` directory.")]
     string $packages_directory = null,
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
+    $project = new Project($environment->pwd->append($project));
 
     line('Init project...');
-    if (File\exists($environment->pwd->append($project)->append(Project::CONFIG_FILENAME))) {
+    if (File\exists($project->config_file)) {
         throw new PreRequirementsFailedException('The project is already initialized.');
     }
-
-    $project = new Project($environment, $environment->pwd->append($project));
 
     $config = pipe(Config::init(), function (Config $config) use ($packages_directory) {
         $packages_directory = $packages_directory ?: $config->packages_directory->string();
@@ -47,7 +45,6 @@ return function(
 
     $project->config($config);
     $project->meta = Meta::init();
-    $project->dependencies = new Dependencies();
 
     PackageManager\commit($project);
 

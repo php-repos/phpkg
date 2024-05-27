@@ -1,10 +1,10 @@
 <?php
 
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\PackageAlias;
 use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
+use Phpkg\System;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
@@ -25,11 +25,11 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
 
     line("Registering alias $alias for $package_url...");
 
-    $project = Project::installed($environment, $environment->pwd->append($project));
+    $project = Project::initialized($environment->pwd->append($project));
 
     $registered_alias = $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $alias);
 

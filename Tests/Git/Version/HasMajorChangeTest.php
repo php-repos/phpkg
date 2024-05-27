@@ -16,6 +16,10 @@ test(
         $version4 = '1.2.3';
         $version5 = '1.3.4';
         $version6 = '2.3.4';
+        $version7 = '1_2_3';
+        $version8 = '1+2+3';
+        $version9 = '1-2-3';
+        $version10 = '1.2.3-alfa';
 
         assert_false(has_major_change($version1, $version1));
         assert_false(has_major_change($version1, $version2));
@@ -28,5 +32,9 @@ test(
         assert_false(has_major_change($version4, $version1));
         assert_false(has_major_change($version5, $version1));
         assert_true(has_major_change($version6, $version1));
+        assert_false(has_major_change($version7, $version1));
+        assert_false(has_major_change($version8, $version1));
+        assert_false(has_major_change($version9, $version1));
+        assert_false(has_major_change($version10, $version1));
     }
 );

@@ -2228,7 +2228,7 @@ use Package\PackageInterface;
 
 class Client implements ClientInterface, NotExistsInterface, PackageInterface
 {
-    
+
 }
 
 EOD
@@ -2348,7 +2348,7 @@ abstract class ClientPrent
 {
     public function do_it()
     {
-    
+
     }
 }
 
@@ -2363,7 +2363,7 @@ use App\Abstracts\ClientParent;
 
 class Client extends ClientParent
 {
-    
+
 }
 
 EOD
@@ -2378,7 +2378,7 @@ use Package\PackageAbstract;
 
 class PackageClient extends PackageAbstract
 {
-    
+
 }
 
 EOD
@@ -2637,7 +2637,7 @@ use const App\Grouped\Constants\{const1 as const2, const3};
 class Client extends TheAbstract implements TheInterface
 {
     use TheTrait;
-    
+
     public function do_it(ParameterType $parameter_type): ReturnType
     {
         $var = new ServiceClass();
@@ -2794,7 +2794,7 @@ use const App\Grouped\Constants\{const1 as const2, const3};
 class Client extends TheAbstract implements TheInterface
 {
     use TheTrait;
-    
+
     public function do_it(ParameterType $parameter_type): ReturnType
     {
         $var = new ServiceClass();

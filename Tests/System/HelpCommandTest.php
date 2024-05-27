@@ -54,16 +54,3 @@ test(
         assert_output($help_content, $output);
     }
 );
-
-function findFirstDifferenceIndex($str1, $str2) {
-    $minLength = min(strlen($str1), strlen($str2));
-
-    for ($i = 0; $i < $minLength; $i++) {
-        if ($str1[$i] !== $str2[$i]) {
-            return $i;
-        }
-    }
-
-    // If all characters up to the minimum length are the same, return the length of the shorter string.
-    return $minLength;
-}

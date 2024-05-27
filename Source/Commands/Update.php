@@ -1,9 +1,6 @@
 <?php
 
-use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Dependency;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Package;
 use Phpkg\Classes\PackageAlias;
 use Phpkg\Classes\Project;
@@ -15,6 +12,7 @@ use PhpRepos\Console\Attributes\LongOption;
 use function PhpRepos\Cli\Output\line;
 use function PhpRepos\Cli\Output\success;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
+use function PhpRepos\FileManager\Directory\exists;
 
 /**
  * Allows you to update the version of a specified package in your PHP project.
@@ -38,15 +36,17 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = ''
 ) {
-    $environment = Environment::setup();
+    $environment = Phpkg\System\environment();
 
     line('Updating package ' . $package_url . ' to ' . ($version ? 'version ' . $version : 'latest version') . '...');
 
-    $project = Project::installed($environment, $environment->pwd->append($project));
-    $project->check_semantic_versioning = ! $force;
+    $project = Project::initialized($environment->pwd->append($project));
 
-    line('Setting env credential...');
-    Credentials\set_credentials($environment);
+    if ($project->config->packages->count() > 0 && ! exists($project->packages_directory)) {
+        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
+    }
+
+    $project->check_semantic_versioning = ! $force;
 
     $package_url = when_exists(
         $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $package_url),
@@ -56,23 +56,27 @@ return function (
     $repository = Repository::from_url($package_url);
 
     line('Finding package in configs...');
-    if (! $project->config->packages->first(fn (Dependency $dependency) => $dependency->value->repository->is($repository))) {
+    if (! $project->config->packages->has(fn (Package $installed_package) => $installed_package->value->owner === $repository->owner && $installed_package->value->repo === $repository->repo)) {
         throw new PreRequirementsFailedException("Package $package_url does not found in your project!");
     }
 
     line('Setting package version...');
-    $version = $version ?? PackageManager\get_latest_version($repository);
+
+    if ($version === PackageManager\DEVELOPMENT_VERSION) {
+        $repository->version = $version;
+    } else {
+        $repository->version = $version
+            ? PackageManager\match_highest_version($repository, $version)
+            : PackageManager\get_latest_version($repository);
+    }
 
     line('Updating package...');
-    $package = new Package($repository);
-    $package->repository->version($version);
-    $package->repository->hash(PackageManager\detect_hash($package->repository));
-    $dependency = new Dependency($package_url, $package);
+    $package = new Package($package_url, $repository);
 
-    PackageManager\update($project, $dependency);
+    $dependency = PackageManager\update($project, $package);
 
     line('Updating configs...');
-    $project->config->packages->push($dependency);
+    $project->config->packages->push($dependency->value);
 
     line('Committing new configs...');
     PackageManager\commit($project);

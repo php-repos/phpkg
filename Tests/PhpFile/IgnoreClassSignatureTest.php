@@ -339,7 +339,7 @@ EOD;
 
 namespace Application\Service;
 
-enum Suit: string
+enum Suit
 {
     case Hearts;
     case Diamonds;

@@ -3,6 +3,7 @@
 namespace Tests\Helper;
 
 use PhpRepos\FileManager\Path;
+use function chmod;
 use function Phpkg\System\is_windows;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Directory\delete_recursive;
@@ -10,14 +11,14 @@ use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 
-function reset_empty_project()
+function reset_empty_project(): void
 {
     $path = Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject');
 
     if (is_windows()) {
         ls_recursively($path)
             ->vertices()
-            ->each(fn ($filename) => \chmod($filename, 0777));
+            ->each(fn ($filename) => chmod($filename, 0777));
     }
 
     clean($path);

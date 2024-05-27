@@ -20,7 +20,7 @@ test(
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
-        force_delete(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package');
+        force_delete(root() . 'TestRequirements/Fixtures/EmptyProject/Packages');
     },
     after: function () {
         reset_empty_project();

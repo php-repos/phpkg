@@ -4,7 +4,7 @@ namespace Phpkg\Commands\Credential;
 
 use Phpkg\Classes\Credential;
 use Phpkg\Classes\Credentials;
-use Phpkg\Classes\Environment;
+use Phpkg\System;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\FileManager\File;
@@ -23,7 +23,7 @@ return function (
     #[Description('The security token that will be used to authenticate your access to the provider\'s services.')]
     string $token,
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
 
     $credentials = File\exists($environment->credential_file)
         ? Credentials::from_array(JsonFile\to_array($environment->credential_file))
