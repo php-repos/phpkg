@@ -2,7 +2,6 @@
 
 namespace Tests\System\UpdateCommand\UpdateUsingSemanticVersionTest;
 
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Project;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\JsonFile;
@@ -13,7 +12,6 @@ use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\reset_empty_project;
 use function Tests\System\Assertions\assert_cli_1_0_0_installed;
 use function Tests\System\Assertions\assert_cli_1_1_0_installed;
-use function Tests\System\Assertions\assert_cli_1_2_0_installed;
 use function Tests\System\Assertions\assert_cli_1_2_1_installed;
 use function Tests\System\Assertions\assert_cli_2_0_0_installed;
 use function Tests\System\Assertions\assert_console_1_0_0_installed;
@@ -26,13 +24,12 @@ use function Tests\System\Assertions\assert_test_runner_1_0_0_installed;
 use function Tests\System\Assertions\assert_test_runner_1_1_0_installed;
 use function Tests\System\Assertions\assert_test_runner_1_2_0_installed;
 
-
 test(
     title: 'it should update considering semantic versioning',
     case: function () {
         shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/cli.git v1.1.0 --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
         $config = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
         assert_true('v1.1.0' === $config['packages']['https://github.com/php-repos/cli.git'], 'Wrong version added to config for cli');
@@ -55,7 +52,7 @@ test(
     case: function () {
         shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/test-runner.git v1.1.0 --force --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         $config = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
@@ -81,7 +78,7 @@ test(
     case: function () {
         shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/cli.git v2.0.0 --force --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         $config = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
@@ -101,11 +98,35 @@ test(
 );
 
 test(
+    title: 'it should update package when a portion of the version passed',
+    case: function () {
+        shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/cli.git v1.2 --project=TestRequirements/Fixtures/EmptyProject');
+
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+
+        $config = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+
+        assert_true('v1.2.1' === $config['packages']['https://github.com/php-repos/cli.git'], 'Wrong version added to config for cli');
+        assert_datatype_1_0_0_installed($project);
+        assert_cli_1_2_1_installed($project);
+        assert_file_manager_1_0_0_installed($project);
+        assert_test_runner_1_0_0_installed($project);
+    },
+    before: function () {
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/cli.git v1.1.0 --project=TestRequirements/Fixtures/EmptyProject');
+    },
+    after: function () {
+        reset_empty_project();
+    }
+);
+
+test(
     title: 'it should show error message when the major version is different and force option not passed to update',
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/cli.git v2.0.0 --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         $config = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
@@ -135,7 +156,7 @@ test(
     case: function () {
         shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/cli.git v2.0.0 --force --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         $config = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
 
@@ -164,7 +185,7 @@ test(
         $lines = explode("\n", trim($output));
 
         assert_error('There is a major upgrade in the version number. Make sure it is a compatible change and if it is, try updating by --force.', end($lines) . PHP_EOL);
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         assert_datatype_1_0_0_installed($project);
         assert_cli_1_2_1_installed($project);
@@ -188,7 +209,7 @@ test(
     case: function () {
         shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/test-runner.git v1.2.0 --force --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         assert_datatype_1_0_0_installed($project);
         assert_cli_2_0_0_installed($project);
@@ -212,7 +233,7 @@ test(
     case: function () {
         shell_exec('php ' . root() . 'phpkg update https://github.com/php-repos/test-runner.git v1.2.0 --force --project=TestRequirements/Fixtures/EmptyProject');
 
-        $project = Project::installed(Environment::setup(), Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
 
         $meta = JsonFile\to_array(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
 

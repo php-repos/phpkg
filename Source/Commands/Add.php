@@ -1,22 +1,19 @@
 <?php
 
-use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Dependency;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Package;
 use Phpkg\Classes\PackageAlias;
 use Phpkg\Classes\Project;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
+use Phpkg\System;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use PhpRepos\FileManager\Directory;
 use function PhpRepos\Cli\Output\line;
 use function PhpRepos\Cli\Output\success;
-use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when_exists;
+use function PhpRepos\FileManager\Directory\exists;
 
 /**
  * Adds the specified package to your project.
@@ -38,15 +35,18 @@ return function(
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     string $project = ''
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
 
-    line('Adding package ' . $package_url . ($version ? ' version ' . $version : ' latest version') . '...');
+    $message = 'Adding package ' . $package_url . ($version ? ' version ' . $version : ' latest version') . '...';
+    line($message);
 
-    $project = Project::installed($environment, $environment->pwd->append($project));
+    $project = Project::initialized($environment->pwd->append($project));
+
+    if ($project->config->packages->count() > 0 && ! exists($project->packages_directory)) {
+        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
+    }
+
     $project->check_semantic_versioning = ! $force;
-
-    line('Setting env credential...');
-    Credentials\set_credentials($environment);
 
     $package_url = when_exists(
         $project->config->aliases->first(fn (PackageAlias $package_alias) => $package_alias->key === $package_url),
@@ -56,25 +56,29 @@ return function(
     $repository = Repository::from_url($package_url);
 
     line('Checking installed packages...');
-    if ($project->config->packages->has(fn (Dependency $dependency) => $dependency->value->repository->is($repository))) {
+
+    if ($project->config->packages->has(fn (Package $installed_package) => $installed_package->value->owner === $repository->owner && $installed_package->value->repo === $repository->repo)) {
         throw new PreRequirementsFailedException("Package $package_url is already exists.");
     }
 
     line('Setting package version...');
-    $repository->version($version ?? PackageManager\get_latest_version($repository));
-    $package = new Package($repository);
+    if ($version === PackageManager\DEVELOPMENT_VERSION) {
+        $repository->version = $version;
+    } else {
+        $repository->version = $version
+            ? PackageManager\match_highest_version($repository, $version)
+            : PackageManager\get_latest_version($repository);
+    }
 
-    unless(Directory\exists($project->packages_directory), fn () => Directory\make_recursive($project->packages_directory));
-
-    line('Detecting version hash...');
-    $package->repository->hash(PackageManager\detect_hash($package->repository));
+    $package = new Package($package_url, $repository);
 
     line('Adding the package...');
-    $dependency = new Dependency($package_url, $package);
-    PackageManager\add($project, $dependency);
+    $dependency = PackageManager\add($project, $package);
+
+    $project->config->packages->push($dependency->value);
 
     line('Updating configs...');
-    $project->config->packages->push($dependency);
+    $project->config->packages->push($dependency->value);
 
     line('Committing configs...');
 

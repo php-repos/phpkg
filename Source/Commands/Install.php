@@ -1,9 +1,8 @@
 <?php
 
-use Phpkg\Application\Credentials;
 use Phpkg\Application\PackageManager;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Project;
+use Phpkg\System;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
 use function PhpRepos\Cli\Output\line;
@@ -19,14 +18,11 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
 
     line('Installing packages...');
 
-    $project = Project::initialized($environment, $environment->pwd->append($project));
-
-    line('Setting env credential...');
-    Credentials\set_credentials($environment);
+    $project = Project::initialized($environment->pwd->append($project));
 
     line('Downloading packages...');
     PackageManager\install($project);

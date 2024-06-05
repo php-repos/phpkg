@@ -6,20 +6,25 @@ spl_autoload_register(function ($class) {
         'Phpkg\Classes\Config' => realpath(__DIR__ . '/Source/Classes/Config.php'),
         'Phpkg\Classes\Credential' => realpath(__DIR__ . '/Source/Classes/Credential.php'),
         'Phpkg\Classes\Credentials' => realpath(__DIR__ . '/Source/Classes/Credentials.php'),
-        'Phpkg\Classes\Dependencies' => realpath(__DIR__ . '/Source/Classes/Dependencies.php'),
         'Phpkg\Classes\Dependency' => realpath(__DIR__ . '/Source/Classes/Dependency.php'),
         'Phpkg\Classes\Environment' => realpath(__DIR__ . '/Source/Classes/Environment.php'),
         'Phpkg\Classes\LinkPair' => realpath(__DIR__ . '/Source/Classes/LinkPair.php'),
         'Phpkg\Classes\Meta' => realpath(__DIR__ . '/Source/Classes/Meta.php'),
         'Phpkg\Classes\NamespaceFilePair' => realpath(__DIR__ . '/Source/Classes/NamespaceFilePair.php'),
         'Phpkg\Classes\NamespacePathPair' => realpath(__DIR__ . '/Source/Classes/NamespacePathPair.php'),
+        'Phpkg\Datatypes\Digraph' => realpath(__DIR__ . '/Source/Datatypes/Digraph.php'),
+        'Phpkg\DependencyGraph' => realpath(__DIR__ . '/Source/DependencyGraph.php'),
+        'Phpkg\Datatypes\Node' => realpath(__DIR__ . '/Source/Datatypes/Node.php'),
+        'Phpkg\Datatypes\Edge' => realpath(__DIR__ . '/Source/Datatypes/Edge.php'),
         'Phpkg\Classes\Package' => realpath(__DIR__ . '/Source/Classes/Package.php'),
         'Phpkg\Classes\PackageAlias' => realpath(__DIR__ . '/Source/Classes/PackageAlias.php'),
         'Phpkg\Classes\Project' => realpath(__DIR__ . '/Source/Classes/Project.php'),
+        'Phpkg\Exception\CanNotDetectComposerPackageVersionException' => realpath(__DIR__ . '/Source/Exception/CanNotDetectComposerPackageVersionException.php'),
         'Phpkg\Exception\CredentialCanNotBeSetException' => realpath(__DIR__ . '/Source/Exception/CredentialCanNotBeSetException.php'),
         'Phpkg\Exception\PreRequirementsFailedException' => realpath(__DIR__ . '/Source/Exception/PreRequirementsFailedException.php'),
         'Phpkg\Git\Repository' => realpath(__DIR__ . '/Source/Git/Repository.php'),
         'Phpkg\Git\Exception\InvalidTokenException' => realpath(__DIR__ . '/Source/Git/Exception/InvalidTokenException.php'),
+        'Phpkg\Git\Exception\NotSupportedVersionControlException' => realpath(__DIR__ . '/Source/Git/Exception/NotSupportedVersionControlException.php'),
         'Phpkg\PhpFile' => realpath(__DIR__ . '/Source/PhpFile.php'),
         // Datatype classes
         'PhpRepos\Datatype\Collection' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Collection.php'),
@@ -61,11 +66,17 @@ require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/Directory.ph
 require realpath(__DIR__ . '/Packages/php-repos/file-manager/Source/JsonFile.php');
 require realpath(__DIR__ . '/Packages/php-repos/console/Source/Reflection.php');
 require realpath(__DIR__ . '/Packages/php-repos/console/Source/Runner.php');
+require realpath(__DIR__ . '/Source/Comparison.php');
+require realpath(__DIR__ . '/Source/Environments.php');
+require realpath(__DIR__ . '/Source/Datatypes/Digraphs.php');
+require realpath(__DIR__ . '/Source/Repository.php');
+require realpath(__DIR__ . '/Source/DependencyGraphs.php');
 require realpath(__DIR__ . '/Source/System.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
+require realpath(__DIR__ . '/Source/Packagist.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
+require realpath(__DIR__ . '/Source/Git/Repositories.php');
 require realpath(__DIR__ . '/Source/Git/Version.php');
 require realpath(__DIR__ . '/Source/Application/Builder.php');
-require realpath(__DIR__ . '/Source/Application/Credentials.php');
 require realpath(__DIR__ . '/Source/Application/PackageManager.php');
 require realpath(__DIR__ . '/Source/Application/Migrator.php');

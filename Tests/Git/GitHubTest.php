@@ -5,15 +5,14 @@ namespace Tests\GitTest\GitHubTest;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\JsonFile;
 use function file_exists;
-use function Phpkg\Providers\GitHub\download;
-use function Phpkg\Providers\GitHub\extract_owner;
-use function Phpkg\Providers\GitHub\extract_repo;
-use function Phpkg\Providers\GitHub\find_latest_commit_hash;
-use function Phpkg\Providers\GitHub\find_latest_version;
-use function Phpkg\Providers\GitHub\find_version_hash;
-use function Phpkg\Providers\GitHub\github_token;
-use function Phpkg\Providers\GitHub\has_release;
-use function Phpkg\Providers\GitHub\is_ssh;
+use function Phpkg\Git\GitHub\download;
+use function Phpkg\Git\GitHub\extract_owner;
+use function Phpkg\Git\GitHub\extract_repo;
+use function Phpkg\Git\GitHub\find_latest_commit_hash;
+use function Phpkg\Git\GitHub\find_latest_version;
+use function Phpkg\Git\GitHub\find_version_hash;
+use function Phpkg\Git\GitHub\has_any_tag;
+use function Phpkg\Git\GitHub\is_ssh;
 use function Phpkg\System\random_temp_directory;
 use function PhpRepos\FileManager\Directory\make_recursive;
 use function PhpRepos\FileManager\Resolver\root;
@@ -21,7 +20,13 @@ use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Runner\test;
-use const Phpkg\Providers\GitHub\GITHUB_DOMAIN;
+use const Phpkg\Git\GitHub\GITHUB_DOMAIN;
+
+function token(): string
+{
+    $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
+    return $credentials[GITHUB_DOMAIN]['token'];
+}
 
 test(
     title: 'it should detect if url is ssh',
@@ -50,72 +55,41 @@ test(
 );
 
 test(
-    title: 'it should get and set github token',
+    title: 'it should detect if repository has any tag',
     case: function () {
-        putenv("GITHUB_TOKEN=FIRST_TOKEN");
-        assert_true('FIRST_TOKEN' === github_token());
-
-        github_token('set new token');
-        assert_true(getenv('GITHUB_TOKEN', true) === 'set new token');
-
-        $token = 'set another token';
-        assert_true(github_token($token) === $token);
-        assert_true(github_token() === $token);
+        assert_true(has_any_tag('php-repos', 'released-package', token()));
+        assert_false(has_any_tag('php-repos', 'simple-package', token()));
     }
 );
 
 test(
-    title: 'it should detect if repository has release',
+    title: 'it should find latest version for repository',
     case: function () {
-        assert_true(has_release('php-repos', 'released-package'));
-        assert_false(has_release('php-repos', 'simple-package'));
-    },
-    before: function () {
-        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
-        github_token($credentials[GITHUB_DOMAIN]['token']);
-    }
-);
-
-test(
-    title: 'it should find latest version for released repository',
-    case: function () {
-        assert_true('v1.1.0' === find_latest_version('php-repos', 'released-package'));
-    },
-    before: function () {
-        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
-        github_token($credentials[GITHUB_DOMAIN]['token']);
+        assert_true('v1.1.0' === find_latest_version('php-repos', 'released-package', token()));
     }
 );
 
 test(
     title: 'it should find version hash for released repository',
     case: function () {
-        assert_true('875b7ecebe6d781bec4b670a77b00471ffaa3422' === find_version_hash('php-repos', 'released-package', 'v1.0.0'));
-        assert_true('34c23761155364826342a79766b6d662aa0ae7fb' === find_version_hash('php-repos', 'released-package', 'v1.0.1'));
-        assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_version_hash('php-repos', 'released-package', 'v1.1.0'));
-    },
-    before: function () {
-        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
-        github_token($credentials[GITHUB_DOMAIN]['token']);
+        assert_true('875b7ecebe6d781bec4b670a77b00471ffaa3422' === find_version_hash('php-repos', 'released-package', 'v1.0.0', token()));
+        assert_true('34c23761155364826342a79766b6d662aa0ae7fb' === find_version_hash('php-repos', 'released-package', 'v1.0.1', token()));
+        assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_version_hash('php-repos', 'released-package', 'v1.1.0', token()));
     }
 );
 
 test(
     title: 'it should find latest commit hash for repository',
     case: function () {
-        assert_true('1022f2004a8543326a92c0ba606439db530a23c9' === find_latest_commit_hash('php-repos', 'simple-package'));
-        assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_latest_commit_hash('php-repos', 'released-package'));
-    },
-    before: function () {
-        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
-        github_token($credentials[GITHUB_DOMAIN]['token']);
+        assert_true('1022f2004a8543326a92c0ba606439db530a23c9' === find_latest_commit_hash('php-repos', 'simple-package', token()));
+        assert_true('be24f45d8785c215901ba90b242f3b8a7d2bdbfb' === find_latest_commit_hash('php-repos', 'released-package', token()));
     }
 );
 
 test(
     title: 'it should download given repository to the given destination',
     case: function (Path $destination) {
-        assert_true(download($destination, 'saeghe', 'released-package', '5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01'), 'download failed');
+        assert_true(download($destination, 'saeghe', 'released-package', '5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01', token()), 'download failed');
         // Assert latest changes on the commit
         assert_true(true ===
             str_contains(
@@ -129,9 +103,6 @@ test(
         return $destination;
     },
     before: function () {
-        $credentials = JsonFile\to_array(realpath(root() . 'credentials.json'));
-        github_token($credentials[GITHUB_DOMAIN]['token']);
-
         $destination = Path::from_string(random_temp_directory());
         make_recursive($destination);
 

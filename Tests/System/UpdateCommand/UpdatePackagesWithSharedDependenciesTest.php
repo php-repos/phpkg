@@ -16,15 +16,14 @@ test(
 
         $lines = explode("\n", trim($output));
 
-        assert_true(8 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(7 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Updating package git@github.com:php-repos/file-manager.git to latest version...", $lines[0] . PHP_EOL);
-        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Finding package in configs...", $lines[2] . PHP_EOL);
-        assert_line("Setting package version...", $lines[3] . PHP_EOL);
-        assert_line("Updating package...", $lines[4] . PHP_EOL);
-        assert_line("Updating configs...", $lines[5] . PHP_EOL);
-        assert_line("Committing new configs...", $lines[6] . PHP_EOL);
-        assert_success("Package git@github.com:php-repos/file-manager.git has been updated.", $lines[7] . PHP_EOL);
+        assert_line("Finding package in configs...", $lines[1] . PHP_EOL);
+        assert_line("Setting package version...", $lines[2] . PHP_EOL);
+        assert_line("Updating package...", $lines[3] . PHP_EOL);
+        assert_line("Updating configs...", $lines[4] . PHP_EOL);
+        assert_line("Committing new configs...", $lines[5] . PHP_EOL);
+        assert_success("Package git@github.com:php-repos/file-manager.git has been updated.", $lines[6] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');

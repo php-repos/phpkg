@@ -1,11 +1,11 @@
 <?php
 
 use Phpkg\Classes\BuildMode;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Project;
+use Phpkg\System;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
-use function Phpkg\Application\PackageManager\build_root;
+use function Phpkg\Application\Builder\build_root;
 use function PhpRepos\Cli\Output\success;
 use function PhpRepos\FileManager\Directory\renew_recursive;
 
@@ -17,10 +17,15 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
 
-    renew_recursive(build_root(Project::installed($environment, $environment->pwd->append($project))));
-    renew_recursive(build_root(Project::installed($environment, $environment->pwd->append($project), BuildMode::Production)));
+    $project = Project::initialized($environment->pwd->append($project));
+    $project->build_mode = BuildMode::Development;
+
+    renew_recursive(build_root($project));
+
+    $project->build_mode = BuildMode::Production;
+    renew_recursive(build_root($project));
 
     success('Build directory has been flushed.');
 };

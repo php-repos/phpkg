@@ -2,8 +2,8 @@
 
 namespace Phpkg\Git;
 
-use function Phpkg\Providers\GitHub\extract_owner;
-use function Phpkg\Providers\GitHub\extract_repo;
+use function Phpkg\Git\GitHub\extract_owner;
+use function Phpkg\Git\GitHub\extract_repo;
 
 class Repository
 {
@@ -24,29 +24,8 @@ class Repository
         return new static('github.com', $owner, $repo);
     }
 
-    public static function from_meta(array $meta): static
+    public function is_github(): bool
     {
-        return (new static('github.com', $meta['owner'], $meta['repo']))
-            ->version($meta['version'])
-            ->hash($meta['hash']);
-    }
-
-    public function version(string $version): static
-    {
-        $this->version = $version;
-
-        return $this;
-    }
-
-    public function hash(string $hash): static
-    {
-        $this->hash = $hash;
-
-        return $this;
-    }
-
-    public function is(self $repository): bool
-    {
-        return $repository->owner === $this->owner && $repository->repo === $this->repo;
+        return $this->domain === 'github.com';
     }
 }

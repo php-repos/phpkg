@@ -16,16 +16,14 @@ test(
 
         $lines = explode("\n", trim($output));
 
-        assert_true(9 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(7 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Adding package test-runner latest version...", $lines[0] . PHP_EOL);
-        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Checking installed packages...", $lines[2] . PHP_EOL);
-        assert_line("Setting package version...", $lines[3] . PHP_EOL);
-        assert_line("Detecting version hash...", $lines[4] . PHP_EOL);
-        assert_line("Adding the package...", $lines[5] . PHP_EOL);
-        assert_line("Updating configs...", $lines[6] . PHP_EOL);
-        assert_line("Committing configs...", $lines[7] . PHP_EOL);
-        assert_success("Package git@github.com:php-repos/test-runner.git has been added successfully.", $lines[8] . PHP_EOL);
+        assert_line("Checking installed packages...", $lines[1] . PHP_EOL);
+        assert_line("Setting package version...", $lines[2] . PHP_EOL);
+        assert_line("Adding the package...", $lines[3] . PHP_EOL);
+        assert_line("Updating configs...", $lines[4] . PHP_EOL);
+        assert_line("Committing configs...", $lines[5] . PHP_EOL);
+        assert_success("Package git@github.com:php-repos/test-runner.git has been added successfully.", $lines[6] . PHP_EOL);
 
         assert_true(file_exists(root() .  'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/test-runner'));
         assert_true(file_exists(root() .  'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/test-runner/phpkg.config.json'));

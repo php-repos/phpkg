@@ -16,11 +16,10 @@ test(
 
         $lines = explode("\n", trim($output));
 
-        assert_true(4 === count($lines), 'Number of output lines do not match' . $output);
+        assert_true(3 === count($lines), 'Number of output lines do not match' . $output);
         assert_line("Updating package git@github.com:php-repos/released-package.git to latest version...", $lines[0] . PHP_EOL);
-        assert_line("Setting env credential...", $lines[1] . PHP_EOL);
-        assert_line("Finding package in configs...", $lines[2] . PHP_EOL);
-        assert_error("Package git@github.com:php-repos/released-package.git does not found in your project!", $lines[3] . PHP_EOL);
+        assert_line("Finding package in configs...", $lines[1] . PHP_EOL);
+        assert_error("Package git@github.com:php-repos/released-package.git does not found in your project!", $lines[2] . PHP_EOL);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');

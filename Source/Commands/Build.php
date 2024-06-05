@@ -2,12 +2,14 @@
 
 use Phpkg\Application\Builder;
 use Phpkg\Classes\BuildMode;
-use Phpkg\Classes\Environment;
 use Phpkg\Classes\Project;
+use Phpkg\Exception\PreRequirementsFailedException;
+use Phpkg\System;
 use PhpRepos\Cli\Output;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
+use function PhpRepos\FileManager\Directory\exists;
 
 /**
  * Compiles and adds project files to the build directory.
@@ -23,10 +25,16 @@ return function (
     #[Description('When working in a different directory, provide the relative project path for correct package placement.')]
     ?string $project = '',
 ) {
-    $environment = Environment::setup();
+    $environment = System\environment();
 
     Output\line('Start building...');
-    $project = Project::installed($environment, $environment->pwd->append($project), BuildMode::from($env));
+    $project = Project::initialized($environment->pwd->append($project));
+
+    if ($project->config->packages->count() > 0 && ! exists($project->packages_directory)) {
+        throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
+    }
+
+    $project->build_mode = BuildMode::from($env);
 
     Output\line('Checking packages...');
 

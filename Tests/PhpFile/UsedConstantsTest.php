@@ -87,7 +87,7 @@ EOD;
 );
 
 test(
-    title: 'it should return empty array when the alias has been used twice but there is no function usage',
+    title: 'it should return empty array when the alias has been used twice but there is no constant usage',
     case: function () {
         $content = <<<'EOD'
 <?php

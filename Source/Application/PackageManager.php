@@ -3,243 +3,162 @@
 namespace Phpkg\Application\PackageManager;
 
 use Exception;
+use JsonException;
+use Phpkg\Classes\Config;
 use Phpkg\Classes\Dependency;
 use Phpkg\Classes\LinkPair;
+use Phpkg\Classes\Meta;
 use Phpkg\Classes\NamespaceFilePair;
 use Phpkg\Classes\Package;
 use Phpkg\Classes\PackageAlias;
 use Phpkg\Classes\Project;
+use Phpkg\DependencyGraph;
+use Phpkg\DependencyGraphs;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\JsonFile;
 use PhpRepos\FileManager\Path;
+use function Phpkg\Application\Migrator\composer;
+use function Phpkg\Comparison\first_is_greater_or_equal;
+use function Phpkg\Git\Repositories\download;
+use function Phpkg\Git\Repositories\file_content;
+use function Phpkg\Git\Repositories\file_exists;
+use function Phpkg\Git\Repositories\find_latest_commit_hash;
+use function Phpkg\Git\Repositories\find_latest_version;
+use function Phpkg\Git\Repositories\find_version_hash;
+use function Phpkg\Git\Repositories\has_any_tag;
+use function Phpkg\Git\Repositories\tags;
 use function Phpkg\Git\Version\compare;
 use function Phpkg\Git\Version\has_major_change;
-use function Phpkg\Git\Version\is_semantic;
-use function Phpkg\Providers\GitHub\download;
-use function Phpkg\Providers\GitHub\find_latest_commit_hash;
-use function Phpkg\Providers\GitHub\find_latest_version;
-use function Phpkg\Providers\GitHub\find_version_hash;
-use function Phpkg\Providers\GitHub\has_release;
+use function Phpkg\System\environment;
 use function Phpkg\System\is_windows;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when;
+use function PhpRepos\Datatype\Arr\has;
+use function PhpRepos\FileManager\File\exists;
 
 const DEVELOPMENT_VERSION = 'development';
 
-function get_latest_version(Repository $repository): string
-{
-    return has_release($repository->owner, $repository->repo)
-        ? find_latest_version($repository->owner, $repository->repo)
-        : DEVELOPMENT_VERSION;
-}
-
-function detect_hash(Repository $repository): string
-{
-    return $repository->version !== DEVELOPMENT_VERSION
-        ? find_version_hash($repository->owner, $repository->repo, $repository->version)
-        : find_latest_commit_hash($repository->owner, $repository->repo);
-}
-
-function cache_path(Project $project, Repository $repository): Path
-{
-    return $project->environment->temp->append("installer/$repository->domain/$repository->owner/$repository->repo/$repository->hash");
-}
-
-function package_path(Project $project, Repository $repository): Path
-{
-    return $project->packages_directory->append("$repository->owner/$repository->repo");
-}
-
-function build_package_path(Project $project, Repository $repository): Path
-{
-    return build_packages_directory($project)->append("$repository->owner/$repository->repo");
-}
-
-function build_root(Project $project): Path
-{
-    return $project->root->append('builds')->append($project->build_mode->value);
-}
-
-function build_packages_directory(Project $project): Path
-{
-    return build_root($project)->append($project->config->packages_directory);
-}
-
-function import_file_path(Project $project): Path
-{
-    return build_root($project)->append($project->config->import_file);
-}
-
 /**
  * @throws PreRequirementsFailedException
  */
-function download_and_resolve_dependencies(Project $project, Dependency $dependency): bool
+function match_highest_version(Repository $repository, string $version): ?string
 {
-    unless(Directory\exists($project->environment->temp), fn () => Directory\make_recursive($project->environment->temp));
+    $tags = tags($repository);
 
-    /** @var Dependency|null $installed_dependency */
-    $installed_dependency = $project->dependencies->first(fn (Dependency $installed_dependency) => $installed_dependency->value->repository->is($dependency->value->repository));
-
-    if ($installed_dependency) {
-        if (is_semantic($installed_dependency->value->repository->version) && is_semantic($dependency->value->repository->version)) {
-            when(
-                $project->check_semantic_versioning && has_major_change($installed_dependency->value->repository->version, $dependency->value->repository->version),
-                fn () => throw new PreRequirementsFailedException('There is a major upgrade in the version number. Make sure it is a compatible change and if it is, try updating by --force.')
-            );
-
-            if (compare($installed_dependency->value->repository->version, $dependency->value->repository->version) >= 0) {
-                $installed_dependency->value->config->packages
-                    ->each(function (Dependency $sub_dependency) use ($project) {
-                        if (! $project->dependencies->has(fn(Dependency $installed_dependency) => $installed_dependency->value->repository->is($sub_dependency->value->repository))) {
-                            $sub_dependency->value->repository->hash(detect_hash($sub_dependency->value->repository));
-                            download_and_resolve_dependencies($project, $sub_dependency);
-                        }
-                    });
-
-                return true;
-            }
-
-            $project->dependencies->forget(fn (Dependency $installed_dependency) => $installed_dependency->value->repository->is($dependency->value->repository));
-        }
-
-        $project->meta->dependencies->forget(fn (Dependency $installed_dependency) => $installed_dependency->value->repository->is($dependency->value->repository));
-        $dependency = $dependency->value(new Package($dependency->value->repository));
-    }
-
-    $root = cache_path($project, $dependency->value->repository);
-    unless(Directory\exists($root), fn () => Directory\make_recursive($root)
-        && download($root, $dependency->value->repository->owner, $dependency->value->repository->repo, $dependency->value->repository->hash));
-
-    $dependency->value->install($root);
-    $project->dependencies->push($dependency);
-    $dependency->value->config->packages->each(fn (Dependency $sub_dependency) =>
-        $sub_dependency->value->repository->hash(detect_hash($sub_dependency->value->repository))
-        && download_and_resolve_dependencies($project, $sub_dependency));
-
-    return true;
-}
-
-/**
- * @throws PreRequirementsFailedException
- */
-function add(Project $project, Dependency $dependency): void
-{
-    download_and_resolve_dependencies($project, $dependency);
-
-    $project->dependencies->each(function (Dependency $installed_dependency) use ($project) {
-        if (Directory\exists(cache_path($project, $installed_dependency->value->repository))) {
-            Directory\renew_recursive(package_path($project, $installed_dependency->value->repository));
-            Directory\preserve_copy_recursively(
-                cache_path($project, $installed_dependency->value->repository),
-                package_path($project, $installed_dependency->value->repository)
-            );
-            $project->meta->dependencies->push($installed_dependency);
-        }
+    usort($tags, function ($tag1, $tag2) {
+        return compare($tag2['name'], $tag1['name']);
     });
 
-    Directory\ls_all($project->packages_directory)
-        ->each(function (Path $owner_directory) use ($project) {
-            $owner = $owner_directory->leaf();
-            Directory\ls_all($owner_directory)
-                ->each(function (Path $repo_directory) use ($project, $owner) {
-                    $repo = $repo_directory->leaf();
-                    unless(
-                        $project->dependencies->has(fn (Dependency $installed_dependency)
-                            => $installed_dependency->value->repository->owner === $owner->string() && $installed_dependency->value->repository->repo === $repo->string()),
-                        fn () => Directory\delete_recursive($repo_directory)
-                            && $project->meta->dependencies->forget(fn (Dependency $installed_dependency)
-                                => $installed_dependency->value->repository->owner === $owner->string() && $installed_dependency->value->repository->repo === $repo->string())
-                    );
-                });
-        });
-}
-
-function remove(Project $project, Dependency $dependency): void
-{
-    $project->dependencies->forget(fn (Dependency $installed_dependency)
-        => $installed_dependency->value->repository->is($dependency->value->repository));
-
-    $dependency->value->config->packages->each(function (Dependency $sub_dependency) use ($project) {
-        /** @var Dependency|null $sub_dependency */
-        $sub_dependency = $project->dependencies->first(fn (Dependency $installed_dependency) => $installed_dependency->value->repository->is($sub_dependency->value->repository));
-
-        if ($sub_dependency) {
-            remove($project, $sub_dependency);
-        }
-    });
-
-    unless(
-        // Project defined the package as required
-        $project->config->packages->has(fn (Dependency $required_dependency) => $required_dependency->value->repository->is($dependency->value->repository))
-            // Package is required in other packages
-        || $project->dependencies->has(function (Dependency $other_dependency) use ($dependency) {
-            return $other_dependency->value->config->packages->has(function (Dependency $sub_dependency) use ($dependency) {
-                return $sub_dependency->value->repository->is($dependency->value->repository);
-            });
-        }),
-        fn () => delete_package($dependency->value) && $project->meta->dependencies->forget(fn (Dependency $installed_dependency) => $installed_dependency->value->repository->is($dependency->value->repository)),
-        fn () => $project->dependencies->push($dependency),
-    );
-}
-
-function delete_package(Package $package): bool
-{
-    if (is_windows()) {
-        Directory\ls_recursively($package->root)->vertices()->each(fn ($filename) => \chmod($filename, 0777));
+    if (has($tags, fn ($tag) => $tag['name'] === $version)) {
+        return $version;
     }
 
-    return Directory\delete_recursive($package->root);
+    foreach ($tags as $tag) {
+        if (! has_major_change($version, $tag['name'])
+            && first_is_greater_or_equal(fn () => compare($version, $tag['name']) >= 0)
+        ) {
+            return $tag['name'];
+        }
+    }
+
+    throw new PreRequirementsFailedException("Can not find $version for package $repository->owner/$repository->repo.");
 }
 
 /**
  * @throws Exception
  */
-function install(Project $project): void
+function get_latest_version(Repository $repository): string
 {
-    Directory\exists_or_create($project->packages_directory);
-
-    $project->meta->dependencies->each(function (Dependency $dependency) use ($project) {
-        $root = package_path($project, $dependency->value->repository);
-        if (! Directory\exists($root)) {
-            Directory\make_recursive($root);
-        }
-        download($root, $dependency->value->repository->owner, $dependency->value->repository->repo, $dependency->value->repository->hash);
-    });
+    return has_any_tag($repository)
+        ? find_latest_version($repository)
+        : DEVELOPMENT_VERSION;
 }
 
-function update(Project $project, Dependency $dependency): void
+function is_development_version(string $version): bool
 {
-    download_and_resolve_dependencies($project, $dependency);
+    return $version === DEVELOPMENT_VERSION;
+}
 
-    $project->dependencies->each(function (Dependency $installed_dependency) use ($project) {
-        if (Directory\exists(cache_path($project, $installed_dependency->value->repository))) {
-            Directory\renew_recursive(package_path($project, $installed_dependency->value->repository));
-            Directory\preserve_copy_recursively(
-                cache_path($project, $installed_dependency->value->repository),
-                package_path($project, $installed_dependency->value->repository)
-            );
-            $project->meta->dependencies->push($installed_dependency);
-        }
-    });
+/**
+ * @throws Exception
+ */
+function detect_hash(Repository $repository): string
+{
+    return is_development_version($repository->version)
+        ? find_latest_commit_hash($repository)
+        : find_version_hash($repository);
+}
 
-    Directory\ls_all($project->packages_directory)
-        ->each(function (Path $owner_directory) use ($project) {
-            $owner = $owner_directory->leaf();
-            Directory\ls_all($owner_directory)
-                ->each(function (Path $repo_directory) use ($project, $owner) {
-                    $repo = $repo_directory->leaf();
-                    unless(
-                        $project->dependencies->has(fn (Dependency $installed_dependency)
-                        => $installed_dependency->value->repository->owner === $owner->string() && $installed_dependency->value->repository->repo === $repo->string()),
-                        fn () => Directory\delete_recursive($repo_directory)
-                            && $project->meta->dependencies->forget(fn (Dependency $installed_dependency)
-                            => $installed_dependency->value->repository->owner === $owner->string() && $installed_dependency->value->repository->repo === $repo->string())
-                    );
-                });
-        });
+function cache_path(Package $package): Path
+{
+    return environment()->temp
+        ->append("installer/{$package->value->domain}/{$package->value->owner}/{$package->value->repo}/{$package->value->hash}");
+}
+
+function package_path(Project $project, Package $package): Path
+{
+    return $project->packages_directory->append("{$package->value->owner}/{$package->value->repo}");
+}
+
+/**
+ * @throws JsonException
+ * @throws Exception
+ */
+function load_local_config(Path $root): Config
+{
+    $config_file = $root->append('phpkg.config.json');
+    if (exists($config_file)) {
+        return Config::from_array(JsonFile\to_array($config_file));
+    }
+
+    if (exists($root->append('composer.json'))) {
+        return Config::from_array(composer(JsonFile\to_array($root->append('composer.json'))));
+    }
+
+    return Config::init();
+}
+
+/**
+ * @throws JsonException
+ * @throws Exception
+ */
+function load_config(Package $package): Config
+{
+    $cache_path = cache_path($package);
+
+    if (Directory\exists($cache_path)) {
+        return load_local_config($cache_path);
+    }
+
+    if (file_exists($package->value, 'phpkg.config.json')) {
+        return Config::from_array(json_decode(json: file_content($package->value, 'phpkg.config.json'), associative: true, flags: JSON_THROW_ON_ERROR));
+    }
+
+    if (file_exists($package->value, 'composer.json')) {
+        return Config::from_array(
+            composer(
+                json_decode(
+                    json: file_content($package->value, 'composer.json'),
+                    associative: true,
+                    flags: JSON_THROW_ON_ERROR
+                )
+            )
+        );
+    }
+
+    return Config::init();
+}
+
+function delete_package(Project $project, Package $package): bool
+{
+    if (is_windows()) {
+        Directory\ls_recursively(package_path($project, $package))->vertices()->each(fn ($filename) => chmod($filename, 0777));
+    }
+
+    return Directory\delete_recursive(package_path($project, $package));
 }
 
 function commit(Project $project): bool
@@ -271,24 +190,231 @@ function commit(Project $project): bool
         $config['executables'][$link->key->string()] = $link->value->string();
     });
     $config['packages-directory'] = $project->config->packages_directory->string();
-    $project->config->packages->each(function (Dependency $dependency) use (&$config) {
-        $config['packages'][$dependency->key] = $dependency->value->repository->version;
+    $project->config->packages->each(function (Package $package) use (&$config) {
+        $config['packages'][$package->key] = $package->value->version;
     });
     $project->config->aliases->each(function (PackageAlias $package_alias) use (&$config) {
         $config['aliases'][$package_alias->key] = $package_alias->value;
     });
 
-    $meta = $project->meta->dependencies->reduce(function (array $packages, Dependency $dependency) {
-        $packages['packages'][$dependency->key] = [
-            'owner' => $dependency->value->repository->owner,
-            'repo' => $dependency->value->repository->repo,
-            'version' => $dependency->value->repository->version,
-            'hash' => $dependency->value->repository->hash,
-        ];
+    $meta = $project->meta->packages->reduce(function (array $packages, Package $package) {
+        $packages['packages'][$package->key] = meta($package->value);
 
         return $packages;
     }, ['packages' => []]);
 
-    return JsonFile\write($project->root->append(Project::CONFIG_FILENAME), $config)
-        && JsonFile\write($project->root->append(Project::META_FILENAME), $meta);
+    return JsonFile\write($project->config_file, $config)
+        && JsonFile\write($project->config_lock_file, $meta);
+}
+
+/**
+ * @param Repository $repository
+ * @return array{owner: string, repo: string, version: string, hash: string}
+ */
+function meta(Repository $repository): array
+{
+    return [
+        'owner' => $repository->owner,
+        'repo' => $repository->repo,
+        'version' => $repository->version,
+        'hash' => $repository->hash,
+    ];
+}
+
+/**
+ * @throws Exception
+ */
+function manage_dependencies(Project $project, DependencyGraph $dependency_graph): void
+{
+    $dependency_graph = DependencyGraphs\resolve($dependency_graph);
+
+    $project->meta->packages
+        ->each(function (Package $package) use ($project, $dependency_graph) {
+            $dependency = Dependency::from_package($package);
+
+            if (!DependencyGraphs\has_similar_dependency($dependency_graph, $dependency)) {
+                return;
+            }
+
+            $highest_version = DependencyGraphs\highest_version_of_dependency($dependency_graph, $dependency);
+
+            when(
+                $project->check_semantic_versioning && has_major_change($highest_version->value->value->version, $dependency->value->value->version),
+                fn () => throw new PreRequirementsFailedException('There is a major upgrade in the version number. Make sure it is a compatible change and if it is, try updating by --force.')
+            );
+        });
+
+    $project->meta->packages
+        ->filter(fn (Package $package) => ! DependencyGraphs\has_identical_dependency($dependency_graph, Dependency::from_package($package)))
+        ->each(function (Package $unused_package) use ($project, $dependency_graph) {
+            delete_package($project, $unused_package);
+            $project->meta->packages->forget(fn (Package $package)
+                => $package->value->owner === $unused_package->value->owner
+                    && $package->value->repo === $unused_package->value->repo);
+        });
+
+    $project->meta->packages
+        ->filter(fn (Package $package) => DependencyGraphs\has_identical_dependency($dependency_graph, Dependency::from_package($package)))
+        ->each(function (Package $package) use ($project, $dependency_graph) {
+            $dependency = Dependency::from_package($package);
+            $highest_version = DependencyGraphs\highest_version_of_dependency($dependency_graph, $dependency);
+
+            if ($highest_version->key !== $dependency->key) {
+                delete_package($project, $dependency->value);
+                $project->meta->packages->forget(fn (Package $installed_package) => Dependency::from_package($installed_package)->key === $dependency->key);
+            }
+        });
+
+    DependencyGraphs\foreach_dependency($dependency_graph, function (Dependency $dependency) use ($project, $dependency_graph) {
+        $root = cache_path($dependency->value);
+        unless(Directory\exists($root), fn () => Directory\make_recursive($root)
+            && download($dependency->value->value, $root));
+        Directory\renew_recursive(package_path($project, $dependency->value));
+        Directory\preserve_copy_recursively(
+            cache_path($dependency->value),
+            package_path($project, $dependency->value)
+        );
+        $project->meta->packages->push($dependency->value);
+    });
+}
+
+/**
+ * @throws JsonException
+ * @throws Exception
+ */
+function add_dependency(Project $project, DependencyGraph &$dependency_graph, Package $package): Dependency
+{
+    $package->value->hash = detect_hash($package->value);
+    $dependency = Dependency::from_package($package);
+
+    if (DependencyGraphs\has_identical_dependency($dependency_graph, $dependency)) {
+        return $dependency;
+    }
+
+    $dependency_graph = DependencyGraphs\add($dependency_graph, $dependency);
+
+    $dependency_graph = load_config($dependency->value)->packages->reduce(function (DependencyGraph $dependency_graph, Package $sub_package) use ($project, $dependency) {
+        $sub_dependency = add_dependency($project, $dependency_graph, $sub_package);
+        return DependencyGraphs\add_sub_dependency($dependency_graph, $dependency, $sub_dependency);
+    }, $dependency_graph);
+
+    return $dependency;
+}
+
+/**
+ * @throws Exception
+ */
+function install(Project $project): void
+{
+    Directory\exists_or_create($project->packages_directory);
+
+    if (! exists($project->config_lock_file)) {
+        $dependency_graph = DependencyGraph::empty();
+        $project->config->packages->each(function (Package $package) use ($project, $dependency_graph) {
+            add_dependency($project, $dependency_graph, $package);
+        });
+
+        DependencyGraphs\foreach_dependency($dependency_graph, function (Dependency $dependency) use ($project) {
+            $project->meta->packages->push($dependency->value);
+        });
+
+        commit($project);
+    }
+
+    $project->meta->packages->each(function (Package $package) use ($project) {
+        $root = package_path($project, $package);
+        if (! Directory\exists($root)) {
+            Directory\make_recursive($root);
+        }
+        download($package->value, $root);
+    });
+}
+
+/**
+ * @throws JsonException
+ * @throws Exception
+ */
+function add(Project $project, Package $package): Dependency
+{
+    $dependency_graph = DependencyGraph::for($project);
+
+    $dependency = add_dependency($project, $dependency_graph, $package);
+
+    manage_dependencies($project, $dependency_graph);
+
+    return $dependency;
+}
+
+/**
+ * @throws JsonException
+ * @throws Exception
+ */
+function update(Project $project, Package $package): Dependency
+{
+    $dependency_graph = DependencyGraph::for($project);
+
+    $dependency = add_dependency($project, $dependency_graph, $package);
+
+    manage_dependencies($project, $dependency_graph);
+
+    return $dependency;
+}
+
+function is_main_dependency(Project $project, Package $package): bool
+{
+    return $project->config->packages->has(fn (Package $main_package)
+        => $main_package->value->owner === $package->value->owner
+            && $main_package->value->repo === $package->value->repo);
+}
+
+function remove_dependency(Project $project, DependencyGraph $dependency_graph, Dependency $dependency): DependencyGraph
+{
+    $dependency = DependencyGraphs\find_dependency($dependency_graph, $dependency);
+
+    if (! is_main_dependency($project, $dependency->value) && count(DependencyGraphs\dependents($dependency_graph, $dependency)) === 0) {
+        $dependencies = DependencyGraphs\dependencies($dependency_graph, $dependency);
+        $dependency_graph = DependencyGraphs\remove($dependency_graph, $dependency);
+
+        foreach ($dependencies as $sub_dependency) {
+            remove_dependency($project, $dependency_graph, $sub_dependency);
+        }
+    }
+
+    return $dependency_graph;
+}
+
+/**
+ * @throws Exception
+ */
+function remove(Project $project, Package $package): void
+{
+    $dependency_graph = DependencyGraph::for($project);
+
+    remove_dependency($project, $dependency_graph, Dependency::from_package($package));
+
+    manage_dependencies($project, $dependency_graph);
+}
+
+/**
+ * @throws JsonException
+ * @throws Exception
+ */
+function migrate(Project $project): void
+{
+    $config = load_local_config($project->root);
+    $config->packages_directory = new Filename('vendor');
+    $meta = Meta::init();
+
+    $project->config($config);
+    $project->meta = $meta;
+
+    Directory\delete_recursive($project->packages_directory);
+
+    $dependency_graph = DependencyGraph::empty();
+
+    $config->packages->each(function (Package $package) use ($project, $dependency_graph) {
+        add_dependency($project, $dependency_graph, $package);
+    });
+
+    manage_dependencies($project, $dependency_graph);
 }

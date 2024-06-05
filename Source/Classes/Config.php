@@ -16,7 +16,7 @@ class Config
         public Map $executables,
         public Filename $import_file,
         public Filename $packages_directory,
-        public Dependencies $packages,
+        public Map $packages,
         public Map $aliases,
     ) {}
 
@@ -30,7 +30,7 @@ class Config
             new Map(),
             new Filename('phpkg.imports.php'),
             new Filename('Packages'),
-            new Dependencies(),
+            new Map(),
             new Map(),
         );
     }
@@ -52,7 +52,7 @@ class Config
         $entry_points = new Collection();
         $import_file = new Filename($config['import-file'] ?? 'phpkg.imports.php');
         $packages_directory = new Filename($config['packages-directory'] ?? 'Packages');
-        $packages = new Dependencies();
+        $packages = new Map();
         $aliases = new Map();
 
         foreach ($config['map'] as $namespace => $path) {
@@ -76,7 +76,7 @@ class Config
         }
         
         foreach ($config['packages'] as $package_url => $version) {
-            $packages->push(new Dependency($package_url, Package::from_config($package_url, $version)));
+            $packages->push(Package::from_config($package_url, $version));
         }
 
         foreach ($config['aliases'] as $alias => $package_url) {
