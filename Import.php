@@ -23,8 +23,12 @@ spl_autoload_register(function ($class) {
         'Phpkg\Exception\CredentialCanNotBeSetException' => realpath(__DIR__ . '/Source/Exception/CredentialCanNotBeSetException.php'),
         'Phpkg\Exception\PreRequirementsFailedException' => realpath(__DIR__ . '/Source/Exception/PreRequirementsFailedException.php'),
         'Phpkg\Git\Repository' => realpath(__DIR__ . '/Source/Git/Repository.php'),
+        'Phpkg\Git\Exception\GithubApiRequestException' => realpath(__DIR__ . '/Source/Git/Exception/GithubApiRequestException.php'),
         'Phpkg\Git\Exception\InvalidTokenException' => realpath(__DIR__ . '/Source/Git/Exception/InvalidTokenException.php'),
+        'Phpkg\Git\Exception\NotFoundException' => realpath(__DIR__ . '/Source/Git/Exception/NotFoundException.php'),
         'Phpkg\Git\Exception\NotSupportedVersionControlException' => realpath(__DIR__ . '/Source/Git/Exception/NotSupportedVersionControlException.php'),
+        'Phpkg\Git\Exception\RateLimitedException' => realpath(__DIR__ . '/Source/Git/Exception/RateLimitedException.php'),
+        'Phpkg\Git\Exception\UnauthenticatedRateLimitedException' => realpath(__DIR__ . '/Source/Git/Exception/UnauthenticatedRateLimitedException.php'),
         'Phpkg\PhpFile' => realpath(__DIR__ . '/Source/PhpFile.php'),
         // Datatype classes
         'PhpRepos\Datatype\Collection' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Collection.php'),

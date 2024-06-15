@@ -3,7 +3,11 @@
 namespace Phpkg\Git\GitHub;
 
 use Exception;
+use Phpkg\Git\Exception\GithubApiRequestException;
 use Phpkg\Git\Exception\InvalidTokenException;
+use Phpkg\Git\Exception\NotFoundException;
+use Phpkg\Git\Exception\RateLimitedException;
+use Phpkg\Git\Exception\UnauthenticatedRateLimitedException;
 use PhpRepos\FileManager\Path;
 use ZipArchive;
 use function Phpkg\System\is_windows;
@@ -77,8 +81,11 @@ function extract_repo(string $package_url): string
  * @param string $api_sub_url The API sub-URL to request.
  * @param string|null $token The GitHub auth token.
  * @return array The JSON response as an array.
- * @throws Exception If there's a network or API error.
+ * @throws GithubApiRequestException If the GitHub api fails.
  * @throws InvalidTokenException If the GitHub token is not valid.
+ * @throws RateLimitedException If user gets rate limited.
+ * @throws UnauthenticatedRateLimitedException If unauthenticated request gets rate limited.
+ * @throws NotFoundException Either the URL is not valid or user does not have access.
  */
 function get_json(string $api_sub_url, ?string $token = null): array
 {
@@ -88,6 +95,7 @@ function get_json(string $api_sub_url, ?string $token = null): array
     $headers = $token ? $headers + ['authentication' => "Authorization: Bearer $token"] : $headers;
     curl_setopt($ch, CURLOPT_HTTPHEADER, array_values($headers));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);  // Include the headers in the output
 
     if (is_windows()) {
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -95,19 +103,50 @@ function get_json(string $api_sub_url, ?string $token = null): array
 
     $output = curl_exec($ch);
     $error = curl_error($ch);
-    curl_close($ch);
 
     if (curl_errno($ch) > 0) {
-        throw new Exception('Git curl error: ' . $error);
+        curl_close($ch);
+        throw new GithubApiRequestException('Git curl error: ' . $error);
     }
 
-    $response = json_decode($output, true);
+    $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $headers = substr($output, 0, $header_size);
+    $body = substr($output, $header_size);
+    $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-    if (isset($response['message']) && $response['message'] === 'Bad credentials') {
+    curl_close($ch);
+
+    $header_lines = explode("\r\n", trim($headers));
+    $response_headers = [];
+    foreach ($header_lines as $header_line) {
+        if (str_contains($header_line, ':')) {
+            list($key, $value) = explode(': ', $header_line, 2);
+            $response_headers[$key] = $value;
+        }
+    }
+
+    if ($status_code === 401) {
         throw new InvalidTokenException('GitHub token is not valid.');
     }
 
-    return $response;
+    if (($status_code === 403 || $status_code === 429) && isset($response_headers['x-ratelimit-remaining']) && $response_headers['x-ratelimit-remaining'] == 0) {
+        if ($token) {
+            throw new RateLimitedException('You have reached the GitHub API rate limit. Please try again in ' . time() - $response_headers['x-ratelimit-reset']);
+        } else {
+            throw new UnauthenticatedRateLimitedException('You have reached the GitHub API rate limit. Please add a token to your request and try again.');
+        }
+    }
+
+    if ($status_code === 404) {
+        if ($token) {
+            throw new NotFoundException('The endpoint not found.');
+        } else {
+            throw new NotFoundException('The endpoint not found. If it is a private repository, please provide a token.');
+        }
+
+    }
+
+    return json_decode($body, true);
 }
 
 /**
@@ -240,40 +279,20 @@ function download(string $destination, string $owner, string $repo, string $hash
  * @param string $path THe path to check for a file
  * @param string|null $token
  * @return bool
- * @throws Exception
+ * @throws GithubApiRequestException If the GitHub api fails.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ * @throws RateLimitedException If user gets rate limited.
+ * @throws UnauthenticatedRateLimitedException If unauthenticated request gets rate limited.
  */
 function file_exists(string $owner, string $repo, string $hash, string $path, ?string $token = null): bool
 {
-    $ch = curl_init(GITHUB_API_URL . "repos/$owner/$repo/contents/$path?ref=$hash");
-    curl_setopt($ch, CURLOPT_USERAGENT, 'phpkg');
-    $headers = ['accept_type' => "Accept: application/vnd.github+json"];
-    $headers = $token ? $headers + ['authentication' => "Authorization: Bearer $token"] : $headers;
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array_values($headers));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
+    try {
+        $response = get_json("repos/$owner/$repo/contents/$path?ref=$hash", $token);
 
-    // Check if the request was successful
-    if ($response === false) {
-        throw new Exception('Error checking file existence on GitHub ' . $path);
-    }
-
-    // Decode the JSON response
-    $data = json_decode($response, true);
-
-    // Check if the JSON decoding was successful
-    if ($data === null) {
-        throw new Exception('Error decoding JSON response ' . $path);
-    }
-
-    // Check if the response contains a "message" field
-    if (isset($data['message'])) {
-        // If "message" field exists, it means the file does not exist at the given commit hash
+        return isset($response['content']);
+    } catch (NotFoundException) {
         return false;
     }
-
-    // If "message" field does not exist, it means the file exists at the given commit hash
-    return true;
 }
 
 /**
@@ -283,34 +302,17 @@ function file_exists(string $owner, string $repo, string $hash, string $path, ?s
  * @param string $path
  * @param string|null $token The GitHub auth token.
  * @return string
- * @throws Exception
+ * @throws GithubApiRequestException If the GitHub api fails.
+ * @throws InvalidTokenException If the GitHub token is not valid.
+ * @throws RateLimitedException If user gets rate limited.
+ * @throws UnauthenticatedRateLimitedException If unauthenticated request gets rate limited.
+ * @throws NotFoundException Either the URL is not valid or user does not have access.
  */
 function file_content(string $owner, string $repo, string $hash, string $path, ?string $token = null): string
 {
-    $ch = curl_init(GITHUB_API_URL . "repos/$owner/$repo/contents/$path?ref=$hash");
-    curl_setopt($ch, CURLOPT_USERAGENT, 'phpkg');
-    $headers = ['accept_type' => "Accept: application/vnd.github+json"];
-    $headers = $token ? $headers + ['authentication' => "Authorization: Bearer $token"] : $headers;
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array_values($headers));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
+    $response = get_json("repos/$owner/$repo/contents/$path?ref=$hash", $token);
 
-    if ($response === false) {
-        throw new Exception('Can not get file content ' . $path);
-    }
-
-    $data = json_decode($response, true);
-
-    if ($data === null) {
-        throw new Exception('Error decoding JSON response to get file content ' . $path);
-    }
-
-    if (!isset($data['content'])) {
-        throw new Exception('File content not found in GitHub response for file ' . $path);
-    }
-
-    return base64_decode($data['content']);
+    return base64_decode($response['content']);
 }
 
 /**
