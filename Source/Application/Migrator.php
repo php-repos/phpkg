@@ -2,7 +2,6 @@
 
 namespace Phpkg\Application\Migrator;
 
-use Exception;
 use Phpkg\Exception\CanNotDetectComposerPackageVersionException;
 use Phpkg\Git\Repository;
 use function Phpkg\Comparison\first_is_greater_or_equal;
@@ -13,9 +12,6 @@ use function Phpkg\Git\Version\has_major_change;
 use function Phpkg\Git\Version\is_stable;
 use function Phpkg\Packagist\git_url;
 
-/**
- * @throws Exception
- */
 function composer(array $composer_config): array
 {
     $is_dev_package = function (string $version_pattern) {
@@ -53,9 +49,6 @@ function composer(array $composer_config): array
     return $config;
 }
 
-/**
- * @throws Exception
- */
 function get_version(Repository $repository, string $version_pattern): string
 {
     $normalize_version = str_replace(' ', '', $version_pattern);

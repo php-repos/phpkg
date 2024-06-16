@@ -2,8 +2,6 @@
 
 namespace Phpkg\Application\PackageManager;
 
-use Exception;
-use JsonException;
 use Phpkg\Classes\Config;
 use Phpkg\Classes\Dependency;
 use Phpkg\Classes\LinkPair;
@@ -41,9 +39,6 @@ use function PhpRepos\FileManager\File\exists;
 
 const DEVELOPMENT_VERSION = 'development';
 
-/**
- * @throws PreRequirementsFailedException
- */
 function match_highest_version(Repository $repository, string $version): ?string
 {
     $tags = tags($repository);
@@ -67,9 +62,6 @@ function match_highest_version(Repository $repository, string $version): ?string
     throw new PreRequirementsFailedException("Can not find $version for package $repository->owner/$repository->repo.");
 }
 
-/**
- * @throws Exception
- */
 function get_latest_version(Repository $repository): string
 {
     return has_any_tag($repository)
@@ -82,9 +74,6 @@ function is_development_version(string $version): bool
     return $version === DEVELOPMENT_VERSION;
 }
 
-/**
- * @throws Exception
- */
 function detect_hash(Repository $repository): string
 {
     return is_development_version($repository->version)
@@ -103,10 +92,6 @@ function package_path(Project $project, Package $package): Path
     return $project->packages_directory->append("{$package->value->owner}/{$package->value->repo}");
 }
 
-/**
- * @throws JsonException
- * @throws Exception
- */
 function load_local_config(Path $root): Config
 {
     $config_file = $root->append('phpkg.config.json');
@@ -121,10 +106,6 @@ function load_local_config(Path $root): Config
     return Config::init();
 }
 
-/**
- * @throws JsonException
- * @throws Exception
- */
 function load_config(Package $package): Config
 {
     $cache_path = cache_path($package);
@@ -221,9 +202,6 @@ function meta(Repository $repository): array
     ];
 }
 
-/**
- * @throws Exception
- */
 function manage_dependencies(Project $project, DependencyGraph $dependency_graph): void
 {
     $dependency_graph = DependencyGraphs\resolve($dependency_graph);
@@ -278,10 +256,6 @@ function manage_dependencies(Project $project, DependencyGraph $dependency_graph
     });
 }
 
-/**
- * @throws JsonException
- * @throws Exception
- */
 function add_dependency(Project $project, DependencyGraph &$dependency_graph, Package $package): Dependency
 {
     $package->value->hash = detect_hash($package->value);
@@ -301,9 +275,6 @@ function add_dependency(Project $project, DependencyGraph &$dependency_graph, Pa
     return $dependency;
 }
 
-/**
- * @throws Exception
- */
 function install(Project $project): void
 {
     Directory\exists_or_create($project->packages_directory);
@@ -330,10 +301,6 @@ function install(Project $project): void
     });
 }
 
-/**
- * @throws JsonException
- * @throws Exception
- */
 function add(Project $project, Package $package): Dependency
 {
     $dependency_graph = DependencyGraph::for($project);
@@ -345,10 +312,6 @@ function add(Project $project, Package $package): Dependency
     return $dependency;
 }
 
-/**
- * @throws JsonException
- * @throws Exception
- */
 function update(Project $project, Package $package): Dependency
 {
     $dependency_graph = DependencyGraph::for($project);
@@ -383,9 +346,6 @@ function remove_dependency(Project $project, DependencyGraph $dependency_graph, 
     return $dependency_graph;
 }
 
-/**
- * @throws Exception
- */
 function remove(Project $project, Package $package): void
 {
     $dependency_graph = DependencyGraph::for($project);
@@ -395,10 +355,6 @@ function remove(Project $project, Package $package): void
     manage_dependencies($project, $dependency_graph);
 }
 
-/**
- * @throws JsonException
- * @throws Exception
- */
 function migrate(Project $project): void
 {
     $config = load_local_config($project->root);
