@@ -155,7 +155,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/myclabs/DeepCopy.git' => '1.11.1',
+                'https://github.com/myclabs/DeepCopy.git' => '1.12.0',
             ]
         ];
 
@@ -209,7 +209,7 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.3.0',
-                'https://github.com/myclabs/DeepCopy.git' => '1.11.1',
+                'https://github.com/myclabs/DeepCopy.git' => '1.12.0',
             ]
         ];
 
