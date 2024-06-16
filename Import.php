@@ -29,6 +29,15 @@ spl_autoload_register(function ($class) {
         'Phpkg\Git\Exception\NotSupportedVersionControlException' => realpath(__DIR__ . '/Source/Git/Exception/NotSupportedVersionControlException.php'),
         'Phpkg\Git\Exception\RateLimitedException' => realpath(__DIR__ . '/Source/Git/Exception/RateLimitedException.php'),
         'Phpkg\Git\Exception\UnauthenticatedRateLimitedException' => realpath(__DIR__ . '/Source/Git/Exception/UnauthenticatedRateLimitedException.php'),
+        'Phpkg\Http\Request\Header' => realpath(__DIR__ . '/Source/Http/Request/Header.php'),
+        'Phpkg\Http\Request\Message' => realpath(__DIR__ . '/Source/Http/Request/Message.php'),
+        'Phpkg\Http\Request\Method' => realpath(__DIR__ . '/Source/Http/Request/Method.php'),
+        'Phpkg\Http\Request\Url' => realpath(__DIR__ . '/Source/Http/Request/Url.php'),
+        'Phpkg\Http\Response\Body' => realpath(__DIR__ . '/Source/Http/Response/Body.php'),
+        'Phpkg\Http\Response\Header' => realpath(__DIR__ . '/Source/Http/Response/Header.php'),
+        'Phpkg\Http\Response\Message' => realpath(__DIR__ . '/Source/Http/Response/Message.php'),
+        'Phpkg\Http\Response\Status' => realpath(__DIR__ . '/Source/Http/Response/Status.php'),
+        'Phpkg\Http\Conversation' => realpath(__DIR__ . '/Source/Http/Conversation.php'),
         'Phpkg\PhpFile' => realpath(__DIR__ . '/Source/PhpFile.php'),
         // Datatype classes
         'PhpRepos\Datatype\Collection' => realpath(__DIR__ . '/Packages/php-repos/datatype/Source/Collection.php'),
@@ -78,6 +87,9 @@ require realpath(__DIR__ . '/Source/DependencyGraphs.php');
 require realpath(__DIR__ . '/Source/System.php');
 require realpath(__DIR__ . '/Source/Exception/Handler.php');
 require realpath(__DIR__ . '/Source/Packagist.php');
+require realpath(__DIR__ . '/Source/Http/Request/Headers.php');
+require realpath(__DIR__ . '/Source/Http/Request/Requests.php');
+require realpath(__DIR__ . '/Source/Http/Response/Responses.php');
 require realpath(__DIR__ . '/Source/Git/GitHub.php');
 require realpath(__DIR__ . '/Source/Git/Repositories.php');
 require realpath(__DIR__ . '/Source/Git/Version.php');
