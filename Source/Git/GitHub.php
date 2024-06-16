@@ -155,7 +155,7 @@ function send(Request\Message $request): Conversation
 
     $conversation = new Conversation($request, $response);
 
-    $cache[$request->url->string()] = $conversation;
+    $cache[md5(serialize($request))] = $conversation;
 
     return $conversation;
 }
