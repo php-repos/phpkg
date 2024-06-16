@@ -5,7 +5,7 @@ namespace Tests\GitTest\GitHubTest;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\JsonFile;
 use function file_exists;
-use function Phpkg\Git\GitHub\download;
+use function Phpkg\Git\GitHub\download_archive;
 use function Phpkg\Git\GitHub\extract_owner;
 use function Phpkg\Git\GitHub\extract_repo;
 use function Phpkg\Git\GitHub\find_latest_commit_hash;
@@ -89,7 +89,7 @@ test(
 test(
     title: 'it should download given repository to the given destination',
     case: function (Path $destination) {
-        assert_true(download($destination, 'saeghe', 'released-package', '5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01', token()), 'download failed');
+        assert_true(download_archive($destination, 'saeghe', 'released-package', '5885e5f3ed26c2289ceb2eeea1f108f7fbc10c01', token()), 'download failed');
         // Assert latest changes on the commit
         assert_true(true ===
             str_contains(

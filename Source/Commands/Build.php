@@ -9,6 +9,7 @@ use PhpRepos\Cli\Output;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;
+use PhpRepos\Console\Exceptions\InvalidCommandPromptException;
 use function PhpRepos\FileManager\Directory\exists;
 
 /**
@@ -27,6 +28,8 @@ return function (
 ) {
     $environment = System\environment();
 
+    $build_mode = BuildMode::tryFrom($env) ?? throw new InvalidCommandPromptException('Build mode env should be either `development` or `production`');
+
     Output\line('Start building...');
     $project = Project::initialized($environment->pwd->append($project));
 
@@ -34,7 +37,7 @@ return function (
         throw new PreRequirementsFailedException('It seems you didn\'t run the install command. Please make sure you installed your required packages.');
     }
 
-    $project->build_mode = BuildMode::from($env);
+    $project->build_mode = $build_mode;
 
     Output\line('Checking packages...');
 

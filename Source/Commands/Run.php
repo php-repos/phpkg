@@ -11,7 +11,7 @@ use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
-use function Phpkg\Git\Repositories\download;
+use function Phpkg\Git\Repositories\download_archive;
 
 /**
  * Allows you to execute a project on-the-fly.
@@ -36,7 +36,7 @@ return function (
     $root = $environment->temp->append('runner/github.com/' . $repository->owner . '/' . $repository->repo . '/' . $repository->hash);
 
     if (! Directory\exists($root)) {
-        Directory\make_recursive($root) && download($repository, $root);
+        Directory\make_recursive($root) && download_archive($repository, $root);
         $project = Project::initialized($root);
         PackageManager\install($project);
     }
