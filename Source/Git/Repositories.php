@@ -22,9 +22,9 @@ function token(Repository $repository): ?string
     );
 }
 
-function download(Repository $repository, string $root): bool
+function download_archive(Repository $repository, string $root): bool
 {
-    return \Phpkg\Git\GitHub\download(
+    return \Phpkg\Git\GitHub\download_archive(
         $root,
         $repository->owner,
         $repository->repo,

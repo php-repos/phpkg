@@ -22,7 +22,7 @@ use PhpRepos\FileManager\JsonFile;
 use PhpRepos\FileManager\Path;
 use function Phpkg\Application\Migrator\composer;
 use function Phpkg\Comparison\first_is_greater_or_equal;
-use function Phpkg\Git\Repositories\download;
+use function Phpkg\Git\Repositories\download_archive;
 use function Phpkg\Git\Repositories\file_content;
 use function Phpkg\Git\Repositories\file_exists;
 use function Phpkg\Git\Repositories\find_latest_commit_hash;
@@ -268,7 +268,7 @@ function manage_dependencies(Project $project, DependencyGraph $dependency_graph
     DependencyGraphs\foreach_dependency($dependency_graph, function (Dependency $dependency) use ($project, $dependency_graph) {
         $root = cache_path($dependency->value);
         unless(Directory\exists($root), fn () => Directory\make_recursive($root)
-            && download($dependency->value->value, $root));
+            && download_archive($dependency->value->value, $root));
         Directory\renew_recursive(package_path($project, $dependency->value));
         Directory\preserve_copy_recursively(
             cache_path($dependency->value),
@@ -326,7 +326,7 @@ function install(Project $project): void
         if (! Directory\exists($root)) {
             Directory\make_recursive($root);
         }
-        download($package->value, $root);
+        download_archive($package->value, $root);
     });
 }
 

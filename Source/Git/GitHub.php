@@ -296,7 +296,7 @@ function find_latest_commit_hash(string $owner, string $repo, ?string $token = n
 }
 
 /**
- * Download a specific version (tag) of a GitHub repository as a zip file.
+ * Download an archive from GitHub for the given repository as a zip file.
  *
  * @param string $destination The destination directory to save the zip file.
  * @param string $owner The owner (username or organization) of the repository.
@@ -306,13 +306,11 @@ function find_latest_commit_hash(string $owner, string $repo, ?string $token = n
  * @return bool True if the download and extraction were successful, false otherwise.
  * @throws Exception
  */
-function download(string $destination, string $owner, string $repo, string $hash, ?string $token = null): bool
+function download_archive(string $destination, string $owner, string $repo, string $hash, ?string $token = null): bool
 {
     $zip_file = Path::from_string($destination)->append("$hash.zip");
-
     $fp = fopen ($zip_file, 'w+');
     $ch = curl_init(GITHUB_URL . "$owner/$repo/zipball/$hash");
-    curl_setopt($ch, CURLOPT_TIMEOUT, 600);
     curl_setopt($ch, CURLOPT_FILE, $fp);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     $headers = [];
