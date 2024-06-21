@@ -10,7 +10,7 @@ use PhpRepos\FileManager\Resolver;
 use function Phpkg\Exception\register_exception_handler;
 
 if (! empty(getopt('v::', ['version::']))) {
-    Output\success('phpkg version 1.7.0');
+    Output\success('phpkg version 1.7.1');
     exit(0);
 }
 
