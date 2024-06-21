@@ -11,7 +11,7 @@ use const Phpkg\Git\GitHub\GITHUB_DOMAIN;
 function has_github_token(Environment $environment): bool
 {
     return Credentials::from_array(JsonFile\to_array($environment->credential_file))
-        ->has(fn (Credential $credential) => $credential->key === GITHUB_DOMAIN);
+        ->has(fn (Credential $credential) => $credential->key === GITHUB_DOMAIN && strlen($credential->value) > 0);
 }
 
 function github_token(Environment $environment): string
