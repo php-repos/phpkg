@@ -141,7 +141,7 @@ function send(Request\Message $request): Conversation
 
     if (($status_code === Status::FORBIDDEN || $status_code === Status::TOO_MANY_REQUESTS) && $response_header->first(fn (Pair $header) => $header->key === 'x-ratelimit-remaining')->value == 0) {
         Request\Requests\has_authorization($request)
-            ? throw new RateLimitedException('You have reached the GitHub API rate limit. Please try again in ' . time() - $response_header->first(fn (Pair $header) => $header->key === 'x-ratelimit-reset')->value)
+            ? throw new RateLimitedException('You have reached the GitHub API rate limit. Please try again in ' . $response_header->first(fn (Pair $header) => $header->key === 'x-ratelimit-reset')->value - time() . ' seconds.')
             : throw new UnauthenticatedRateLimitedException('You have reached the GitHub API rate limit. Please add a token to your request and try again.');
     }
 
