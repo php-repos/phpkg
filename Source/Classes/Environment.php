@@ -10,5 +10,6 @@ class Environment
         public readonly Path $pwd,
         public readonly Path $credential_file,
         public readonly Path $temp,
+        public readonly ?string $github_token,
     ) {}
 }
