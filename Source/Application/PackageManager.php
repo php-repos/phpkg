@@ -364,7 +364,7 @@ function migrate(Project $project): void
     $project->config($config);
     $project->meta = $meta;
 
-    Directory\delete_recursive($project->packages_directory);
+    when(exists($project->packages_directory), fn () => Directory\delete_recursive($project->packages_directory));
 
     $dependency_graph = DependencyGraph::empty();
 
