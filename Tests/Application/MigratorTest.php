@@ -9,6 +9,87 @@ use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(
+    title: 'it should set the import file to be match with composer autoload file',
+    case: function () {
+        $result = composer([]);
+
+        assert_true(['import-file' => 'vendor/autoload.php'] === $result, 'Default import file has not been set properly!');
+    }
+);
+
+test(
+    title: 'it should detect map from a composer config',
+    case: function () {
+        $composer_config = [
+            'autoload' => [
+                'psr-4' => [
+                    'App\\' => 'src/',
+                    'Tests\\' => 'src/tests/',
+                    'Data\Models\\' => 'src/Data/'
+                ]
+            ]
+        ];
+
+        $result = composer($composer_config);
+
+        $expected = [
+            'map' => [
+                'App' => 'src',
+                'Tests' => 'src/tests',
+                'Data\Models' => 'src/Data',
+            ],
+            'import-file' => 'vendor/autoload.php',
+        ];
+
+        assert_true($expected === $result, 'Map has not been detected properly!');
+    }
+);
+
+test(
+    title: 'it should ignore when an array defined in psr-4',
+    case: function () {
+        $composer_config = [
+            'autoload' => [
+                'psr-4' => [
+                    "App\\" => ["src/", "app/"],
+                ]
+            ]
+        ];
+        $result = composer($composer_config);
+
+        $expected = ['import-file' => 'vendor/autoload.php'];
+
+        assert_true($expected === $result, 'Map has not been detected properly!');
+    }
+);
+
+test(
+    title: 'it should detect autoloads from a composer config',
+    case: function () {
+        $composer_config = [
+            'autoload' => [
+                'files' => [
+                    'file1.php',
+                    'directory/file2.php',
+                ]
+            ]
+        ];
+
+        $result = composer($composer_config);
+
+        $expected = [
+            'autoloads' => [
+                'file1.php',
+                'directory/file2.php',
+            ],
+            'import-file' => 'vendor/autoload.php'
+        ];
+
+        assert_true($expected === $result, 'Autoloads has not been detected properly!');
+    }
+);
+
+test(
     title: 'it should convert composer requirements to packages',
     case: function () {
         $composer_config = [
@@ -31,7 +112,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.2.10',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'composer migrate did not convert packages properly.');
@@ -56,7 +138,7 @@ test(
 
         $result = composer($composer_config);
 
-        assert_true([] === $result, 'dev package not working as expected');
+        assert_true(['import-file' => 'vendor/autoload.php'] === $result, 'dev package not working as expected');
     }
 );
 
@@ -102,7 +184,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/php-fig/http-message.git' => '2.0',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, '2 digits convert is not working properly!');
@@ -130,7 +213,8 @@ test(
             'packages' => [
                 'https://github.com/php-fig/http-message.git' => '2.0',
                 'https://github.com/symfony/thanks.git' => 'v1.0.0'
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'It is not working with or without v');
@@ -156,7 +240,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/myclabs/DeepCopy.git' => '1.12.0',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting caret version numbers is not working properly.');
@@ -182,7 +267,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.3.0',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting tilda version numbers is not working properly.');
@@ -210,7 +296,8 @@ test(
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.3.0',
                 'https://github.com/myclabs/DeepCopy.git' => '1.12.0',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting >= version numbers is not working properly.');
@@ -236,7 +323,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.3.0',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting > version numbers is not working properly.');
@@ -262,7 +350,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/brick/math.git' => '0.12.1',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'multiple version number separated with | is not working properly.');
@@ -288,7 +377,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/brick/math.git' => '0.12.1',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'multiple version number separated with double pipe is not working properly.');
@@ -315,7 +405,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/brick/math.git' => '0.12.1',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Trimming version numbers is not working!');
@@ -343,7 +434,8 @@ test(
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.2.9',
                 'https://github.com/myclabs/DeepCopy.git' => '1.11.1',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting <= version numbers is not working properly.');
@@ -371,7 +463,8 @@ test(
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.2.9',
                 'https://github.com/sebastianbergmann/phpunit.git' => '8.5.38',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting <= version numbers is not working properly.');
@@ -397,7 +490,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/sebastianbergmann/phpunit.git' => '8.5.38',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Matching * is not working properly.');
@@ -423,7 +517,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/sebastianbergmann/phpunit.git' => '8.5.38',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Matching x is not working properly.');
@@ -449,7 +544,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/phpstan/phpstan.git' => '1.1.1',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting <= version numbers is not working properly.');
@@ -475,7 +571,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.3.0',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Converting <= version numbers is not working properly.');
@@ -501,7 +598,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/doctrine/common.git' => '3.4.4',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, 'Double pipe is not working properly');
@@ -527,7 +625,8 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/nikic/PHP-Parser.git' => 'v5.0.2',
-            ]
+            ],
+            'import-file' => 'vendor/autoload.php'
         ];
 
         assert_true($expected === $result, '@stable version is not working as expected!');
@@ -550,8 +649,7 @@ test(
 
         $result = composer($composer_config);
 
-        $expected = [
-        ];
+        $expected = ['import-file' => 'vendor/autoload.php'];
 
         assert_true($expected === $result, 'It is not ignoring the package when there is no tag');
     }
