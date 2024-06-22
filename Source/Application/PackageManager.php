@@ -372,13 +372,13 @@ function migrate(Project $project): void
     $project->config($config);
     $project->meta = $meta;
 
-    when(Directory\exists($project->packages_directory), fn () => Directory\delete_recursive($project->packages_directory));
-
     $dependency_graph = DependencyGraph::empty();
 
     $config->packages->each(function (Package $package) use ($project, $dependency_graph) {
         add_dependency($project, $dependency_graph, $package);
     });
+
+    when(Directory\exists($project->packages_directory), fn () => Directory\delete_recursive($project->packages_directory));
 
     manage_dependencies($project, $dependency_graph);
 }
