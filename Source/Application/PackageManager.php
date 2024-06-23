@@ -14,20 +14,14 @@ use Phpkg\DependencyGraph;
 use Phpkg\DependencyGraphs;
 use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Repository;
+use Phpkg\Git\Repositories;
 use PhpRepos\FileManager\Directory;
+use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\JsonFile;
 use PhpRepos\FileManager\Path;
 use function Phpkg\Application\Migrator\composer;
 use function Phpkg\Comparison\first_is_greater_or_equal;
-use function Phpkg\Git\Repositories\download_archive;
-use function Phpkg\Git\Repositories\file_content;
-use function Phpkg\Git\Repositories\file_exists;
-use function Phpkg\Git\Repositories\find_latest_commit_hash;
-use function Phpkg\Git\Repositories\find_latest_version;
-use function Phpkg\Git\Repositories\find_version_hash;
-use function Phpkg\Git\Repositories\has_any_tag;
-use function Phpkg\Git\Repositories\tags;
 use function Phpkg\Git\Version\compare;
 use function Phpkg\Git\Version\has_major_change;
 use function Phpkg\System\environment;
@@ -35,13 +29,12 @@ use function Phpkg\System\is_windows;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\ControlFlow\Conditional\when;
 use function PhpRepos\Datatype\Arr\has;
-use function PhpRepos\FileManager\File\exists;
 
 const DEVELOPMENT_VERSION = 'development';
 
 function match_highest_version(Repository $repository, string $version): ?string
 {
-    $tags = tags($repository);
+    $tags = Repositories\tags($repository);
 
     usort($tags, function ($tag1, $tag2) {
         return compare($tag2['name'], $tag1['name']);
@@ -64,8 +57,8 @@ function match_highest_version(Repository $repository, string $version): ?string
 
 function get_latest_version(Repository $repository): string
 {
-    return has_any_tag($repository)
-        ? find_latest_version($repository)
+    return Repositories\has_any_tag($repository)
+        ? Repositories\find_latest_version($repository)
         : DEVELOPMENT_VERSION;
 }
 
@@ -77,11 +70,11 @@ function is_development_version(string $version): bool
 function detect_hash(Repository $repository): string
 {
     return is_development_version($repository->version)
-        ? find_latest_commit_hash($repository)
-        : find_version_hash($repository);
+        ? Repositories\find_latest_commit_hash($repository)
+        : Repositories\find_version_hash($repository);
 }
 
-function cache_path(Package $package): Path
+function temp_path(Package $package): Path
 {
     return environment()->temp
         ->append("installer/{$package->value->domain}/{$package->value->owner}/{$package->value->repo}/{$package->value->hash}");
@@ -92,37 +85,28 @@ function package_path(Project $project, Package $package): Path
     return $project->packages_directory->append("{$package->value->owner}/{$package->value->repo}");
 }
 
-function load_local_config(Path $root): Config
+function config_from_disk(Path $root): Config
 {
-    $config_file = $root->append('phpkg.config.json');
-    if (exists($config_file)) {
-        return Config::from_array(JsonFile\to_array($config_file));
-    }
-
-    if (exists($root->append('composer.json'))) {
-        return Config::from_array(composer(JsonFile\to_array($root->append('composer.json'))));
-    }
-
-    return Config::init();
+    return Config::from_array(JsonFile\to_array($root->append('phpkg.config.json')));
 }
 
-function load_config(Package $package): Config
+function config(Dependency $dependency): Config
 {
-    $cache_path = cache_path($package);
+    static $cache = [];
 
-    if (Directory\exists($cache_path)) {
-        return load_local_config($cache_path);
+    if (isset($cache[$dependency->key])) {
+        return $cache[$dependency->key];
     }
 
-    if (file_exists($package->value, 'phpkg.config.json')) {
-        return Config::from_array(json_decode(json: file_content($package->value, 'phpkg.config.json'), associative: true, flags: JSON_THROW_ON_ERROR));
-    }
-
-    if (file_exists($package->value, 'composer.json')) {
-        return Config::from_array(
+    if (Directory\exists(temp_path($dependency->value))) {
+        $config = Config::from_array(JsonFile\to_array(temp_path($dependency->value)->append('phpkg.config.json')));
+    } else if (Repositories\file_exists($dependency->value->value, 'phpkg.config.json')) {
+        $config = Config::from_array(json_decode(json: Repositories\file_content($dependency->value->value, 'phpkg.config.json'), associative: true, flags: JSON_THROW_ON_ERROR));
+    } else if (Repositories\file_exists($dependency->value->value, 'composer.json')) {
+        $config = Config::from_array(
             composer(
                 json_decode(
-                    json: file_content($package->value, 'composer.json'),
+                    json: Repositories\file_content($dependency->value->value, 'composer.json'),
                     associative: true,
                     flags: JSON_THROW_ON_ERROR
                 )
@@ -130,7 +114,13 @@ function load_config(Package $package): Config
         );
     }
 
-    return Config::init();
+    if (! isset($config)) {
+        throw new PreRequirementsFailedException('The package you provided is neither a valid `phpkg` package nor a `composer` package. Please ensure that you are using a supported package type.');
+    }
+
+    $cache[$dependency->key] = $config;
+
+    return $config;
 }
 
 function delete_package(Project $project, Package $package): bool
@@ -144,7 +134,21 @@ function delete_package(Project $project, Package $package): bool
 
 function commit(Project $project): bool
 {
-    $config = [
+    $config = config_to_array($project->config);
+
+    $meta = $project->meta->packages->reduce(function (array $packages, Package $package) {
+        $packages['packages'][$package->key] = meta($package->value);
+
+        return $packages;
+    }, ['packages' => []]);
+
+    return JsonFile\write($project->config_file, $config)
+        && JsonFile\write($project->config_lock_file, $meta);
+}
+
+function config_to_array(Config $config): array
+{
+    $config_array = [
         'map' => [],
         'autoloads' => [],
         'excludes' => [],
@@ -155,37 +159,30 @@ function commit(Project $project): bool
         'packages' => [],
     ];
 
-    $project->config->map->each(function (NamespaceFilePair $namespace_file) use (&$config) {
-        $config['map'][$namespace_file->key] = $namespace_file->value->string();
+    $config->map->each(function (NamespaceFilePair $namespace_file) use (&$config_array) {
+        $config_array['map'][$namespace_file->key] = $namespace_file->value->string();
     });
-    $project->config->autoloads->each(function (Filename $filename) use (&$config) {
-        $config['autoloads'][] = $filename->string();
+    $config->autoloads->each(function (Filename $filename) use (&$config_array) {
+        $config_array['autoloads'][] = $filename->string();
     });
-    $project->config->excludes->each(function (Filename $filename) use (&$config) {
-        $config['excludes'][] = $filename->string();
+    $config->excludes->each(function (Filename $filename) use (&$config_array) {
+        $config_array['excludes'][] = $filename->string();
     });
-    $project->config->entry_points->each(function (Filename $filename) use (&$config) {
-        $config['entry-points'][] = $filename->string();
+    $config->entry_points->each(function (Filename $filename) use (&$config_array) {
+        $config_array['entry-points'][] = $filename->string();
     });
-    $project->config->executables->each(function (LinkPair $link) use (&$config) {
-        $config['executables'][$link->key->string()] = $link->value->string();
+    $config->executables->each(function (LinkPair $link) use (&$config_array) {
+        $config_array['executables'][$link->key->string()] = $link->value->string();
     });
-    $config['packages-directory'] = $project->config->packages_directory->string();
-    $project->config->packages->each(function (Package $package) use (&$config) {
-        $config['packages'][$package->key] = $package->value->version;
+    $config_array['packages-directory'] = $config->packages_directory->string();
+    $config->packages->each(function (Package $package) use (&$config_array) {
+        $config_array['packages'][$package->key] = $package->value->version;
     });
-    $project->config->aliases->each(function (PackageAlias $package_alias) use (&$config) {
-        $config['aliases'][$package_alias->key] = $package_alias->value;
+    $config->aliases->each(function (PackageAlias $package_alias) use (&$config_array) {
+        $config_array['aliases'][$package_alias->key] = $package_alias->value;
     });
 
-    $meta = $project->meta->packages->reduce(function (array $packages, Package $package) {
-        $packages['packages'][$package->key] = meta($package->value);
-
-        return $packages;
-    }, ['packages' => []]);
-
-    return JsonFile\write($project->config_file, $config)
-        && JsonFile\write($project->config_lock_file, $meta);
+    return $config_array;
 }
 
 /**
@@ -200,6 +197,17 @@ function meta(Repository $repository): array
         'version' => $repository->version,
         'hash' => $repository->hash,
     ];
+}
+
+function download(Dependency $dependency, Path $root): bool
+{
+    $downloaded = Repositories\download_archive($dependency->value->value, $root);
+
+    if (! File\exists($root->append('phpkg.config.json'))) {
+        JsonFile\write($root->append('phpkg.config.json'), config_to_array(config($dependency)));
+    }
+
+    return $downloaded;
 }
 
 function manage_dependencies(Project $project, DependencyGraph $dependency_graph): void
@@ -244,12 +252,11 @@ function manage_dependencies(Project $project, DependencyGraph $dependency_graph
         });
 
     DependencyGraphs\foreach_dependency($dependency_graph, function (Dependency $dependency) use ($project, $dependency_graph) {
-        $root = cache_path($dependency->value);
-        unless(Directory\exists($root), fn () => Directory\make_recursive($root)
-            && download_archive($dependency->value->value, $root));
+        $root = temp_path($dependency->value);
+        unless(Directory\exists($root), fn () => Directory\make_recursive($root) && download($dependency, $root));
         Directory\renew_recursive(package_path($project, $dependency->value));
         Directory\preserve_copy_recursively(
-            cache_path($dependency->value),
+            temp_path($dependency->value),
             package_path($project, $dependency->value)
         );
         $project->meta->packages->push($dependency->value);
@@ -267,7 +274,7 @@ function add_dependency(Project $project, DependencyGraph &$dependency_graph, Pa
 
     $dependency_graph = DependencyGraphs\add($dependency_graph, $dependency);
 
-    $dependency_graph = load_config($dependency->value)->packages->reduce(function (DependencyGraph $dependency_graph, Package $sub_package) use ($project, $dependency) {
+    $dependency_graph = config($dependency)->packages->reduce(function (DependencyGraph $dependency_graph, Package $sub_package) use ($project, $dependency) {
         $sub_dependency = add_dependency($project, $dependency_graph, $sub_package);
         return DependencyGraphs\add_sub_dependency($dependency_graph, $dependency, $sub_dependency);
     }, $dependency_graph);
@@ -279,7 +286,7 @@ function install(Project $project): void
 {
     Directory\exists_or_create($project->packages_directory);
 
-    if (! exists($project->config_lock_file)) {
+    if (! File\exists($project->config_lock_file)) {
         $dependency_graph = DependencyGraph::empty();
         $project->config->packages->each(function (Package $package) use ($project, $dependency_graph) {
             add_dependency($project, $dependency_graph, $package);
@@ -297,7 +304,8 @@ function install(Project $project): void
         if (! Directory\exists($root)) {
             Directory\make_recursive($root);
         }
-        download_archive($package->value, $root);
+
+        download(Dependency::from_package($package), $root);
     });
 }
 
@@ -357,20 +365,20 @@ function remove(Project $project, Package $package): void
 
 function migrate(Project $project): void
 {
-    $config = load_local_config($project->root);
+    $config = Config::from_array(composer(JsonFile\to_array($project->root->append('composer.json'))));
     $config->packages_directory = new Filename('vendor');
     $meta = Meta::init();
 
     $project->config($config);
     $project->meta = $meta;
 
-    Directory\delete_recursive($project->packages_directory);
-
     $dependency_graph = DependencyGraph::empty();
 
     $config->packages->each(function (Package $package) use ($project, $dependency_graph) {
         add_dependency($project, $dependency_graph, $package);
     });
+
+    when(Directory\exists($project->packages_directory), fn () => Directory\delete_recursive($project->packages_directory));
 
     manage_dependencies($project, $dependency_graph);
 }

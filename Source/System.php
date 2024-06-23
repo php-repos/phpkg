@@ -17,12 +17,12 @@ function random_temp_directory(): string
 
 function environment(): Environment
 {
-    $github_token_var = getenv('GITHUB_TOKEN');
-
     return new Environment(
-        Path::from_string($_SERVER['PWD']),
-        Path::from_string($_SERVER['SCRIPT_FILENAME'])->sibling('credentials.json'),
-        Path::from_string(sys_get_temp_dir())->append('phpkg'),
-        strlen($github_token_var) > 0 ? $github_token_var : null,
+        pwd: $pwd = Path::from_string($_SERVER['PWD']),
+        credential_file: str_starts_with($_SERVER['SCRIPT_FILENAME'], '..')
+            ? $pwd->append($_SERVER['SCRIPT_FILENAME'])->sibling('credentials.json')
+            : Path::from_string($_SERVER['SCRIPT_FILENAME'])->sibling('credentials.json'),
+        temp: Path::from_string(sys_get_temp_dir())->append('phpkg'),
+        github_token: strlen(getenv('GITHUB_TOKEN')) > 0 ? getenv('GITHUB_TOKEN') : null,
     );
 }

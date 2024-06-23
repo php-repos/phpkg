@@ -11,6 +11,7 @@ use function Phpkg\Git\Version\compare;
 use function Phpkg\Git\Version\has_major_change;
 use function Phpkg\Git\Version\is_stable;
 use function Phpkg\Packagist\git_url;
+use function PhpRepos\Datatype\Str\remove_last_character;
 
 function composer(array $composer_config): array
 {
@@ -45,6 +46,24 @@ function composer(array $composer_config): array
             }
         }
     }
+
+    if (isset($composer_config['autoload']['psr-4'])) {
+        foreach ($composer_config['autoload']['psr-4'] as $namespace => $path) {
+            if (! is_string($path)) {
+                continue;
+            }
+
+            $config['map'][remove_last_character($namespace)] = remove_last_character($path);
+        }
+    }
+
+    if (isset($composer_config['autoload']['files'])) {
+        foreach ($composer_config['autoload']['files'] as $path) {
+            $config['autoloads'][] = $path;
+        }
+    }
+
+    $config['import-file'] = 'vendor/autoload.php';
 
     return $config;
 }

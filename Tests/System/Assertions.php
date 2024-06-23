@@ -6,7 +6,7 @@ use Phpkg\Classes\Package;
 use Phpkg\Classes\Project;
 use Phpkg\Git\Repository;
 use PhpRepos\FileManager\Path;
-use function Phpkg\Application\PackageManager\cache_path;
+use function Phpkg\Application\PackageManager\temp_path;
 use function Phpkg\Application\PackageManager\package_path;
 use function PhpRepos\Datatype\Str\replace_first_occurrence;
 use function PhpRepos\FileManager\Directory\ls_recursively;
@@ -14,11 +14,11 @@ use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 
 function same_content_installed(Project $project, Package $package): void
 {
-    $cache_root = cache_path($package);
+    $temp_root = temp_path($package);
     $package_root = package_path($project, $package);
 
-    assert_true(ls_recursively($cache_root)->vertices()->every(function (Path $path) use ($cache_root, $package_root) {
-        $installed_path = replace_first_occurrence($path, $cache_root, $package_root);
+    assert_true(ls_recursively($temp_root)->vertices()->every(function (Path $path) use ($temp_root, $package_root) {
+        $installed_path = replace_first_occurrence($path, $temp_root, $package_root);
         
         if (is_dir($path)) {
             return is_dir($installed_path);

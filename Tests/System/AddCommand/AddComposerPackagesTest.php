@@ -3,6 +3,7 @@
 namespace Tests\System\AddComand\AddComposerPackagesTest;
 
 use PhpRepos\FileManager\Directory;
+use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\JsonFile;
 use PhpRepos\FileManager\Path;
 use function PhpRepos\FileManager\Resolver\root;
@@ -17,8 +18,10 @@ test(
 
         $project = Path::from_string(root() . '/TestRequirements/Fixtures/EmptyProject');
         assert_true(Directory\exists($project->append('Packages/sebastianbergmann/phpunit')), 'Composer package is not installed');
+        assert_true(File\exists($project->append('Packages/sebastianbergmann/phpunit/phpkg.config.json')), 'Config file not generated while adding composer package');
         assert_true(Directory\exists($project->append('Packages/phar-io/manifest')), 'Composer sub package is not installed');
         assert_true(Directory\exists($project->append('Packages/phar-io/version')), 'Composer recursive sub package is not installed');
+        assert_true(File\exists($project->append('Packages/phar-io/version/phpkg.config.json')), 'Config file not generated while adding composer package on sub package');
 
         $config = JsonFile\to_array($project->append('phpkg.config.json'));
         $meta = JsonFile\to_array($project->append('phpkg.config-lock.json'));

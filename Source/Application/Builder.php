@@ -18,7 +18,7 @@ use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\FilesystemCollection;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\Symlink;
-use function Phpkg\Application\PackageManager\load_local_config;
+use function Phpkg\Application\PackageManager\config_from_disk;
 use function Phpkg\Application\PackageManager\package_path;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
@@ -55,7 +55,7 @@ function build(Project $project): void
     $namespace_map = new Map();
 
     $project->meta->packages->each( function (Package $package) use ($project, $namespace_map) {
-        load_local_config(package_path($project, $package))->map->each(function (NamespaceFilePair $namespace_file) use ($project, $namespace_map, $package) {
+        config_from_disk(package_path($project, $package))->map->each(function (NamespaceFilePair $namespace_file) use ($project, $namespace_map, $package) {
             $namespace_map->push(new NamespacePathPair($namespace_file->key, build_package_path($project, $package)->append($namespace_file->value)));
         });
     });
@@ -75,7 +75,7 @@ function build(Project $project): void
     });
 
     $project->meta->packages->each(function (Package $package)  use ($project) {
-        load_local_config(package_path($project, $package))->executables->each(function (LinkPair $executable) use ($project, $package) {
+        config_from_disk(package_path($project, $package))->executables->each(function (LinkPair $executable) use ($project, $package) {
             add_executables($project, build_package_path($project, $package)->append($executable->value), build_root($project)->append($executable->key));
         });
     });
@@ -101,7 +101,7 @@ function compile_packages(Package $package, Project $project, Map $import_map, M
             package_path($project, $package),
             build_package_path($project, $package),
             $project,
-            load_local_config(package_path($project, $package)),
+            config_from_disk(package_path($project, $package)),
             $import_map,
             $namespace_map,
         ));
@@ -229,7 +229,7 @@ function package_compilable_files_and_directories(Project $project, Package $pac
     $package_root = package_path($project, $package);
     $excluded_paths = new FilesystemCollection();
     $excluded_paths->push($package_root->append('.git'));
-    load_local_config(package_path($project, $package))->excludes
+    config_from_disk(package_path($project, $package))->excludes
         ->each(fn (Filename $exclude) => $excluded_paths->push($package_root->append($exclude)));
 
     return Directory\ls_all($package_root)
@@ -345,7 +345,7 @@ EOD;
     }
 
     $project->meta->packages->each(function (Package $package) use ($project, &$content) {
-        load_local_config(package_path($project, $package))->autoloads->each(function (Filename $autoload) use ($project, $package, &$content) {
+        config_from_disk(package_path($project, $package))->autoloads->each(function (Filename $autoload) use ($project, $package, &$content) {
             $file_path = build_package_path($project, $package)->append($autoload)->string();
 
             if (File\exists($file_path)) {
