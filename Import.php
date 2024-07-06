@@ -54,6 +54,7 @@ spl_autoload_register(function ($class) {
         'PhpRepos\Console\Arguments' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Arguments.php'),
         'PhpRepos\Console\Attributes\Argument' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/Argument.php'),
         'PhpRepos\Console\Attributes\Description' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/Description.php'),
+        'PhpRepos\Console\Attributes\ExcessiveArguments' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/ExcessiveArguments.php'),
         'PhpRepos\Console\Attributes\LongOption' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/LongOption.php'),
         'PhpRepos\Console\Attributes\ShortOption' => realpath(__DIR__ . '/Packages/php-repos/console/Source/Attributes/ShortOption.php'),
         'PhpRepos\Console\CommandParameter' => realpath(__DIR__ . '/Packages/php-repos/console/Source/CommandParameter.php'),

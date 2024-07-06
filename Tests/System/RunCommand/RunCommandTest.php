@@ -12,6 +12,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
 use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
+use function Tests\Helper\reset_empty_project;
 
 test(
     title: 'it should run the given entry point on the given package',
@@ -64,5 +65,35 @@ test(
     after: function (Path $output) {
         delete($output);
         delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/chuck-norris'));
+    }
+);
+
+test(
+    title: 'it should run a composer package',
+    case: function (Path $path) {
+        $output = shell_exec('php ' . root() . 'phpkg run https://github.com/phpstan/phpstan.git phpstan analyze ' . $path->string() . ' -l 9');
+
+        assert_true(str_contains($output, '[ERROR] Found 2 errors'));
+    },
+    before: function () {
+        $path = Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject');
+        $content = <<<'EOD'
+<?php
+
+function a($b)
+{
+ echo $b;
+}
+
+a(1);
+
+EOD;
+
+        file_put_contents($path->append('index.php'), $content);
+
+        return $path;
+    },
+    after: function () {
+         reset_empty_project();
     }
 );
