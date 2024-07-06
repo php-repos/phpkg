@@ -624,7 +624,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/nikic/PHP-Parser.git' => 'v5.0.2',
+                'https://github.com/nikic/PHP-Parser.git' => 'v5.1.0',
             ],
             'import-file' => 'vendor/autoload.php'
         ];

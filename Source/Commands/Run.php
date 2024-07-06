@@ -9,6 +9,7 @@ use Phpkg\Git\Repository;
 use Phpkg\System;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
+use PhpRepos\Console\Attributes\ExcessiveArguments;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use function Phpkg\Git\Repositories\download_archive;
@@ -25,7 +26,9 @@ return function (
     string $package_url,
     #[Argument]
     #[Description("The entry point you want to execute within the project. If not provided, it will use the first\navailable entry point.")]
-    ?string $entry_point = null
+    ?string $entry_point = null,
+    #[ExcessiveArguments]
+    array $entry_point_arguments = []
 ) {
     $environment = System\environment();
 
@@ -37,6 +40,15 @@ return function (
 
     if (! Directory\exists($root)) {
         Directory\make_recursive($root) && download_archive($repository, $root);
+
+        $project = new Project($root);
+        $composer_file = $project->root->append('composer.json');
+
+        if (! File\exists($project->config_file) && File\exists($composer_file)) {
+            PackageManager\migrate($project);
+            PackageManager\commit($project);
+        }
+
         $project = Project::initialized($root);
         PackageManager\install($project);
     }
@@ -54,6 +66,6 @@ return function (
         throw new PreRequirementsFailedException("Entry point $entry_point is not defined in the package.");
     }
 
-    $process = proc_open('php ' . $entry_point_path->string(), [STDIN, STDOUT, STDOUT], $pipes);
+    $process = proc_open('php ' . $entry_point_path->string() . ' ' . implode(' ', $entry_point_arguments), [STDIN, STDOUT, STDOUT], $pipes);
     proc_close($process);
 };
