@@ -462,7 +462,7 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.2.9',
-                'https://github.com/sebastianbergmann/phpunit.git' => '8.5.38',
+                'https://github.com/sebastianbergmann/phpunit.git' => '8.5.39',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -489,7 +489,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/sebastianbergmann/phpunit.git' => '8.5.38',
+                'https://github.com/sebastianbergmann/phpunit.git' => '8.5.39',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -516,7 +516,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/sebastianbergmann/phpunit.git' => '8.5.38',
+                'https://github.com/sebastianbergmann/phpunit.git' => '8.5.39',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
