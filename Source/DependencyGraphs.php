@@ -13,8 +13,6 @@ use function Phpkg\Datatypes\Digraphs\depth_first_search;
 use function Phpkg\Datatypes\Digraphs\filter;
 use function Phpkg\Datatypes\Digraphs\find;
 use function Phpkg\Datatypes\Digraphs\has_node;
-use function Phpkg\Datatypes\Digraphs\in_neighbors;
-use function Phpkg\Datatypes\Digraphs\out_neighbors;
 use function Phpkg\Git\Version\compare;
 use function PhpRepos\Datatype\Arr\reduce;
 
@@ -32,21 +30,6 @@ function find_dependency(DependencyGraph $dependency_graph, Dependency $dependen
 {
     /** @var Dependency */
     return find($dependency_graph, fn (Dependency $vertex) => $vertex->key === $dependency->key);
-}
-
-/**
- * @param DependencyGraph $dependency_graph
- * @param Dependency $dependency
- * @return array<Dependency>
- */
-function dependencies(DependencyGraph $dependency_graph, Dependency $dependency): array
-{
-    return out_neighbors($dependency_graph, $dependency);
-}
-
-function dependents(DependencyGraph $dependency_graph, Dependency $dependency): array
-{
-    return in_neighbors($dependency_graph, $dependency);
 }
 
 function highest_version_of_dependency(DependencyGraph $dependency_graph, Dependency $dependency): Dependency
@@ -97,7 +80,7 @@ function swap(DependencyGraph $dependency_graph, Dependency $search, Dependency 
 
 function resolve(DependencyGraph $dependency_graph): DependencyGraph
 {
-    foreach_dependency($dependency_graph, function (Dependency $dependency) use (&$dependency_graph) {
+    $dependency_graph->vertices->each(function (Dependency $dependency) use (&$dependency_graph) {
         if (highest_version_of_dependency($dependency_graph, $dependency)->key !== $dependency->key) {
             return;
         }
@@ -114,11 +97,14 @@ function resolve(DependencyGraph $dependency_graph): DependencyGraph
     return $dependency_graph;
 }
 
-function foreach_dependency(DependencyGraph $dependency_graph, \Closure $closure): void
+/**
+ * @param DependencyGraph $dependency_graph
+ * @param Dependency $dependency
+ * @return Collection<Dependency>
+ */
+function dependencies(DependencyGraph $dependency_graph, Dependency $dependency): Collection
 {
-    foreach (depth_first_search($dependency_graph) as $dependency) {
-        $closure($dependency);
-    }
+    return depth_first_search($dependency_graph, $dependency);
 }
 
 function add(DependencyGraph $dependency_graph, Dependency $dependency): DependencyGraph

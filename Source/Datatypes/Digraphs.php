@@ -3,12 +3,11 @@
 namespace Phpkg\Datatypes\Digraphs;
 
 use Closure;
-use Generator;
 use Phpkg\Datatypes\Digraph;
 use Phpkg\Datatypes\Edge;
 use Phpkg\Datatypes\Node;
+use PhpRepos\Datatype\Collection;
 use PhpRepos\Datatype\Map;
-use PhpRepos\Datatype\Pair;
 
 function add_node(Digraph $digraph, Node $node): Digraph
 {
@@ -71,7 +70,7 @@ function filter(Digraph $digraph, Closure $condition): Map
 function out_neighbors(Digraph $digraph, Node $node): array
 {
     return $digraph->edges
-        ->filter(fn (Pair $edge) => $edge->key === $node->key)
+        ->filter(fn (Edge $edge) => $edge->key === $node->key)
         ->map(fn (Edge $edge) => find($digraph, fn (Node $vertex) => $vertex->key === $edge->value));
 }
 
@@ -83,17 +82,34 @@ function out_neighbors(Digraph $digraph, Node $node): array
 function in_neighbors(Digraph $digraph, Node $node): array
 {
     return $digraph->edges
-        ->filter(fn (Pair $edge) => $edge->value === $node->key)
+        ->filter(fn (Edge $edge) => $edge->value === $node->key)
         ->map(fn (Edge $edge) => find($digraph, fn (Node $vertex) => $vertex->key === $edge->key));
 }
 
 /**
  * @param Digraph $digraph
- * @return Generator<Node>
+ * @param Node $root
+ * @return Collection<Node>
  */
-function depth_first_search(Digraph $digraph): Generator
+function depth_first_search(Digraph $digraph, Node $root): Collection
 {
-    foreach ($digraph->vertices as $vertex) {
-        yield $vertex;
-    }
+    $visited = [];
+    $nodes = new Collection();
+
+    $dfs = function (Node $root) use ($digraph, &$visited, $nodes, &$dfs) {
+        if (isset($visited[$root->key])) {
+            return;
+        }
+
+        $visited[$root->key] = true;
+        $nodes->push($root);
+
+        foreach (out_neighbors($digraph, $root) as $node) {
+            $dfs($node);
+        }
+    };
+
+    $dfs($root);
+
+    return $nodes;
 }
