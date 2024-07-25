@@ -251,7 +251,7 @@ function manage_dependencies(Project $project, DependencyGraph $dependency_graph
             }
         });
 
-    DependencyGraphs\foreach_dependency($dependency_graph, function (Dependency $dependency) use ($project, $dependency_graph) {
+    $dependency_graph->vertices->each(function (Dependency $dependency) use ($project, $dependency_graph) {
         $root = temp_path($dependency->value);
         unless(Directory\exists($root), fn () => Directory\make_recursive($root) && download($dependency, $root));
         Directory\renew_recursive(package_path($project, $dependency->value));
@@ -292,7 +292,7 @@ function install(Project $project): void
             add_dependency($project, $dependency_graph, $package);
         });
 
-        DependencyGraphs\foreach_dependency($dependency_graph, function (Dependency $dependency) use ($project) {
+        $dependency_graph->vertices->each(function (Dependency $dependency) use ($project) {
             $project->meta->packages->push($dependency->value);
         });
 
@@ -331,27 +331,22 @@ function update(Project $project, Package $package): Dependency
     return $dependency;
 }
 
-function is_main_dependency(Project $project, Package $package): bool
-{
-    return $project->config->packages->has(fn (Package $main_package)
-        => $main_package->value->owner === $package->value->owner
-            && $main_package->value->repo === $package->value->repo);
-}
-
-function remove_dependency(Project $project, DependencyGraph $dependency_graph, Dependency $dependency): DependencyGraph
+function remove_dependency(Project $project, DependencyGraph $dependency_graph, Dependency $dependency): void
 {
     $dependency = DependencyGraphs\find_dependency($dependency_graph, $dependency);
 
-    if (! is_main_dependency($project, $dependency->value) && count(DependencyGraphs\dependents($dependency_graph, $dependency)) === 0) {
-        $dependencies = DependencyGraphs\dependencies($dependency_graph, $dependency);
-        $dependency_graph = DependencyGraphs\remove($dependency_graph, $dependency);
+    DependencyGraphs\dependencies($dependency_graph, $dependency)->each(function (Dependency $dependency) use ($project, $dependency_graph) {
+        $number_of_used = 1;
 
-        foreach ($dependencies as $sub_dependency) {
-            remove_dependency($project, $dependency_graph, $sub_dependency);
+        $project->config->packages->each(function (Package $main_package) use ($project, $dependency_graph, $dependency, &$number_of_used) {
+            $main_installed_package = $project->meta->packages->first(fn (Package $installed_package) => $installed_package->value->owner === $main_package->value->owner && $installed_package->value->repo === $main_package->value->repo);
+            $number_of_used += DependencyGraphs\dependencies($dependency_graph, Dependency::from_package($main_installed_package))->filter(fn (Dependency $sub_dependency) => $dependency->key === $sub_dependency->key)->count();
+        });
+
+        if ($number_of_used === 1) {
+            DependencyGraphs\remove($dependency_graph, $dependency);
         }
-    }
-
-    return $dependency_graph;
+    });
 }
 
 function remove(Project $project, Package $package): void
