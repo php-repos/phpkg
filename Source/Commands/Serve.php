@@ -12,21 +12,24 @@ use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\ExcessiveArguments;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
+use PhpRepos\FileManager\Path;
 use function Phpkg\Git\Repositories\download_archive;
 use function Phpkg\System\is_windows;
 use function PhpRepos\Cli\Output\line;
 
 /**
  * Serves an external project using PHP's built-in server on-the-fly.
- * This command facilitates serving a project on-the-fly by handling the download, build, and serving process using
- * PHP's built-in server. To use this command, provide a valid Git URL (either SSH or HTTPS) as the `package_url`
- * argument. Additionally, you can specify the desired entry point as the optional second argument when the package
- * offers multiple entry points.
+ * This command seamlessly manages the downloading, building, and serving of the specified project using PHP built-in server.
+ *
+ * To use this command, provide a valid Git URL (either SSH or HTTPS) as the `url_or_path` argument.
+ * For local projects, use an absolute or relative path from your current working directory.
+ *
+ * If the project has multiple entry points, you can specify the desired entry point as an optional second argument.
  */
 return function (
     #[Argument]
-    #[Description('The Git repository URL (HTTPS or SSH) of the project you intend to serve.')]
-    string $package_url,
+    #[Description("URL or path to the package.\nThe Git repository URL (HTTPS or SSH) of the package you want to serve. In case you want to serve a local package, pass an absolute path to the package, or a relative path from your current working directory.")]
+    string $url_or_path,
     #[Argument]
     #[Description("The entry point you want to execute within the project. If not provided, it will use the first\navailable entry point.")]
     ?string $entry_point = null,
@@ -40,13 +43,16 @@ return function (
         return;
     }
 
-    line("Serving $package_url on http://localhost:8000");
+    line("Serving $url_or_path on http://localhost:8000");
 
-    $repository = Repository::from_url($package_url);
-    $repository->version = PackageManager\get_latest_version($repository);
-    $repository->hash = PackageManager\detect_hash($repository);
-
-    $root = $environment->temp->append('runner/github.com/' . $repository->owner . '/' . $repository->repo . '/' . $repository->hash);
+    if (str_starts_with($url_or_path, 'https://') || str_starts_with($url_or_path, 'http://')) {
+        $repository = Repository::from_url($url_or_path);
+        $repository->version = PackageManager\get_latest_version($repository);
+        $repository->hash = PackageManager\detect_hash($repository);
+        $root = $environment->temp->append('runner/github.com/' . $repository->owner . '/' . $repository->repo . '/' . $repository->hash);
+    } else {
+        $root = str_starts_with($url_or_path, '/') ? Path::from_string($url_or_path) : $environment->pwd->append($url_or_path);
+    }
 
     if (! Directory\exists($root)) {
         Directory\make_recursive($root) && download_archive($repository, $root);

@@ -21,7 +21,7 @@ Here you can see a list of available commands:
 \e[39m    install       Downloads and installs added packages into your project's directory.
 \e[39m    migrate       The `migrate` command is used to migrate from a Composer project to a `phpkg` project.
 \e[39m    remove        Removes the specified package from your project.
-\e[39m    run           Allows you to execute a project on-the-fly.
+\e[39m    run           Runs a project on-the-fly.
 \e[39m    serve         Serves an external project using PHP's built-in server on-the-fly.
 \e[39m    update        Allows you to update the version of a specified package in your PHP project.
 \e[39m    watch         Enables you to monitor file changes in your project and automatically build the project for each change.
