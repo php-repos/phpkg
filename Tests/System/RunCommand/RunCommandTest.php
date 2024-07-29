@@ -27,6 +27,42 @@ test(
 );
 
 test(
+    title: 'it should run the given version',
+    case: function () {
+        $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/dummy-tool.git --version=v1');
+
+        assert_true(str_contains($output, 'v1: Hello world from cli'));
+    },
+    after: function () {
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/dummy-tool'));
+    }
+);
+
+test(
+    title: 'it should run the given version at the latest commit',
+    case: function () {
+        $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/dummy-tool.git --version=development');
+
+        assert_true(str_contains($output, 'Latest commit: Hello world from cli'));
+    },
+    after: function () {
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/dummy-tool'));
+    }
+);
+
+test(
+    title: 'it should run the given version at the latest commit',
+    case: function () {
+        $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/dummy-tool.git --version=development#7a327643799d64632f2e1dbdb69f1f5eb6658881');
+
+        assert_true(str_contains($output, 'Specific commit: Hello world from cli'));
+    },
+    after: function () {
+        delete_recursive(Path::from_string(sys_get_temp_dir())->append('phpkg/runner/github.com/php-repos/dummy-tool'));
+    }
+);
+
+test(
     title: 'it should show error message when the entry point is not defined',
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg run https://github.com/php-repos/chuck-norris.git not-exists.php');
