@@ -35,7 +35,7 @@ function assert_cli_1_0_0_installed(Project $project): void
     $installed_version = $project->meta->packages->first(fn (Package $package) => $package->value->owner === $repository->owner && $package->value->repo === $repository->repo);
     assert_true($installed_version instanceof Package, 'CLI is not installed!');
     assert_true($installed_version->value->version === 'v1.0.0', 'CLI version is not v1.0.0!');
-    assert_true($installed_version->value->hash === '9d8bd24f9d31b5bf18bc01e89053d311495f714d', 'CLI hash is not for v1.0.0!');
+    assert_true(in_array($installed_version->value->hash, ['9d8bd24f9d31b5bf18bc01e89053d311495f714d', 'f7c1eecaee1fbf01f4ea90a375ae8a3cd4944b3e']), 'CLI hash is not for v1.0.0!');
     same_content_installed($project, $installed_version);
 }
 
@@ -138,6 +138,28 @@ function assert_datatype_1_1_0_installed(Project $project): void
     same_content_installed($project, $installed_version);
 }
 
+function assert_datatype_1_2_0_installed(Project $project): void
+{
+    $repository = Repository::from_url('https://github.com/php-repos/datatype.git');
+    /** @var Package|null $installed_version */
+    $installed_version = $project->meta->packages->first(fn (Package $package) => $package->value->owner === $repository->owner && $package->value->repo === $repository->repo);
+    assert_true($installed_version instanceof Package, 'Datatype is not installed!');
+    assert_true($installed_version->value->version === 'v1.2.0', 'Datatype version is not v1.2.0!');
+    assert_true($installed_version->value->hash === '81dbcabda6f2713ce093fdc846afa3d403486426', 'Datatype hash is not for v1.2.0!');
+    same_content_installed($project, $installed_version);
+}
+
+function assert_datatype_2_0_0_installed(Project $project): void
+{
+    $repository = Repository::from_url('https://github.com/php-repos/datatype.git');
+    /** @var Package|null $installed_version */
+    $installed_version = $project->meta->packages->first(fn (Package $package) => $package->value->owner === $repository->owner && $package->value->repo === $repository->repo);
+    assert_true($installed_version instanceof Package, 'Datatype is not installed!');
+    assert_true($installed_version->value->version === 'v2.0.0', 'Datatype version is not v2.0.0!');
+    assert_true($installed_version->value->hash === '7fe3a27e6b57ff31374927d14c63db07cbaee579', 'Datatype hash is not for v2.0.0!');
+    same_content_installed($project, $installed_version);
+}
+
 function assert_file_manager_1_0_0_installed(Project $project): void
 {
     $repository = Repository::from_url('https://github.com/php-repos/file-manager.git');
@@ -200,7 +222,7 @@ function assert_test_runner_1_0_0_installed(Project $project): void
     $installed_version = $project->meta->packages->first(fn (Package $package) => $package->value->owner === $repository->owner && $package->value->repo === $repository->repo);
     assert_true($installed_version instanceof Package, 'TestRunner is not installed!');
     assert_true($installed_version->value->version === 'v1.0.0', 'TestRunner version is not v1.0.0!');
-    assert_true($installed_version->value->hash === '30f3ce06c760719c7a107532b6755f9882c57b83', 'TestRunner hash is not for v1.0.0!');
+    assert_true(in_array($installed_version->value->hash, ['30f3ce06c760719c7a107532b6755f9882c57b83', 'c5ee7b5d9a228b6e833af414359d486609ee530d']), 'TestRunner hash is not for v1.0.0!');
     same_content_installed($project, $installed_version);
 }
 

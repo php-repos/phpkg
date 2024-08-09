@@ -73,10 +73,10 @@ return function (
     line('Updating package...');
     $package = new Package($package_url, $repository);
 
-    $dependency = PackageManager\update($project, $package);
-
     line('Updating configs...');
-    $project->config->packages->push($dependency->value);
+    $project->config->packages->push($package);
+
+    PackageManager\update($project, $package);
 
     line('Committing new configs...');
     PackageManager\commit($project);

@@ -21,6 +21,7 @@ use PhpRepos\FileManager\Filename;
 use PhpRepos\FileManager\JsonFile;
 use PhpRepos\FileManager\Path;
 use function Phpkg\Application\Migrator\composer;
+use function Phpkg\Application\Migrator\composer_lock;
 use function Phpkg\Comparison\first_is_greater_or_equal;
 use function Phpkg\Git\Version\compare;
 use function Phpkg\Git\Version\has_major_change;
@@ -69,9 +70,19 @@ function is_development_version(string $version): bool
 
 function detect_hash(Repository $repository): string
 {
-    return is_development_version($repository->version)
+    static $cache = [];
+
+    if (isset($cache[$repository->owner][$repository->repo][$repository->version])) {
+        return $cache[$repository->owner][$repository->repo][$repository->version];
+    }
+
+    $hash = is_development_version($repository->version)
         ? Repositories\find_latest_commit_hash($repository)
         : Repositories\find_version_hash($repository);
+
+    $cache[$repository->owner][$repository->repo][$repository->version] = $hash;
+
+    return $hash;
 }
 
 function temp_path(Package $package): Path
@@ -123,6 +134,48 @@ function config(Dependency $dependency): Config
     return $config;
 }
 
+function meta(Dependency $dependency): Meta
+{
+    static $cache = [];
+
+    if (isset($cache[$dependency->key])) {
+        return $cache[$dependency->key];
+    }
+
+    if (File\exists(temp_path($dependency->value)->append('phpkg.config-lock.json'))) {
+        $meta = Meta::from_array(JsonFile\to_array(temp_path($dependency->value)->append('phpkg.config-lock.json')));
+    } else if (Repositories\file_exists($dependency->value->value, 'phpkg.config-lock.json')) {
+        $meta = Meta::from_array(json_decode(json: Repositories\file_content($dependency->value->value, 'phpkg.config-lock.json'), associative: true, flags: JSON_THROW_ON_ERROR));
+    } else if (Repositories\file_exists($dependency->value->value, 'composer.lock')) {
+        $meta = Meta::from_array(
+            composer_lock(
+                json_decode(
+                    json: Repositories\file_content($dependency->value->value, 'composer.lock'),
+                    associative: true,
+                    flags: JSON_THROW_ON_ERROR
+                )
+            )
+        );
+    } else {
+        $meta = Meta::init();
+    }
+
+    $cache[$dependency->key] = $meta;
+
+    return $meta;
+}
+
+function get_hash(Dependency $dependency, Package $package): string
+{
+    $meta = meta($dependency);
+
+    $hash = $meta->packages->has(fn (Package $required_package) => $required_package->value->owner === $package->value->owner && $required_package->value->repo === $package->value->repo && $required_package->value->version === $package->value->version)
+        ? $meta->packages->first(fn (Package $required_package) => $required_package->value->owner === $package->value->owner && $required_package->value->repo === $package->value->repo && $required_package->value->version === $package->value->version)->value->hash
+        : detect_hash($package->value);
+
+    return $hash !== '' ? $hash : detect_hash($package->value);
+}
+
 function delete_package(Project $project, Package $package): bool
 {
     if (is_windows()) {
@@ -135,15 +188,19 @@ function delete_package(Project $project, Package $package): bool
 function commit(Project $project): bool
 {
     $config = config_to_array($project->config);
-
-    $meta = $project->meta->packages->reduce(function (array $packages, Package $package) {
-        $packages['packages'][$package->key] = meta($package->value);
-
-        return $packages;
-    }, ['packages' => []]);
+    $meta = meta_to_array($project->meta);
 
     return JsonFile\write($project->config_file, $config)
         && JsonFile\write($project->config_lock_file, $meta);
+}
+
+function meta_to_array(Meta $meta): array
+{
+    return $meta->packages->reduce(function (array $packages, Package $package) {
+        $packages['packages'][$package->key] = meta_array($package->value);
+
+        return $packages;
+    }, ['packages' => []]);
 }
 
 function config_to_array(Config $config): array
@@ -189,7 +246,7 @@ function config_to_array(Config $config): array
  * @param Repository $repository
  * @return array{owner: string, repo: string, version: string, hash: string}
  */
-function meta(Repository $repository): array
+function meta_array(Repository $repository): array
 {
     return [
         'owner' => $repository->owner,
@@ -207,12 +264,31 @@ function download(Dependency $dependency, Path $root): bool
         JsonFile\write($root->append('phpkg.config.json'), config_to_array(config($dependency)));
     }
 
+    if (! File\exists($root->append('phpkg.config-lock.json'))) {
+        JsonFile\write($root->append('phpkg.config-lock.json'), meta_to_array(meta($dependency)));
+    }
+
     return $downloaded;
 }
 
 function manage_dependencies(Project $project, DependencyGraph $dependency_graph): void
 {
     $dependency_graph = DependencyGraphs\resolve($dependency_graph);
+
+    $dependency_graph->vertices->each(function (Dependency $dependency) use ($project, $dependency_graph) {
+        DependencyGraphs\dependencies($dependency_graph, $dependency)->each(function (Dependency $dependency) use ($project, $dependency_graph) {
+            $number_of_used = $project->config->packages->has(fn (Package $main_package) => $dependency->value->value->owner === $main_package->value->owner && $dependency->value->value->repo === $main_package->value->repo) ? 1 : 0;
+
+            $project->config->packages->each(function (Package $main_package) use ($project, $dependency_graph, $dependency, &$number_of_used) {
+                $main_dependency = DependencyGraphs\find_package_dependency($dependency_graph, $main_package);
+                $number_of_used += DependencyGraphs\dependencies($dependency_graph, $main_dependency)->filter(fn (Dependency $sub_dependency) => $dependency->key === $sub_dependency->key)->count();
+            });
+
+            if ($number_of_used === 0) {
+                DependencyGraphs\remove($dependency_graph, $dependency);
+            }
+        });
+    });
 
     $project->meta->packages
         ->each(function (Package $package) use ($project, $dependency_graph) {
@@ -265,7 +341,6 @@ function manage_dependencies(Project $project, DependencyGraph $dependency_graph
 
 function add_dependency(Project $project, DependencyGraph &$dependency_graph, Package $package): Dependency
 {
-    $package->value->hash = detect_hash($package->value);
     $dependency = Dependency::from_package($package);
 
     if (DependencyGraphs\has_identical_dependency($dependency_graph, $dependency)) {
@@ -274,7 +349,8 @@ function add_dependency(Project $project, DependencyGraph &$dependency_graph, Pa
 
     $dependency_graph = DependencyGraphs\add($dependency_graph, $dependency);
 
-    $dependency_graph = config($dependency)->packages->reduce(function (DependencyGraph $dependency_graph, Package $sub_package) use ($project, $dependency) {
+    $dependency_graph = config($dependency)->packages->reduce(function (DependencyGraph $dependency_graph, Package $sub_package) use ($project, $dependency, $package) {
+        $sub_package->value->hash = get_hash($dependency, $sub_package);
         $sub_dependency = add_dependency($project, $dependency_graph, $sub_package);
         return DependencyGraphs\add_sub_dependency($dependency_graph, $dependency, $sub_dependency);
     }, $dependency_graph);
@@ -289,6 +365,7 @@ function install(Project $project): void
     if (! File\exists($project->config_lock_file)) {
         $dependency_graph = DependencyGraph::empty();
         $project->config->packages->each(function (Package $package) use ($project, $dependency_graph) {
+            $package->value->hash = detect_hash($package->value);
             add_dependency($project, $dependency_graph, $package);
         });
 
@@ -309,32 +386,29 @@ function install(Project $project): void
     });
 }
 
-function add(Project $project, Package $package): Dependency
+function add(Project $project, Package $package)
 {
+    $package->value->hash = detect_hash($package->value);
     $dependency_graph = DependencyGraph::for($project);
-
-    $dependency = add_dependency($project, $dependency_graph, $package);
-
+    add_dependency($project, $dependency_graph, $package);
     manage_dependencies($project, $dependency_graph);
-
-    return $dependency;
 }
 
-function update(Project $project, Package $package): Dependency
+function update(Project $project, Package $package)
 {
+    $package->value->hash = detect_hash($package->value);
     $dependency_graph = DependencyGraph::for($project);
-
-    $dependency = add_dependency($project, $dependency_graph, $package);
-
+    $old_dependency = DependencyGraphs\find_package_dependency($dependency_graph, $package);
+    $new_dependency = add_dependency($project, $dependency_graph, $package);
+    $dependency_graph = DependencyGraphs\swap($dependency_graph, $old_dependency, $new_dependency);
+    DependencyGraphs\remove($dependency_graph, $old_dependency);
     manage_dependencies($project, $dependency_graph);
-
-    return $dependency;
 }
 
-function remove_dependency(Project $project, DependencyGraph $dependency_graph, Dependency $dependency): void
+function remove(Project $project, Package $package): void
 {
-    $dependency = DependencyGraphs\find_dependency($dependency_graph, $dependency);
-
+    $dependency_graph = DependencyGraph::for($project);
+    $dependency = Dependency::from_package($package);
     DependencyGraphs\dependencies($dependency_graph, $dependency)->each(function (Dependency $dependency) use ($project, $dependency_graph) {
         $number_of_used = 1;
 
@@ -347,13 +421,6 @@ function remove_dependency(Project $project, DependencyGraph $dependency_graph, 
             DependencyGraphs\remove($dependency_graph, $dependency);
         }
     });
-}
-
-function remove(Project $project, Package $package): void
-{
-    $dependency_graph = DependencyGraph::for($project);
-
-    remove_dependency($project, $dependency_graph, Dependency::from_package($package));
 
     manage_dependencies($project, $dependency_graph);
 }
@@ -362,16 +429,21 @@ function migrate(Project $project): void
 {
     $config = Config::from_array(composer(JsonFile\to_array($project->root->append('composer.json'))));
     $config->packages_directory = new Filename('vendor');
-    $meta = Meta::init();
+    $meta = File\exists($project->root->append('composer.lock')) ? Meta::from_array(composer_lock(JsonFile\to_array($project->root->append('composer.json')))) : Meta::init();
 
     $project->config($config);
     $project->meta = $meta;
 
-    $dependency_graph = DependencyGraph::empty();
+    if (File\exists($project->root->append('composer.lock'))) {
+        $dependency_graph = DependencyGraph::for($project);
+    } else {
+        $dependency_graph = DependencyGraph::empty();
 
-    $config->packages->each(function (Package $package) use ($project, $dependency_graph) {
-        add_dependency($project, $dependency_graph, $package);
-    });
+        $config->packages->each(function (Package $package) use ($project, $dependency_graph) {
+            $package->value->hash = detect_hash($package->value);
+            add_dependency($project, $dependency_graph, $package);
+        });
+    }
 
     when(Directory\exists($project->packages_directory), fn () => Directory\delete_recursive($project->packages_directory));
 

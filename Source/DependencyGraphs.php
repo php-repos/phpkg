@@ -3,6 +3,7 @@
 namespace Phpkg\DependencyGraphs;
 
 use Phpkg\Classes\Dependency;
+use Phpkg\Classes\Package;
 use Phpkg\Datatypes\Edge;
 use Phpkg\DependencyGraph;
 use PhpRepos\Datatype\Collection;
@@ -26,10 +27,10 @@ function has_identical_dependency(DependencyGraph $dependency_graph, Dependency 
     return has_node($dependency_graph, fn (Dependency $vertex) => $vertex->key === $dependency->key);
 }
 
-function find_dependency(DependencyGraph $dependency_graph, Dependency $dependency): Dependency
+function find_package_dependency(DependencyGraph $dependency_graph, Package $package): Dependency
 {
     /** @var Dependency */
-    return find($dependency_graph, fn (Dependency $vertex) => $vertex->key === $dependency->key);
+    return find($dependency_graph, fn (Dependency $vertex) => $vertex->value->value->owner === $package->value->owner && $vertex->value->value->repo === $package->value->repo);
 }
 
 function highest_version_of_dependency(DependencyGraph $dependency_graph, Dependency $dependency): Dependency

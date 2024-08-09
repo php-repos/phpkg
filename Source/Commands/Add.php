@@ -73,12 +73,12 @@ return function(
     $package = new Package($package_url, $repository);
 
     line('Adding the package...');
-    $dependency = PackageManager\add($project, $package);
+    $project->config->packages->push($package);
 
-    $project->config->packages->push($dependency->value);
+    PackageManager\add($project, $package);
 
     line('Updating configs...');
-    $project->config->packages->push($dependency->value);
+
 
     line('Committing configs...');
 

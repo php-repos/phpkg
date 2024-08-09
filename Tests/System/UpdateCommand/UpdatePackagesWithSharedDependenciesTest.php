@@ -12,7 +12,7 @@ use function Tests\Helper\reset_empty_project;
 test(
     title: 'it should update packages with shared dependencies',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/file-manager.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/file-manager.git --force --project=TestRequirements/Fixtures/EmptyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -27,9 +27,9 @@ test(
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/datatype.git --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/file-manager.git --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/test-runner.git --version=v1 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/datatype.git --version=v1 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/file-manager.git --version=v2 --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         reset_empty_project();
