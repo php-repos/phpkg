@@ -16,6 +16,7 @@ use function Tests\System\Assertions\assert_cli_2_0_0_installed;
 use function Tests\System\Assertions\assert_console_1_0_0_installed;
 use function Tests\System\Assertions\assert_datatype_1_0_0_installed;
 use function Tests\System\Assertions\assert_datatype_1_1_0_installed;
+use function Tests\System\Assertions\assert_datatype_1_2_0_installed;
 use function Tests\System\Assertions\assert_file_manager_1_0_0_installed;
 use function Tests\System\Assertions\assert_file_manager_2_0_0_installed;
 use function Tests\System\Assertions\assert_file_manager_2_0_3_installed;
@@ -186,6 +187,44 @@ test(
         shell_exec('php ' . root() . 'phpkg alias test-runner https://github.com/php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg alias cli https://github.com/php-repos/cli.git --project=TestRequirements/Fixtures/EmptyProject');
         shell_exec('php ' . root() . 'phpkg add cli v1.2.1 --project=TestRequirements/Fixtures/EmptyProject');
+    },
+    after: function () {
+        reset_empty_project();
+    }
+);
+
+test(
+    title: 'it should show error when there is another packages that uses a version with major change',
+    case: function () {
+        shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/datatype.git --version=v1 --project=TestRequirements/Fixtures/EmptyProject');
+
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+
+        assert_datatype_1_2_0_installed($project);
+        assert_file_manager_2_0_0_installed($project);
+    },
+    before: function () {
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+    },
+    after: function () {
+        reset_empty_project();
+    }
+);
+
+test(
+    title: 'it should install the given version of the package',
+    case: function () {
+        shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/datatype.git --version=v1 --project=TestRequirements/Fixtures/EmptyProject');
+
+        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+
+        assert_datatype_1_2_0_installed($project);
+        assert_file_manager_2_0_0_installed($project);
+        assert_cli_1_0_0_installed($project);
+        assert_test_runner_1_1_0_installed($project);
+    },
+    before: function () {
+        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         reset_empty_project();

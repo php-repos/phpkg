@@ -14,14 +14,14 @@ test(
     case: function () {
         $output = shell_exec('php ' . root() . 'phpkg remove git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
 
-        assert_desired_data_in_packages_directory('Package has not been deleted from Packages directory!' . $output);
+        assert_desired_data_in_packages_directory('Package has been deleted from Packages directory!' . $output);
         assert_config_file_is_clean('Packages has not been deleted from config file!' . $output);
         assert_meta_is_clean('Packages has been deleted from meta file!' . $output);
     },
     before: function () {
         shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/cli.git --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/test-runner.git --version=v1 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/cli.git --version=v2 --project=TestRequirements/Fixtures/EmptyProject');
     },
     after: function () {
         reset_empty_project();

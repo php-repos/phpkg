@@ -4,6 +4,7 @@ namespace Phpkg\Application\Migrator;
 
 use Phpkg\Exception\CanNotDetectComposerPackageVersionException;
 use Phpkg\Git\Repository;
+use function Phpkg\Application\PackageManager\meta_array;
 use function Phpkg\Comparison\first_is_greater_or_equal;
 use function Phpkg\Git\Repositories\has_any_tag;
 use function Phpkg\Git\Repositories\tags;
@@ -200,4 +201,19 @@ function get_version(Repository $repository, string $version_pattern): string
     }
 
     throw new CanNotDetectComposerPackageVersionException("Not supported version number $version_pattern defined for package $repository->owner/$repository->repo");
+}
+
+function composer_lock(array $lock_content): array
+{
+    $meta = ['packages' => []];
+
+    foreach ($lock_content['packages'] as $package) {
+        $repository = Repository::from_url($package['source']['url']);
+        $repository->version = $package['version'];
+        $repository->hash = $package['source']['reference'];
+
+        $meta['packages'][] = meta_array($repository);
+    }
+
+    return $meta;
 }
