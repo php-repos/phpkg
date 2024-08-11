@@ -4,7 +4,7 @@ namespace Tests\System\VersionCommandTest;
 
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\Cli\Output\assert_success;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

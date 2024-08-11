@@ -6,7 +6,7 @@ use function Phpkg\Environments\github_token;
 use function Phpkg\Git\GitHub\get_json;
 use function Phpkg\Http\Response\Responses\to_array;
 use function Phpkg\System\environment;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

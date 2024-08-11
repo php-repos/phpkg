@@ -1,2 +1,4 @@
 .idea
 credentials.json
+/Packages
+/builds

@@ -3,7 +3,7 @@
 namespace Tests\Git\Version\MajorTest;
 
 use function Phpkg\Git\Version\major;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

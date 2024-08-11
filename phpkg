@@ -1,13 +1,11 @@
 #!/usr/bin/env php
 <?php
 
-require realpath(__DIR__ . '/Import.php');
-
 use PhpRepos\Cli\Output;
 use PhpRepos\Console\Config;
 use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\Resolver;
-use function Phpkg\Exception\register_exception_handler;
+use function Phpkg\Exception\Handler\register_exception_handler;
 
 if (! empty(getopt('v::', ['version::']))) {
     Output\success('phpkg version 1.9.1');

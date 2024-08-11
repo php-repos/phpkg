@@ -1,7 +1,10 @@
 <?php
 
-namespace Phpkg\Exception;
+namespace Phpkg\Exception\Handler;
 
+use Phpkg\Exception\CanNotDetectComposerPackageVersionException;
+use Phpkg\Exception\CredentialCanNotBeSetException;
+use Phpkg\Exception\PreRequirementsFailedException;
 use Phpkg\Git\Exception\GithubApiRequestException;
 use Phpkg\Git\Exception\InvalidTokenException;
 use Phpkg\Git\Exception\NotFoundException;
