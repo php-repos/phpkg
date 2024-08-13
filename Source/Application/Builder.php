@@ -214,11 +214,7 @@ function apply_file_modifications(Project $project, Path $origin, Map $import_ma
 
     $require_statements = $paths->map(fn(NamespacePathPair $namespace_path) => "require_once '{$namespace_path->value->string()}';");
 
-    $php_file = $php_file->has_namespace()
-        ? $php_file->add_after_namespace(PHP_EOL . PHP_EOL . implode(PHP_EOL, $require_statements))
-        : $php_file->add_after_opening_tag(PHP_EOL . implode(PHP_EOL, $require_statements) . PHP_EOL);
-
-    return $php_file->code();
+    return $php_file->add_autoloads(implode('', $require_statements))->code();
 }
 
 /**
@@ -265,10 +261,8 @@ function add_autoloads(Project $project, Path $target): void
     $line = "require_once '$import_path';";
 
     $php_file = PhpFile::from_content(File\content($target));
-    $php_file = $php_file->has_strict_type_declaration()
-        ? $php_file->add_after_strict_type_declaration(PHP_EOL . $line . PHP_EOL)
-        : $php_file->add_after_opening_tag(PHP_EOL . $line . PHP_EOL);
-    File\modify($target, $php_file->code());
+
+    File\modify($target, $php_file->add_autoloads($line)->code());
 }
 
 /**

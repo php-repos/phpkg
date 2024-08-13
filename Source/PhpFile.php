@@ -307,6 +307,19 @@ class PhpFile
         return $used_constants;
     }
 
+    public function add_autoloads(string $autoloads): static
+    {
+        if ($this->has_namespace()) {
+            return $this->add_after_namespace($autoloads);
+        }
+
+        if ($this->has_strict_type_declaration()) {
+            return $this->add_after_strict_type_declaration($autoloads);
+        }
+
+        return $this->add_after_opening_tag($autoloads);
+    }
+
     private function class_definition_tokens(): array
     {
         $tokens = [T_CLASS, T_TRAIT, T_INTERFACE, T_FINAL, T_ABSTRACT];

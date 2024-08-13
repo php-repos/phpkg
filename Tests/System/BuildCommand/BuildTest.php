@@ -510,9 +510,7 @@ EOD;
         assert_true(File\exists($build_path->append('Packages/owner/repo/helper.php')));
         $expected = <<<EOD
 <?php
-
 require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
 // public/index file
 
 EOD;
@@ -520,9 +518,7 @@ EOD;
         assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('public/index.php')), 'public/index file content is not correct!');
         $expected = <<<EOD
 <?php
-
 require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
 // index file
 
 EOD;
@@ -647,20 +643,17 @@ EOD;
         assert_true(File\exists($build_path->append('helper.php')));
         assert_true(File\exists($build_path->append('Packages/owner/repo/helper.php')));
         $expected = <<<EOD
-<?php declare(strict_types=1);
-require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
+<?php declare(strict_types=1);require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
 
 // public/index file
 
 EOD;
+
         assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('public/index.php')), 'public/index file content is not correct!');
         $expected = <<<EOD
 <?php
 
-declare(strict_types=0);
-require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
+declare(strict_types=0);require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
 
 // index file
 
@@ -788,9 +781,7 @@ EOD;
         assert_true(File\exists($build_path->append('helper.php')));
         assert_true(File\exists($build_path->append('Packages/owner/repo/helper.php')));
         $expected = <<<EOD
-<?php declare(strict_types=1);
-require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
+<?php declare(strict_types=1);require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
 
 // public/index file
 
@@ -799,9 +790,7 @@ EOD;
         $expected = <<<EOD
 <?php
 
-declare(strict_types=0);
-require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
+declare(strict_types=0);require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
 
 // index file
 
@@ -937,9 +926,7 @@ EOD;
         assert_true(File\exists($build_path->append('helper.php')));
         assert_true(File\exists($build_path->append('Packages/owner/repo/helper.php')));
         $expected = <<<EOD
-<?php declare(strict_types=1);
-require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
+<?php declare(strict_types=1);require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
 
 // public/index file
 
@@ -948,9 +935,7 @@ EOD;
         $expected = <<<EOD
 <?php
 
-declare(strict_types=0);
-require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
+declare(strict_types=0);require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
 
 // index file
 
@@ -960,18 +945,15 @@ EOD;
         assert_false(Directory\exists($build_path->append('node_modules')));
         $expected = <<<EOD
 <?php
-
 require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
 // bin/executable file
 
 EOD;
-        assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('Packages/owner/repo/bin/executable.php')), 'bin/executable file content is not correct!');
+
+        assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) , file_get_contents($build_path->append('Packages/owner/repo/bin/executable.php')), 'bin/executable file content is not correct!');
         $expected = <<<EOD
 <?php
-
 require_once '@BUILDS_DIRECTORY/phpkg.imports.php';
-
 // executable file
 
 EOD;
@@ -1133,9 +1115,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App\Client;
-
-require_once '@BUILDS_DIRECTORY/Source/Service.php';
+namespace App\Client;require_once '@BUILDS_DIRECTORY/Source/Service.php';
 
 use App\Service;
 use App\NotExist;
@@ -1257,9 +1237,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App\Client;
-
-require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
+namespace App\Client;require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
 
 use Package\Service;
 use Package\NotExist;
@@ -1414,10 +1392,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App\Client;
-
-require_once '@BUILDS_DIRECTORY/Source/Service.php';
-require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
+namespace App\Client;require_once '@BUILDS_DIRECTORY/Source/Service.php';require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
 
 use function App\Service\main_service;
 use function App\NotExists\not_exists_main_service;
@@ -1587,10 +1562,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App\Client;
-
-require_once '@BUILDS_DIRECTORY/Source/Service.php';
-require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
+namespace App\Client;require_once '@BUILDS_DIRECTORY/Source/Service.php';require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
 
 use function App\Service\main_service as Service;
 use function App\NotExists\not_exists_main_service;
@@ -1754,10 +1726,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App\Client;
-
-require_once '@BUILDS_DIRECTORY/Source/Service.php';
-require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
+namespace App\Client;require_once '@BUILDS_DIRECTORY/Source/Service.php';require_once '@BUILDS_DIRECTORY/Packages/owner/repo/Src/Service.php';
 
 use const App\Service\Name;
 use const App\NotExists\NotExists;
@@ -2625,10 +2594,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App;
-
-require_once '@BUILDS_DIRECTORY/Source/Grouped/Constants.php';
-require_once '@BUILDS_DIRECTORY/Source/Grouped/Functions.php';
+namespace App;require_once '@BUILDS_DIRECTORY/Source/Grouped/Constants.php';require_once '@BUILDS_DIRECTORY/Source/Grouped/Functions.php';
 
 use App\Grouped\{TheInterface, TheAbstract, TheTrait, ParameterType, ReturnType, AnyClass as ServiceClass};
 use function App\Grouped\Functions\{func1, func2 as func3};
@@ -2878,14 +2844,7 @@ EOD;
         $expected = <<<'EOD'
 <?php
 
-namespace App;
-
-require_once '@BUILDS_DIRECTORY/Source/Functions/Dir.php';
-require_once '@BUILDS_DIRECTORY/Source/Functions/File.php';
-require_once '@BUILDS_DIRECTORY/Source/Functions/JsonFile.php';
-require_once '@BUILDS_DIRECTORY/Source/Functions/TextFile.php';
-require_once '@BUILDS_DIRECTORY/Source/Functions/Str.php';
-require_once '@BUILDS_DIRECTORY/Source/Functions/Integers.php';
+namespace App;require_once '@BUILDS_DIRECTORY/Source/Functions/Dir.php';require_once '@BUILDS_DIRECTORY/Source/Functions/File.php';require_once '@BUILDS_DIRECTORY/Source/Functions/JsonFile.php';require_once '@BUILDS_DIRECTORY/Source/Functions/TextFile.php';require_once '@BUILDS_DIRECTORY/Source/Functions/Str.php';require_once '@BUILDS_DIRECTORY/Source/Functions/Integers.php';
 
 use App\Functions\Dir;
 use App\Functions\File as Files;
