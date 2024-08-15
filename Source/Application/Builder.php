@@ -3,6 +3,7 @@
 namespace Phpkg\Application\Builder;
 
 use JsonException;
+use Phpkg\Classes\BuildMode;
 use Phpkg\Classes\Config;
 use Phpkg\Classes\LinkPair;
 use Phpkg\Classes\NamespaceFilePair;
@@ -12,6 +13,7 @@ use Phpkg\Classes\Project;
 use Phpkg\PhpFile;
 use PhpRepos\Datatype\Map;
 use PhpRepos\Datatype\Str;
+use PhpRepos\Datatype\Tree;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
 use PhpRepos\FileManager\Filename;
@@ -22,6 +24,56 @@ use function Phpkg\Application\PackageManager\config_from_disk;
 use function Phpkg\Application\PackageManager\package_path;
 use function PhpRepos\ControlFlow\Conditional\unless;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
+
+function is_production_build(BuildMode $build_mode): bool
+{
+    return $build_mode === BuildMode::Production;
+}
+
+function get_relative_path(string $from, string $to): string
+{
+    if ($from === $to) {
+        return '';
+    }
+
+    $from_tree = new Tree(DIRECTORY_SEPARATOR);
+    $to_tree = new Tree(DIRECTORY_SEPARATOR);
+
+    if ($from !== DIRECTORY_SEPARATOR) {
+        $previous = DIRECTORY_SEPARATOR;
+        foreach (explode(DIRECTORY_SEPARATOR, trim($from, DIRECTORY_SEPARATOR)) as $section) {
+            $from_tree->edge($previous, $section);
+            $previous = $section;
+        }
+    }
+
+    if ($to !== DIRECTORY_SEPARATOR) {
+        $previous = DIRECTORY_SEPARATOR;
+        foreach (explode(DIRECTORY_SEPARATOR, trim($to, DIRECTORY_SEPARATOR)) as $section) {
+            $to_tree->edge($previous, $section);
+            $previous = $section;
+        }
+    }
+
+    $first_change = $from_tree->vertices()->first_key(fn (string $from, int $index) => ! isset($to_tree->vertices()->items()[$index]) || $to_tree->vertices()->items()[$index] !== $from);
+    $first_change = is_null($first_change) ? $from_tree->vertices()->last_key() : $first_change;
+
+    $relative = '';
+
+    for ($i = min($first_change, $to_tree->vertices()->last_key()); $i < $from_tree->vertices()->last_key(); $i++) {
+        $relative .= '..' . DIRECTORY_SEPARATOR;
+    }
+
+    for ($i = max(1, $first_change); $i <= $to_tree->vertices()->last_key(); $i++) {
+        $relative .= $to_tree->vertices()->items()[$i];
+
+        if ($i !== $to_tree->vertices()->last_key()) {
+            $relative .= DIRECTORY_SEPARATOR;
+        }
+    }
+
+    return $relative;
+}
 
 function build_package_path(Project $project, Package $package): Path
 {
@@ -157,11 +209,6 @@ function compile(Path $address, Path $origin, Path $destination, Project $projec
 
 function compile_file(Project $project, Path $origin, Path $destination, Map $import_map, Map $namespace_map): void
 {
-    File\create($destination, apply_file_modifications($project, $origin, $import_map, $namespace_map), File\permission($origin));
-}
-
-function apply_file_modifications(Project $project, Path $origin, Map $import_map, Map $namespace_map): string
-{
     $php_file = PhpFile::from_content(File\content($origin));
     $file_imports = $php_file->imports();
 
@@ -209,12 +256,21 @@ function apply_file_modifications(Project $project, Path $origin, Map $import_ma
     });
 
     if ($paths->count() === 0) {
-        return $php_file->code();
+        $content = $php_file->code();
+    } else {
+        $requires = $paths->map(fn(NamespacePathPair $namespace_path) => $namespace_path->value->string());
+        $require_statements = \PhpRepos\Datatype\Arr\map($requires, function (string $path) use ($project, $destination) {
+            if (is_production_build($project->build_mode)) {
+                $path = get_relative_path($destination, $path);
+                return "require_once __DIR__ . '/{$path}';";
+            }
+            return "require_once '{$path}';";
+        });
+
+        $content = $php_file->add_autoloads(implode('', $require_statements))->code();
     }
 
-    $require_statements = $paths->map(fn(NamespacePathPair $namespace_path) => "require_once '{$namespace_path->value->string()}';");
-
-    return $php_file->add_autoloads(implode('', $require_statements))->code();
+    File\create($destination, $content, File\permission($origin));
 }
 
 /**
@@ -258,9 +314,14 @@ function add_autoloads(Project $project, Path $target): void
 {
     $import_path = import_file_path($project);
 
-    $line = "require_once '$import_path';";
-
     $php_file = PhpFile::from_content(File\content($target));
+
+    if (is_production_build($project->build_mode)) {
+        $path = get_relative_path($target, $import_path);
+        $line = "require_once __DIR__ . '/$path';";
+    } else {
+        $line = "require_once '$import_path';";
+    }
 
     File\modify($target, $php_file->add_autoloads($line)->code());
 }
@@ -285,10 +346,18 @@ EOD;
     });
     foreach ($import_map as $namespace_path) {
         if (File\exists(str_replace(build_root($project), $project->root, $namespace_path->value))) {
-            $content .= <<<EOD
+            if (is_production_build($project->build_mode)) {
+                $path = get_relative_path(import_file_path($project), $namespace_path->value);
+                $content .= <<<EOD
+        '$namespace_path->key' => __DIR__ . '/$path',
+
+EOD;
+            } else {
+                $content .= <<<EOD
         '$namespace_path->key' => '$namespace_path->value',
 
 EOD;
+            }
         }
     }
 
@@ -307,10 +376,18 @@ spl_autoload_register(function ($class) {
 EOD;
 
     foreach ($namespace_map as $namespace_path) {
-        $content .= <<<EOD
+        if (is_production_build($project->build_mode)) {
+            $path = get_relative_path(import_file_path($project), $namespace_path->value);
+            $content .= <<<EOD
+        '$namespace_path->key' => __DIR__ . '/$path',
+
+EOD;
+        } else {
+            $content .= <<<EOD
         '$namespace_path->key' => '$namespace_path->value',
 
 EOD;
+        }
     }
     $content .= <<<'EOD'
     ];
@@ -343,7 +420,12 @@ EOD;
             $file_path = build_package_path($project, $package)->append($autoload)->string();
 
             if (File\exists($file_path)) {
-                $content .= "require_once '$file_path';" . PHP_EOL;
+                if (is_production_build($project->build_mode)) {
+                    $path = get_relative_path(import_file_path($project), $file_path);
+                    $content .= "require_once __DIR__ . '/$path';" . PHP_EOL;
+                } else {
+                    $content .= "require_once '$file_path';" . PHP_EOL;
+                }
             }
         });
     });
@@ -352,7 +434,12 @@ EOD;
         $file_path = build_root($project)->append($autoload)->string();
 
         if (File\exists($file_path)) {
-            $content .= "require_once '$file_path';" . PHP_EOL;
+            if (is_production_build($project->build_mode)) {
+                $path = get_relative_path(import_file_path($project), $file_path);
+                $content .= "require_once __DIR__ . '/$path';" . PHP_EOL;
+            } else {
+                $content .= "require_once '$file_path';" . PHP_EOL;
+            }
         }
     });
 
