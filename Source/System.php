@@ -18,10 +18,8 @@ function random_temp_directory(): string
 function environment(): Environment
 {
     return new Environment(
-        pwd: $pwd = Path::from_string($_SERVER['PWD']),
-        credential_file: str_starts_with($_SERVER['SCRIPT_FILENAME'], '..')
-            ? $pwd->append($_SERVER['SCRIPT_FILENAME'])->sibling('credentials.json')
-            : Path::from_string($_SERVER['SCRIPT_FILENAME'])->sibling('credentials.json'),
+        pwd: $pwd = Path::from_string(getcwd()),
+        credential_file: $pwd->append('credentials.json'),
         temp: Path::from_string(sys_get_temp_dir())->append('phpkg'),
         github_token: strlen(getenv('GITHUB_TOKEN')) > 0 ? getenv('GITHUB_TOKEN') : null,
     );

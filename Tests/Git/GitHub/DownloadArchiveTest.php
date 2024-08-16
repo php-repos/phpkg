@@ -8,7 +8,7 @@ use function Phpkg\Git\GitHub\download_archive;
 use function Phpkg\System\environment;
 use PhpRepos\FileManager\Directory;
 use PhpRepos\FileManager\File;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

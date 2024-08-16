@@ -5,7 +5,7 @@ namespace Tests\System\UpdateCommand\UpdateToFeverDependenciesTest;
 use Phpkg\Classes\Project;
 use PhpRepos\FileManager\Path;
 use function PhpRepos\FileManager\Resolver\root;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\reset_empty_project;
 use function Tests\System\Assertions\assert_datatype_2_0_0_installed;

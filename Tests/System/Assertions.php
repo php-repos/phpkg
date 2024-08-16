@@ -10,7 +10,7 @@ use function Phpkg\Application\PackageManager\temp_path;
 use function Phpkg\Application\PackageManager\package_path;
 use function PhpRepos\Datatype\Str\replace_first_occurrence;
 use function PhpRepos\FileManager\Directory\ls_recursively;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 
 function same_content_installed(Project $project, Package $package): void
 {

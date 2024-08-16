@@ -4,8 +4,8 @@ namespace Tests\Application\MigratorTest;
 
 use Exception;
 use function Phpkg\Application\Migrator\composer;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_false;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_false;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

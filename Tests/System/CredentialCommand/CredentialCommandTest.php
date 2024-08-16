@@ -8,7 +8,7 @@ use function PhpRepos\FileManager\File\delete;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\File\move;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

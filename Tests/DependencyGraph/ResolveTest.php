@@ -10,7 +10,7 @@ use Phpkg\Git\Repository;
 use function Phpkg\DependencyGraphs\add;
 use function Phpkg\DependencyGraphs\add_sub_dependency;
 use function Phpkg\DependencyGraphs\resolve;
-use function PhpRepos\TestRunner\Assertions\Boolean\assert_true;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(

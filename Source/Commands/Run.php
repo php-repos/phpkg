@@ -87,5 +87,5 @@ return function (
     }
 
     $process = proc_open('php ' . $entry_point_path->string() . ' ' . implode(' ', $entry_point_arguments), [STDIN, STDOUT, STDOUT], $pipes);
-    proc_close($process);
+    exit(proc_close($process));
 };
