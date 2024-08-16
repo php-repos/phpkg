@@ -23,11 +23,11 @@ jobs:
       - name: Remove unneccessary files
         run: |
           cd builds/production
+          rm -fR .github
           rm -fR TestRequirements
           rm -fR Tests
           rm -f credentials.json
           rm -f .gitattributes
-          rm -f .github
           rm -f .gitignore
           rm -f CODE_OF_CONDUCT.md
           rm -f CONTRIBUTING.md
