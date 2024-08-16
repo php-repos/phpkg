@@ -19,8 +19,10 @@ jobs:
       - name: Build project
         run: |
           phpkg install
-          phpkg build production
-      - name: Remove unneccessary files
+          phpkg build
+          cd builds/development
+          ./phpkg build production --project=../../
+      - name: Remove unnecessary files
         run: |
           cd builds/production
           rm -fR .github
