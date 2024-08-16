@@ -12,26 +12,33 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Build project
+      - name: Install PHPKG
         run: |
           bash -c "$(curl -fsSL https://raw.github.com/php-repos/phpkg-installation/master/install.sh)"
           echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
+      - name: Build project
+        run: |
           phpkg install
           phpkg build production
+      - name: Remove unneccessary files
+        run: |
+          cd builds/production
+          rm -fR TestRequirements
+          rm -fR Tests
+          rm -f credentials.json
+          rm -f .gitattributes
+          rm -f .github
+          rm -f .gitignore
+          rm -f CODE_OF_CONDUCT.md
+          rm -f CONTRIBUTING.md
+          rm -f LICENSE
+          rm -f README.md
+          rm -f console
+          rm -f phpkg.config-lock.json
+          rm -f phpkg.config.json
+      - name: Create the zip
+        run: |
           cd builds
-          rm -fR production/TestRequirements
-          rm -fR production/Tests
-          rm -f production/credentials.json
-          rm -f production/.gitattributes
-          rm -f production/.github
-          rm -f production/.gitignore
-          rm -f production/CODE_OF_CONDUCT.md
-          rm -f production/CONTRIBUTING.md
-          rm -f production/LICENSE
-          rm -f production/README.md
-          rm -f production/console
-          rm -f production/phpkg.config-lock.json
-          rm -f production/phpkg.config.json
           zip -r phpkg.zip production
       - name: Create Release
         id: create_release
@@ -50,6 +57,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./phpkg.zip
+          asset_path: builds/phpkg.zip
           asset_name: phpkg.zip
           asset_content_type: application/zip
