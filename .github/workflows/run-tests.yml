@@ -35,13 +35,26 @@ jobs:
           extensions: curl, mbstring, zip
           coverage: none
 
+      - name: Install phpkg
+        run: | 
+          bash -c "$(curl -fsSL https://raw.github.com/php-repos/phpkg-installation/master/install.sh)"
+          echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
+
+      - name: Set Credentials for main PHPKG
+        run: phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+
       - name: Install dependencies
-        run: |
-          git submodule init
-          git submodule update
+        run: phpkg install
+
+      - name: Build
+        run: phpkg build production
 
       - name: Set Credentials
-        run: php phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+        run: |
+          cd builds/production
+          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
 
       - name: Execute tests
-        run: php test-runner
+        run: |
+          cd builds/production
+          ./phpkg run https://github.com/php-repos/test-runner.git
