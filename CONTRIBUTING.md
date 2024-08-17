@@ -22,7 +22,7 @@ php-repos GitHub issue trackers are not intended to provide php-repos help or su
 
 ## Core Development Discussion
 
-You may propose new features or improvements of existing php-repos behavior in the php-repos repository's [GitHub discussion board](https://github.com/saeghe/saeghe/discussions). 
+You may propose new features or improvements of existing php-repos behavior in the php-repos repository's [GitHub discussion board](https://github.com/php-repos/phpkg/discussions). 
 If you propose a new feature, please be willing to implement at least some of the code that would be needed to complete the feature.
 
 ## Security Vulnerabilities
@@ -32,32 +32,34 @@ All security vulnerabilities will be promptly addressed.
 
 ## Code of Conduct
 
-In order to ensure that the php-repos community is welcoming to all, please review and abide by the [Code of Conduct](https://github.com/saeghe/saeghe/blob/master/CODE_OF_CONDUCT.md).
+In order to ensure that the php-repos community is welcoming to all, please review and abide by the [Code of Conduct](https://github.com/php-repos/phpkg/blob/master/CODE_OF_CONDUCT.md).
 
 ## Installation for Contributors
 
 In order to install `phpkg` for contributing, follow these steps:
 
-```shell
-git@github.com:php-repos/phpkg.git
-cd phpkg
-git submodule init
-git submodule update
-```
-## Code Style
+### Install phpkg on your machine
+
+Follow instruction [here](https://phpkg.com/documentations/installation).
+
+### Clone the fork
+
+Create a fork from the `phpkg` repository and then clone it.
+
+### Code Style
 
 Please use snake_case syntax for variables and functions to follow PHP's code style.
 
-## Running tests
+### Running tests
 
 In order to run tests for contributing, run the following command:
 
 ```shell
-./test-runner
+phpkg run https://github.com/php-repos/test-runner.git
 ```
 
 If you need to run tests on a specific file, you can use the `filter` argument on the test runner:
 
 ```shell
-./test-runner --filter=YourTestFileTest
+phpkg run https://github.com/php-repos/test-runner.git run --filter=YourTestFileTest
 ```
