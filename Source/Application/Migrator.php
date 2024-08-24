@@ -14,12 +14,13 @@ use function Phpkg\Git\Version\is_stable;
 use function Phpkg\Packagist\git_url;
 use function PhpRepos\Datatype\Str\remove_last_character;
 
+function is_dev_package(string $version_pattern): bool
+{
+    return str_contains($version_pattern, 'dev');
+}
+
 function composer(array $composer_config): array
 {
-    $is_dev_package = function (string $version_pattern) {
-        return str_contains($version_pattern, 'dev');
-    };
-
     $config = [];
 
     if (isset($composer_config['require'])) {
@@ -32,7 +33,7 @@ function composer(array $composer_config): array
                 continue;
             }
 
-            if ($is_dev_package($version_pattern)) {
+            if (is_dev_package($version_pattern)) {
                 continue;
             }
 
@@ -208,11 +209,22 @@ function composer_lock(array $lock_content): array
     $meta = ['packages' => []];
 
     foreach ($lock_content['packages'] as $package) {
+        if (! str_contains($package['name'], '/')) {
+            continue;
+        }
+
+        if ($package['name'] === 'composer/composer') {
+            continue;
+        }
+
+        if (is_dev_package($package['version'])) {
+            continue;
+        }
         $repository = Repository::from_url($package['source']['url']);
         $repository->version = $package['version'];
         $repository->hash = $package['source']['reference'];
 
-        $meta['packages'][] = meta_array($repository);
+        $meta['packages'][$package['source']['url']] = meta_array($repository);
     }
 
     return $meta;

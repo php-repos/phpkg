@@ -231,6 +231,7 @@ function config_to_array(Config $config): array
     $config->executables->each(function (LinkPair $link) use (&$config_array) {
         $config_array['executables'][$link->key->string()] = $link->value->string();
     });
+    $config_array['import-file'] = $config->import_file->string();
     $config_array['packages-directory'] = $config->packages_directory->string();
     $config->packages->each(function (Package $package) use (&$config_array) {
         $config_array['packages'][$package->key] = $package->value->version;
@@ -429,16 +430,20 @@ function migrate(Project $project): void
 {
     $config = Config::from_array(composer(JsonFile\to_array($project->root->append('composer.json'))));
     $config->packages_directory = new Filename('vendor');
-    $meta = File\exists($project->root->append('composer.lock')) ? Meta::from_array(composer_lock(JsonFile\to_array($project->root->append('composer.json')))) : Meta::init();
+    $config->import_file = new Filename('vendor/autoload.php');
+    $meta = Meta::init();
 
     $project->config($config);
     $project->meta = $meta;
 
-    if (File\exists($project->root->append('composer.lock'))) {
-        $dependency_graph = DependencyGraph::for($project);
-    } else {
-        $dependency_graph = DependencyGraph::empty();
+    $dependency_graph = DependencyGraph::empty();
 
+    if (File\exists($project->root->append('composer.lock'))) {
+        Meta::from_array(composer_lock(JsonFile\to_array($project->root->append('composer.lock'))))
+            ->packages->each(function (Package $package) use ($project, $dependency_graph, $meta) {
+                add_dependency($project, $dependency_graph, $package);
+            });
+    } else {
         $config->packages->each(function (Package $package) use ($project, $dependency_graph) {
             $package->value->hash = detect_hash($package->value);
             add_dependency($project, $dependency_graph, $package);
