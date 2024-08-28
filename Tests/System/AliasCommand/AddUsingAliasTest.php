@@ -7,12 +7,12 @@ use function PhpRepos\Cli\Output\assert_success;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should add package using alias',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add test-runner --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add test-runner --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -25,14 +25,14 @@ test(
         assert_line("Committing configs...", $lines[5] . PHP_EOL);
         assert_success("Package git@github.com:php-repos/test-runner.git has been added successfully.", $lines[6] . PHP_EOL);
 
-        assert_true(file_exists(root() .  'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/test-runner'));
-        assert_true(file_exists(root() .  'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/test-runner/phpkg.config.json'));
+        assert_true(file_exists(root() . '../../DummyProject/Packages/php-repos/test-runner'));
+        assert_true(file_exists(root() . '../../DummyProject/Packages/php-repos/test-runner/phpkg.config.json'));
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg alias test-runner git@github.com:php-repos/test-runner.git --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );

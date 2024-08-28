@@ -7,12 +7,12 @@ use function PhpRepos\Cli\Output\assert_line;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should show error message when package does not exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -22,10 +22,10 @@ test(
         assert_error("Package git@github.com:php-repos/released-package.git does not found in your project!", $lines[2] . PHP_EOL);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );

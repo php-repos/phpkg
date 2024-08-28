@@ -12,7 +12,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_false;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 function assert_build_output(string $output): void
 {
@@ -28,10 +28,10 @@ function assert_build_output(string $output): void
 test(
     title: 'it should create build directory, environment directory and import file',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -78,22 +78,22 @@ EOD;
     before: function () {
         $config = [];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should put imports in the given import file path',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -140,22 +140,22 @@ EOD;
     before: function () {
         $config = ['import-file' => 'vendor/autoload.php'];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should create build directory, environment directory and import file for production also',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build production --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build production --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/production');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/production');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -202,22 +202,22 @@ EOD;
     before: function () {
         $config = [];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'the build should be contains the given map',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -269,22 +269,22 @@ EOD;
             ]
         ];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'the build should be contains of autoload files when they exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -343,23 +343,23 @@ EOD;
             ]
         ];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add autoload files from packages when they exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -430,7 +430,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
@@ -442,24 +442,24 @@ EOD;
                 'not-exists.php',
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should build entry points',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -549,7 +549,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
@@ -576,24 +576,24 @@ EOD
                 'not-exists.php',
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add the require statement after declare strict type',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -685,7 +685,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
@@ -714,24 +714,24 @@ EOD
                 'not-exists.php',
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should exclude defined paths in the exclude part',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -828,7 +828,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
@@ -859,24 +859,24 @@ EOD
                 'not-exists.php',
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add executables for packages',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -992,7 +992,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         File\create($path->append('helper.php'), '');
@@ -1027,7 +1027,7 @@ EOD
                 "exec" => "executable.php",
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
@@ -1049,17 +1049,17 @@ EOD
 );
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add require statement for the imported file, when they exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -1136,7 +1136,7 @@ EOD;
             ]
         ];
         $meta = [];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -1170,17 +1170,17 @@ EOD
 );
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add require statement for the imported file from packages, when they exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -1268,7 +1268,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -1295,7 +1295,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -1313,17 +1313,17 @@ EOD
 );
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add require statement for used functions, when they exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -1424,7 +1424,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -1465,7 +1465,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -1483,17 +1483,17 @@ EOD
         );
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add require statement for used functions, when they exists and defined by alias',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -1594,7 +1594,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -1635,7 +1635,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -1653,17 +1653,17 @@ EOD
         );
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add require statement for used constants, when they exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -1758,7 +1758,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -1796,7 +1796,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -1811,17 +1811,17 @@ EOD
         );
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add class to import file when used and exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -1909,7 +1909,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -1947,22 +1947,22 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add class from packages to import file when used and exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/development');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
 <?php
@@ -2050,7 +2050,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -2076,7 +2076,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -2093,17 +2093,17 @@ class User
 EOD);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should add interface file to import when exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $project_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $project_path = Path::from_string(root())->append('../../DummyProject');
         $build_path = $project_path->append('builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
@@ -2169,7 +2169,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -2209,7 +2209,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -2226,17 +2226,17 @@ interface PackageInterface
 EOD);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add abstract file to import',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $project_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $project_path = Path::from_string(root())->append('../../DummyProject');
         $build_path = $project_path->append('builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
@@ -2303,7 +2303,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -2359,7 +2359,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -2376,17 +2376,17 @@ abstract class PackageAbstract
 EOD);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add used traits file to import',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $project_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $project_path = Path::from_string(root())->append('../../DummyProject');
         $build_path = $project_path->append('builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
@@ -2454,7 +2454,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -2507,7 +2507,7 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
@@ -2524,17 +2524,17 @@ trait PackageTrait
 EOD);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should build properly when there is grouped uses',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $project_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $project_path = Path::from_string(root())->append('../../DummyProject');
         $build_path = $project_path->append('builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
@@ -2633,7 +2633,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -2778,23 +2778,23 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should build used functions and constants when namespace imported using use',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_build_output($output);
-        $project_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $project_path = Path::from_string(root())->append('../../DummyProject');
         $build_path = $project_path->append('builds/development');
         assert_true(File\exists($build_path->append('phpkg.imports.php')), 'Import file not exists!');
         $expected = <<<'EOD'
@@ -2886,7 +2886,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -2998,12 +2998,201 @@ EOD
                 'Package' => 'Src'
             ]
         ];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/Packages/owner/repo');
+        $path = Path::from_string(root())->append('../../DummyProject/Packages/owner/repo');
         Directory\make_recursive($path);
         JsonFile\write($path->append('phpkg.config.json'), $config);
         Directory\make($path->append('Src'));
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
+    }
+);
+
+test(
+    title: 'it should add used imported files to the classmap',
+    case: function () {
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
+
+        assert_build_output($output);
+        $project_path = Path::from_string(root())->append('../../DummyProject');
+        $build_path = $project_path->append('builds/development');
+        $expected = <<<EOD
+<?php
+
+namespace App\Handler;require_once '@BUILDS_DIRECTORY/Helper/Helpers.php';require_once '@BUILDS_DIRECTORY/Source/functions.php';
+
+use App\Helper\Service;
+use App\World;
+use function App\Helper\Helpers\help;
+use function App\Functions\line;
+
+function handle()
+{
+    return new Service(help() . new World()) . line();
+}
+
+EOD;
+        assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('Source/App.php')), 'App file content is not correct!');
+        $expected = <<<EOD
+<?php
+
+namespace App\Helper\Helpers;
+
+function help()
+{
+    return 'Help';
+}
+
+EOD;
+        assert_true($expected === file_get_contents($build_path->append('Helper/Helpers.php')), 'Helper file content is not correct!');
+        $expected = <<<'EOD'
+<?php
+
+namespace App\Helper;
+
+class Service
+{
+    public function __construct(public string $content) {}
+}
+
+EOD;
+        assert_true($expected === file_get_contents($build_path->append('Services/Service.php')), 'Service file content is not correct!');
+        $expected = <<<'EOD'
+<?php
+
+spl_autoload_register(function ($class) {
+    $classes = [
+        'App\Functions\line' => '@BUILDS_DIRECTORY/Source/functions.php',
+        'App\Helper\NotUsedService' => '@BUILDS_DIRECTORY/Services/NotUsedService.php',
+        'App\Helper\Service' => '@BUILDS_DIRECTORY/Services/Service.php',
+        'App\World' => '@BUILDS_DIRECTORY/Source/World.php',
+    ];
+
+    if (array_key_exists($class, $classes)) {
+        require $classes[$class];
+    }
+
+}, true, true);
+
+spl_autoload_register(function ($class) {
+    $namespaces = [
+        'App' => '@BUILDS_DIRECTORY/Source',
+        'App\Helper' => '@BUILDS_DIRECTORY/Helper',
+        'App\NotUsed' => '@BUILDS_DIRECTORY/ValidNamespace',
+    ];
+
+    $realpath = null;
+
+    foreach ($namespaces as $namespace => $path) {
+        if (str_starts_with($class, $namespace)) {
+            $pos = strpos($class, $namespace);
+            if ($pos !== false) {
+                $realpath = substr_replace($class, $path, $pos, strlen($namespace));
+            }
+            $realpath = str_replace("\\", DIRECTORY_SEPARATOR, $realpath) . '.php';
+            if (file_exists($realpath)) {
+                require $realpath;
+            }
+
+            return ;
+        }
+    }
+});
+
+EOD;
+
+        assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('phpkg.imports.php')), 'Import file content is not correct!');
+    },
+    before: function () {
+        $config = [
+            'map' => [
+                'App' => 'Source',
+                'App\\Helper' => 'Helper',
+                'App\\NotUsed' => 'ValidNamespace',
+                'App\\Helper\\Service' => 'Services/Service.php',
+                'App\\Helper\\NotUsedService' => 'Services/NotUsedService.php',
+                'App\\Functions\\line' => 'Source/functions.php',
+            ]
+        ];
+        $meta = [];
+        $path = Path::from_string(root())->append('../../DummyProject');
+        JsonFile\write($path->append('phpkg.config.json'), $config);
+        JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
+        Directory\make($path->append('Source'));
+        Directory\make($path->append('Helper'));
+        Directory\make($path->append('Services'));
+        $content = <<<EOD
+<?php
+
+namespace App\Handler;
+
+use App\Helper\Service;
+use App\World;
+use function App\Helper\Helpers\help;
+use function App\Functions\line;
+
+function handle()
+{
+    return new Service(help() . new World()) . line();
+}
+
+EOD;
+        File\create($path->append('Source/App.php'), $content);
+        $content = <<<EOD
+<?php
+
+namespace App\Functions;
+
+function line()
+{
+    return PHP_EOL;
+}
+
+EOD;
+        File\create($path->append('Source/functions.php'), $content);
+        $content = <<<EOD
+<?php
+
+namespace App;
+
+class World
+{
+    public static function world() 
+    {
+        return 'World';
+    }
+}
+
+EOD;
+        File\create($path->append('Source/World.php'), $content);
+
+        $content = <<<EOD
+<?php
+
+namespace App\Helper\Helpers;
+
+function help()
+{
+    return 'Help';
+}
+
+EOD;
+        File\create($path->append('Helper/Helpers.php'), $content);
+        $content = <<<'EOD'
+<?php
+
+namespace App\Helper;
+
+class Service
+{
+    public function __construct(public string $content) {}
+}
+
+EOD;
+        File\create($path->append('Services/Service.php'), $content);
+        File\create($path->append('Services/NotUsedService.php'), '');
+    },
+    after: function () {
+        reset_dummy_project();
     }
 );

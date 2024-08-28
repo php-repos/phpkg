@@ -11,12 +11,12 @@ use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should show error message when there is no composer file',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg migrate --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg migrate --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
         assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
@@ -27,12 +27,12 @@ test(
 test(
     title: 'it should migrate a composer package',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg migrate --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg migrate --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
         assert_success('Composer package has been successfully migrated to a phpkg project. Enjoy.', $lines[0] . PHP_EOL);
 
-        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . '../../DummyProject'));
 
         assert_config_file_generated_properly($project);
         assert_config_lock_file_generated_properly($project);
@@ -61,17 +61,17 @@ test(
 
 EOD;
 
-        create(root() . 'TestRequirements/Fixtures/EmptyProject/composer.json', $composer_json_content);
-        make_recursive(root() . 'TestRequirements/Fixtures/EmptyProject/vendor/bin');
+        create(root() . '../../DummyProject/composer.json', $composer_json_content);
+        make_recursive(root() . '../../DummyProject/vendor/bin');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 function assert_config_file_generated_properly(Project $project)
 {
-    assert_true($project->packages_directory->string() ===  Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject/vendor')->string());
+    assert_true($project->packages_directory->string() ===  Path::from_string(root() . '../../DummyProject/vendor')->string());
     assert_true($project->config->packages->count() === 1);
     assert_true($project->config->packages->first()->value->version === 'v5.0.2', 'Wrong version defined!');
 }

@@ -9,7 +9,7 @@ use function Phpkg\Application\PackageManager\commit;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should run a local package',
@@ -19,9 +19,9 @@ test(
         assert_true($output === 'Hello from local cli');
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
 
-        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . '../../DummyProject'));
         $project->config->entry_points->push(new Filename('index.php'));
 
         $index_content = <<<EOD
@@ -37,21 +37,21 @@ EOD;
         return $project;
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should run a local package using relative path',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg run TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg run ../../DummyProject');
 
         assert_true($output === 'Hello from local cli');
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
 
-        $project = Project::initialized(Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject'));
+        $project = Project::initialized(Path::from_string(root() . '../../DummyProject'));
         $project->config->entry_points->push(new Filename('index.php'));
 
         $index_content = <<<EOD
@@ -67,6 +67,6 @@ EOD;
         return $project;
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );

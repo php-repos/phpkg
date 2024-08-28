@@ -11,12 +11,12 @@ use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\force_delete;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should show error message when the project is not initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/simple-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -29,7 +29,7 @@ test(
 test(
     title: 'it should not update and show error message when project is not installed',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -38,19 +38,19 @@ test(
         assert_error("It seems you didn't run the install command. Please make sure you installed your required packages.", $lines[1] . PHP_EOL);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        force_delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=../../DummyProject');
+        force_delete(realpath(root() . '../../DummyProject/Packages'));
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should update to the latest version',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -67,17 +67,17 @@ test(
         assert_meta_updated($output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 function assert_version_upgraded_in_config_file($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['git@github.com:php-repos/released-package.git'])
@@ -89,7 +89,7 @@ function assert_version_upgraded_in_config_file($message)
 
 function assert_meta_updated($message)
 {
-    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/released-package.git'])

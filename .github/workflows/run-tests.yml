@@ -46,6 +46,9 @@ jobs:
       - name: Install dependencies
         run: phpkg install
 
+      - name: Prepare test env
+        run: mkdir DummyProject
+
       - name: Build
         run: phpkg build production
 

@@ -14,12 +14,12 @@ use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Assertions\assert_false;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\force_delete;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should show error message when the project is not initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg install --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -32,30 +32,30 @@ test(
 test(
     title: 'it should install packages from config file when lock file not exists',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg install --project=../../DummyProject');
 
         assert_output($output);
         assert_config_file_content_not_changed('Config file has been changed!' . $output);
-        assert_true(exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json')),'Config lock file has not been created!' . $output);
+        assert_true(exists(realpath(root() . '../../DummyProject/phpkg.config-lock.json')),'Config lock file has not been created!' . $output);
         assert_meta_file_content_not_changed('Released Package metadata does not added to meta file properly! ' . $output);
         assert_package_exists_in_packages_directory('Package does not exist in the packages\' directory.' . $output);
         assert_zip_file_deleted('Zip file has not been deleted.' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        force_delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
-        delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=../../DummyProject');
+        force_delete(realpath(root() . '../../DummyProject/Packages'));
+        delete(realpath(root() . '../../DummyProject/phpkg.config-lock.json'));
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
 test(
     title: 'it should install packages from lock file',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg install --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg install --project=../../DummyProject');
 
         assert_output($output);
         assert_config_file_content_not_changed('Config file has been changed!' . $output);
@@ -64,12 +64,12 @@ test(
         assert_zip_file_deleted('Zip file has not been deleted.' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        force_delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=../../DummyProject');
+        force_delete(realpath(root() . '../../DummyProject/Packages'));
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     },
 );
 
@@ -85,7 +85,7 @@ function assert_output($output)
 
 function assert_config_file_content_not_changed($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['git@github.com:php-repos/released-package.git'])
@@ -97,7 +97,7 @@ function assert_config_file_content_not_changed($message)
 
 function assert_meta_file_content_not_changed($message)
 {
-    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/released-package.git'])
@@ -113,10 +113,10 @@ function assert_meta_file_content_not_changed($message)
 function assert_package_exists_in_packages_directory($message)
 {
     assert_true((
-            file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package'))
-            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/phpkg.config.json'))
-            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/phpkg.config-lock.json'))
-            && ! file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package/Tests'))
+            file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/released-package'))
+            && file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/released-package/phpkg.config.json'))
+            && file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/released-package/phpkg.config-lock.json'))
+            && ! file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/released-package/Tests'))
         ),
         $message
     );
@@ -125,7 +125,7 @@ function assert_package_exists_in_packages_directory($message)
 function assert_zip_file_deleted($message)
 {
     assert_false(
-        file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/released-package.zip')),
+        file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/released-package.zip')),
         $message
     );
 }

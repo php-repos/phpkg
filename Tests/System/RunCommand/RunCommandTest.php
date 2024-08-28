@@ -12,7 +12,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_false;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should run the given entry point on the given package',
@@ -112,7 +112,7 @@ test(
         assert_true(str_contains($output, '[ERROR] Found 2 errors'));
     },
     before: function () {
-        $path = Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root() . '../../DummyProject');
         $content = <<<'EOD'
 <?php
 
@@ -130,6 +130,6 @@ EOD;
         return $path;
     },
     after: function () {
-         reset_empty_project();
+         reset_dummy_project();
     }
 );

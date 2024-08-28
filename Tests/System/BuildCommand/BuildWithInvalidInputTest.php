@@ -10,7 +10,7 @@ use function PhpRepos\TestRunner\Runner\test;
 test(
     title: 'it should return error message when the build mode is invalid',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build invalid --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build invalid --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
