@@ -8,7 +8,6 @@ use function Phpkg\System\is_windows;
 use function PhpRepos\FileManager\Directory\clean;
 use function PhpRepos\FileManager\Directory\delete_recursive;
 use function PhpRepos\FileManager\Directory\ls_recursively;
-use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 
 function reset_dummy_project(): void
@@ -22,7 +21,6 @@ function reset_dummy_project(): void
     }
 
     clean($path);
-    create($path->append('.gitignore'), '*' . PHP_EOL);
 }
 
 function force_delete(string $path): bool
