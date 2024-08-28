@@ -106,13 +106,23 @@ function build(Project $project): void
     $import_map = new Map();
     $namespace_map = new Map();
 
-    $project->meta->packages->each( function (Package $package) use ($project, $namespace_map) {
-        config_from_disk(package_path($project, $package))->map->each(function (NamespaceFilePair $namespace_file) use ($project, $namespace_map, $package) {
-            $namespace_map->push(new NamespacePathPair($namespace_file->key, build_package_path($project, $package)->append($namespace_file->value)));
+    $project->meta->packages->each( function (Package $package) use ($project, $namespace_map, $import_map) {
+        config_from_disk(package_path($project, $package))->map->each(function (NamespaceFilePair $namespace_file) use ($project, $namespace_map, $import_map, $package) {
+            $path = build_package_path($project, $package)->append($namespace_file->value);
+            if (str_ends_with($path, '.php')) {
+                $import_map->push(new NamespacePathPair($namespace_file->key, $path));
+            } else {
+                $namespace_map->push(new NamespacePathPair($namespace_file->key, $path));
+            }
         });
     });
-    $project->config->map->each(function (NamespaceFilePair $namespace_file) use ($project, $namespace_map) {
-        $namespace_map->push(new NamespacePathPair($namespace_file->key, build_root($project)->append($namespace_file->value)));
+    $project->config->map->each(function (NamespaceFilePair $namespace_file) use ($project, $namespace_map, $import_map) {
+        $path = build_root($project)->append($namespace_file->value);
+        if (str_ends_with($path, '.php')) {
+            $import_map->push(new NamespacePathPair($namespace_file->key, $path));
+        } else {
+            $namespace_map->push(new NamespacePathPair($namespace_file->key, $path));
+        }
     });
 
     $project->meta->packages->each(function (Package $package) use ($project, $import_map, $namespace_map) {
@@ -235,7 +245,14 @@ function compile_file(Project $project, Path $origin, Path $destination, Map $im
 
     $paths = new Map([]);
 
-    array_walk($imports, function ($import) use ($project, $paths, $namespace_map) {
+    array_walk($imports, function ($import) use ($project, $paths, $namespace_map, $import_map) {
+        if ($import_map->has(fn (NamespacePathPair $import_map) => $import_map->key === $import)) {
+            $path = $import_map->first(fn (NamespacePathPair $import_map) => $import_map->key === $import)->value;
+            $paths->push(new NamespacePathPair($import, $path));
+
+            return;
+        }
+
         $path = $namespace_map->first(fn (NamespacePathPair $namespace_path) => $namespace_path->key === $import)?->value;
         $import = $path ? $import : Str\before_last_occurrence($import, '\\');
         $path = $path ?: $namespace_map->reduce(function (?Path $carry, NamespacePathPair $namespace_path) use ($import) {
@@ -247,6 +264,13 @@ function compile_file(Project $project, Path $origin, Path $destination, Map $im
     });
 
     array_walk($autoload, function ($import) use ($project, $import_map, $namespace_map) {
+        if ($import_map->has(fn (NamespacePathPair $import_map) => $import_map->key === $import)) {
+            $path = $import_map->first(fn (NamespacePathPair $import_map) => $import_map->key === $import)->value;
+            $import_map->push(new NamespacePathPair($import, $path));
+
+            return;
+        }
+
         $path = $namespace_map->reduce(function (?Path $carry, NamespacePathPair $namespace_path) use ($import) {
             return str_starts_with($import, $namespace_path->key)
                 ? $namespace_path->value->append(after_first_occurrence($import, $namespace_path->key) . '.php')
@@ -338,7 +362,6 @@ spl_autoload_register(function ($class) {
     $classes = [
 
 EOD;
-
 
     $import_map = iterator_to_array($import_map);
     usort($import_map, function (NamespacePathPair $namespace_path_pair1, NamespacePathPair $namespace_path_pair2) {

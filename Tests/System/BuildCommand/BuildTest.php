@@ -3007,3 +3007,192 @@ EOD
         reset_empty_project();
     }
 );
+
+test(
+    title: 'it should add used imported files to the classmap',
+    case: function () {
+        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+
+        assert_build_output($output);
+        $project_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $build_path = $project_path->append('builds/development');
+        $expected = <<<EOD
+<?php
+
+namespace App\Handler;require_once '@BUILDS_DIRECTORY/Helper/Helpers.php';require_once '@BUILDS_DIRECTORY/Source/functions.php';
+
+use App\Helper\Service;
+use App\World;
+use function App\Helper\Helpers\help;
+use function App\Functions\line;
+
+function handle()
+{
+    return new Service(help() . new World()) . line();
+}
+
+EOD;
+        assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('Source/App.php')), 'App file content is not correct!');
+        $expected = <<<EOD
+<?php
+
+namespace App\Helper\Helpers;
+
+function help()
+{
+    return 'Help';
+}
+
+EOD;
+        assert_true($expected === file_get_contents($build_path->append('Helper/Helpers.php')), 'Helper file content is not correct!');
+        $expected = <<<'EOD'
+<?php
+
+namespace App\Helper;
+
+class Service
+{
+    public function __construct(public string $content) {}
+}
+
+EOD;
+        assert_true($expected === file_get_contents($build_path->append('Services/Service.php')), 'Service file content is not correct!');
+        $expected = <<<'EOD'
+<?php
+
+spl_autoload_register(function ($class) {
+    $classes = [
+        'App\Functions\line' => '@BUILDS_DIRECTORY/Source/functions.php',
+        'App\Helper\NotUsedService' => '@BUILDS_DIRECTORY/Services/NotUsedService.php',
+        'App\Helper\Service' => '@BUILDS_DIRECTORY/Services/Service.php',
+        'App\World' => '@BUILDS_DIRECTORY/Source/World.php',
+    ];
+
+    if (array_key_exists($class, $classes)) {
+        require $classes[$class];
+    }
+
+}, true, true);
+
+spl_autoload_register(function ($class) {
+    $namespaces = [
+        'App' => '@BUILDS_DIRECTORY/Source',
+        'App\Helper' => '@BUILDS_DIRECTORY/Helper',
+        'App\NotUsed' => '@BUILDS_DIRECTORY/ValidNamespace',
+    ];
+
+    $realpath = null;
+
+    foreach ($namespaces as $namespace => $path) {
+        if (str_starts_with($class, $namespace)) {
+            $pos = strpos($class, $namespace);
+            if ($pos !== false) {
+                $realpath = substr_replace($class, $path, $pos, strlen($namespace));
+            }
+            $realpath = str_replace("\\", DIRECTORY_SEPARATOR, $realpath) . '.php';
+            if (file_exists($realpath)) {
+                require $realpath;
+            }
+
+            return ;
+        }
+    }
+});
+
+EOD;
+
+        assert_true(str_replace('@BUILDS_DIRECTORY', $build_path->string(), $expected) === file_get_contents($build_path->append('phpkg.imports.php')), 'Import file content is not correct!');
+    },
+    before: function () {
+        $config = [
+            'map' => [
+                'App' => 'Source',
+                'App\\Helper' => 'Helper',
+                'App\\NotUsed' => 'ValidNamespace',
+                'App\\Helper\\Service' => 'Services/Service.php',
+                'App\\Helper\\NotUsedService' => 'Services/NotUsedService.php',
+                'App\\Functions\\line' => 'Source/functions.php',
+            ]
+        ];
+        $meta = [];
+        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        JsonFile\write($path->append('phpkg.config.json'), $config);
+        JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
+        Directory\make($path->append('Source'));
+        Directory\make($path->append('Helper'));
+        Directory\make($path->append('Services'));
+        $content = <<<EOD
+<?php
+
+namespace App\Handler;
+
+use App\Helper\Service;
+use App\World;
+use function App\Helper\Helpers\help;
+use function App\Functions\line;
+
+function handle()
+{
+    return new Service(help() . new World()) . line();
+}
+
+EOD;
+        File\create($path->append('Source/App.php'), $content);
+        $content = <<<EOD
+<?php
+
+namespace App\Functions;
+
+function line()
+{
+    return PHP_EOL;
+}
+
+EOD;
+        File\create($path->append('Source/functions.php'), $content);
+        $content = <<<EOD
+<?php
+
+namespace App;
+
+class World
+{
+    public static function world() 
+    {
+        return 'World';
+    }
+}
+
+EOD;
+        File\create($path->append('Source/World.php'), $content);
+
+        $content = <<<EOD
+<?php
+
+namespace App\Helper\Helpers;
+
+function help()
+{
+    return 'Help';
+}
+
+EOD;
+        File\create($path->append('Helper/Helpers.php'), $content);
+        $content = <<<'EOD'
+<?php
+
+namespace App\Helper;
+
+class Service
+{
+    public function __construct(public string $content) {}
+}
+
+EOD;
+        File\create($path->append('Services/Service.php'), $content);
+        File\create($path->append('Services/NotUsedService.php'), '');
+    },
+    after: function () {
+        reset_empty_project();
+    }
+);
