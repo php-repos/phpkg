@@ -9,7 +9,7 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 if (is_windows()) {
     line('I don\'t know how to make this work on windows. So for now, i\'m ignoring it.');
@@ -19,15 +19,15 @@ if (is_windows()) {
 test(
     title: 'it should watch for changes',
     case: function () {
-        $command =  'php ' . root() . 'phpkg watch --wait=1 --project=TestRequirements/Fixtures/EmptyProject > /dev/null 2>&1 & echo $!; ';
+        $command =  'php ' . root() . 'phpkg watch --wait=1 --project=../../DummyProject > /dev/null 2>&1 & echo $!; ';
         $pid = exec($command, $output);
 
         $content = <<<'EOD'
 <?php
 
-namespace EmptyProject;
+namespace DummyProject;
 
-class SimpleClassForEmptyProject
+class SimpleClassForDummyProject
 {
 
 }
@@ -36,7 +36,7 @@ EOD;
 
 
         create(
-            realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Source/SimpleClassForEmptyProject.php'),
+            realpath(root() . '../../DummyProject/Source/SimpleClassForDummyProject.php'),
             $content
         );
 
@@ -44,17 +44,17 @@ EOD;
 
         $output = implode(PHP_EOL, $output);
 
-        assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/builds')), 'builds directory does not exists! ' . $output);
-        assert_true(true === file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/builds/development')), 'development directory does not exists! ' . $output);
-        assert_true(true === file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/builds/development/Source')), 'Source directory does not exists! ' . $output);
-        assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/builds/development/Source/SimpleClassForEmptyProject.php')), 'File has not been built! ' . $output);
+        assert_true(file_exists(realpath(root() . '../../DummyProject/builds')), 'builds directory does not exists! ' . $output);
+        assert_true(true === file_exists(realpath(root() . '../../DummyProject/builds/development')), 'development directory does not exists! ' . $output);
+        assert_true(true === file_exists(realpath(root() . '../../DummyProject/builds/development/Source')), 'Source directory does not exists! ' . $output);
+        assert_true(file_exists(realpath(root() . '../../DummyProject/builds/development/Source/SimpleClassForDummyProject.php')), 'File has not been built! ' . $output);
         posix_kill($pid, SIGKILL);
     },
     before: function () {
-        mkdir(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Source'));
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        mkdir(realpath(root() . '../../DummyProject/Source'));
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );

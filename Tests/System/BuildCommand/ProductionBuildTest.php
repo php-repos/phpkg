@@ -10,17 +10,17 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_false;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 use function Tests\System\BuildCommand\BuildTest\assert_build_output;
 
 test(
     title: 'it should build with production mode',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build production --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build production --project=../../DummyProject');
 
         assert_build_output($output);
 
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/production');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/production');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -67,23 +67,23 @@ EOD;
     before: function() {
         $config = [];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
     },
     after: function() {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should compile files with relative path in production mode',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build production --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build production --project=../../DummyProject');
 
         assert_build_output($output);
 
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/production');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/production');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -202,7 +202,7 @@ EOD;
             ]
         ];
         $meta = ['packages' => []];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -294,16 +294,16 @@ EOD;
         File\create($path->append('Source/Output/Hello.php'), $content);
     },
     after: function() {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should compile files with relative path in production mode in packages',
     case: function () {
-        shell_exec('php ' . root() . 'phpkg build production --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg build production --project=../../DummyProject');
 
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/production');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/production');
         assert_true(Directory\exists($build_path), 'Builds directory not exists!');
         assert_true(File\exists($build_path->append('phpkg.config.json')), 'config file is not copied!');
         assert_true(File\exists($build_path->append('phpkg.config-lock.json')), 'lock file is not copied!');
@@ -416,7 +416,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -496,16 +496,16 @@ EOD;
 
     },
     after: function() {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add relative path to import file in entry-points and executables',
     case: function () {
-        shell_exec('php ' . root() . 'phpkg build production --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg build production --project=../../DummyProject');
 
-        $build_path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject/builds/production');
+        $build_path = Path::from_string(root())->append('../../DummyProject/builds/production');
         assert_true(File\exists($build_path->append('runner')), 'runner file is not copied!');
         $expected = <<<EOD
 #!/usr/bin/env php
@@ -577,7 +577,7 @@ EOD;
                 'hash' => '123abc',
             ]
         ]];
-        $path = Path::from_string(root())->append('TestRequirements/Fixtures/EmptyProject');
+        $path = Path::from_string(root())->append('../../DummyProject');
         JsonFile\write($path->append('phpkg.config.json'), $config);
         JsonFile\write($path->append('phpkg.config-lock.json'), $meta);
         Directory\make($path->append('Source'));
@@ -606,6 +606,6 @@ EOD;
         File\create($path->append('Packages/owner/repo/run'), $content);
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );

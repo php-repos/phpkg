@@ -12,12 +12,12 @@ use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\force_delete;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should show error message when project is not initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -30,7 +30,7 @@ test(
 test(
     title: 'it should not add the package and show error message when project is not installed',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -38,36 +38,36 @@ test(
         assert_error("It seems you didn't run the install command. Please make sure you installed your required packages.", $lines[1] . PHP_EOL);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
-        force_delete(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages'));
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.1 --project=../../DummyProject');
+        force_delete(realpath(root() . '../../DummyProject/Packages'));
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should show error message when project is not a supported package',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/phpkg-installation.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/phpkg-installation.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
         assert_error('The package you provided is neither a valid `phpkg` package nor a `composer` package. Please ensure that you are using a supported package type.', last($lines) . PHP_EOL);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add package to the project',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
 
         assert_output($output);
         assert_config_file_created_for_simple_project('Config file is not created!' . $output);
@@ -77,32 +77,32 @@ test(
         assert_meta_has_desired_data('Meta data is not what we want.' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should add package to the project without trailing .git',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package --project=../../DummyProject');
 
         assert_simple_package_cloned('Simple package does not cloned!' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 test(
     title: 'it should use same repo with git and https urls',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add https://github.com/php-repos/simple-package.git --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -111,17 +111,17 @@ test(
         assert_line("Checking installed packages...", $lines[1] . PHP_EOL);
         assert_error("Package https://github.com/php-repos/simple-package.git is already exists.", $lines[2] . PHP_EOL);
 
-        $config = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json');
-        $meta = JsonFile\to_array(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json');
+        $config = JsonFile\to_array(root() . '../../DummyProject/phpkg.config.json');
+        $meta = JsonFile\to_array(root() . '../../DummyProject/phpkg.config-lock.json');
         assert_true(count($config['packages']) === 1);
         assert_true(count($meta['packages']) === 1);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
@@ -141,20 +141,20 @@ function assert_output($output)
 
 function assert_config_file_created_for_simple_project($message)
 {
-    assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json')), $message);
+    assert_true(file_exists(realpath(root() . '../../DummyProject/phpkg.config.json')), $message);
 }
 
 function assert_packages_directory_created_for_empty_project($message)
 {
-    assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages')), $message);
+    assert_true(file_exists(realpath(root() . '../../DummyProject/Packages')), $message);
 }
 
 function assert_simple_package_cloned($message)
 {
     assert_true(
-        file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package'))
-            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package/phpkg.config.json'))
-            && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/Packages/php-repos/simple-package/README.md'))
+        file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/simple-package'))
+            && file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/simple-package/phpkg.config.json'))
+            && file_exists(realpath(root() . '../../DummyProject/Packages/php-repos/simple-package/README.md'))
         ,
         $message
     );
@@ -162,7 +162,7 @@ function assert_simple_package_cloned($message)
 
 function assert_simple_package_added_to_config($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['git@github.com:php-repos/simple-package.git'])
@@ -174,7 +174,7 @@ function assert_simple_package_added_to_config($message)
 
 function assert_meta_has_desired_data($message)
 {
-    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/simple-package.git'])

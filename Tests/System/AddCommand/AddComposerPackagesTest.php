@@ -9,14 +9,14 @@ use PhpRepos\FileManager\Path;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should add a composer package',
     case: function () {
-         shell_exec('php ' . root() . 'phpkg add https://github.com/sebastianbergmann/phpunit.git --force --project=TestRequirements/Fixtures/EmptyProject');
+         shell_exec('php ' . root() . 'phpkg add https://github.com/sebastianbergmann/phpunit.git --force --project=../../DummyProject');
 
-        $project = Path::from_string(root() . '/TestRequirements/Fixtures/EmptyProject');
+        $project = Path::from_string(root() . '/../../DummyProject');
         assert_true(Directory\exists($project->append('Packages/sebastianbergmann/phpunit')), 'Composer package is not installed');
         assert_true(File\exists($project->append('Packages/sebastianbergmann/phpunit/phpkg.config.json')), 'Config file not generated while adding composer package');
         assert_true(Directory\exists($project->append('Packages/phar-io/manifest')), 'Composer sub package is not installed');
@@ -31,9 +31,9 @@ test(
         assert_true(isset($meta['packages']['https://github.com/phar-io/version.git']), 'meta for recursive sub package is not correct');
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );

@@ -9,12 +9,12 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should update to the given version',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --version=v1.0.1 --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg update git@github.com:php-repos/released-package.git --version=v1.0.1 --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -30,18 +30,18 @@ test(
         assert_given_version_added('Package did not updated to given package version. ' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.0 --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/released-package.git --version=v1.0.0 --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 function assert_given_version_added($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
-    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $config = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config.json'));
+    $meta = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config-lock.json'));
 
     assert_true(
         isset($config['packages']['git@github.com:php-repos/released-package.git'])

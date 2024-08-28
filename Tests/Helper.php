@@ -11,9 +11,9 @@ use function PhpRepos\FileManager\Directory\ls_recursively;
 use function PhpRepos\FileManager\File\create;
 use function PhpRepos\FileManager\Resolver\root;
 
-function reset_empty_project(): void
+function reset_dummy_project(): void
 {
-    $path = Path::from_string(root() . 'TestRequirements/Fixtures/EmptyProject');
+    $path = Path::from_string(root() . '../../DummyProject');
 
     if (is_windows()) {
         ls_recursively($path)

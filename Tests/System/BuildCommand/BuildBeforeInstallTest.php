@@ -8,22 +8,22 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 use function Tests\Helper\force_delete;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should show error message when project packages are not installed',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg build --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg build --project=../../DummyProject');
 
         assert_output($output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
-        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
-        force_delete(root() . 'TestRequirements/Fixtures/EmptyProject/Packages');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
+        shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
+        force_delete(root() . '../../DummyProject/Packages');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 

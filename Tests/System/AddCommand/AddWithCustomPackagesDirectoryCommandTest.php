@@ -7,12 +7,12 @@ use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\FileManager\Resolver\realpath;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should add package to the given directory',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg add git@github.com:php-repos/simple-package.git --project=../../DummyProject');
 
         assert_package_directory_added_to_config('Config does not contains the custom package directory!');
         assert_config_file_created_for_simple_project('Config file is not created!' . $output);
@@ -22,16 +22,16 @@ test(
         assert_meta_has_desired_data('Meta data is not what we want.' . $output);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject --packages-directory=vendor');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject --packages-directory=vendor');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
 
 function assert_package_directory_added_to_config($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config.json'));
 
     assert_true(
         $config['packages-directory'] === 'vendor',
@@ -41,27 +41,27 @@ function assert_package_directory_added_to_config($message)
 
 function assert_config_file_created_for_simple_project($message)
 {
-    assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json')), $message);
+    assert_true(file_exists(realpath(root() . '../../DummyProject/phpkg.config.json')), $message);
 }
 
 function assert_packages_directory_created_for_empty_project($message)
 {
-    assert_true(file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/vendor')), $message);
+    assert_true(file_exists(realpath(root() . '../../DummyProject/vendor')), $message);
 }
 
 function assert_simple_package_cloned($message)
 {
     assert_true(
-        file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/vendor/php-repos/simple-package'))
-        && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/vendor/php-repos/simple-package/phpkg.config.json'))
-        && file_exists(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/vendor/php-repos/simple-package/README.md')),
+        file_exists(realpath(root() . '../../DummyProject/vendor/php-repos/simple-package'))
+        && file_exists(realpath(root() . '../../DummyProject/vendor/php-repos/simple-package/phpkg.config.json'))
+        && file_exists(realpath(root() . '../../DummyProject/vendor/php-repos/simple-package/README.md')),
         $message
     );
 }
 
 function assert_simple_package_added_to_config($message)
 {
-    $config = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config.json'));
+    $config = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config.json'));
 
     assert_true((
             isset($config['packages']['git@github.com:php-repos/simple-package.git'])
@@ -73,7 +73,7 @@ function assert_simple_package_added_to_config($message)
 
 function assert_meta_has_desired_data($message)
 {
-    $meta = JsonFile\to_array(realpath(root() . 'TestRequirements/Fixtures/EmptyProject/phpkg.config-lock.json'));
+    $meta = JsonFile\to_array(realpath(root() . '../../DummyProject/phpkg.config-lock.json'));
 
     assert_true((
             isset($meta['packages']['git@github.com:php-repos/simple-package.git'])

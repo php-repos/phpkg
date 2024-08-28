@@ -7,12 +7,12 @@ use function PhpRepos\Cli\Output\assert_line;
 use function PhpRepos\FileManager\Resolver\root;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
-use function Tests\Helper\reset_empty_project;
+use function Tests\Helper\reset_dummy_project;
 
 test(
     title: 'it should return error when project is already initialized',
     case: function () {
-        $output = shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        $output = shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
 
         $lines = explode("\n", trim($output));
 
@@ -21,9 +21,9 @@ test(
         assert_error("The project is already initialized.", $lines[1] . PHP_EOL);
     },
     before: function () {
-        shell_exec('php ' . root() . 'phpkg init --project=TestRequirements/Fixtures/EmptyProject');
+        shell_exec('php ' . root() . 'phpkg init --project=../../DummyProject');
     },
     after: function () {
-        reset_empty_project();
+        reset_dummy_project();
     }
 );
