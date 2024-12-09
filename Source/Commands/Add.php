@@ -27,7 +27,7 @@ return function(
     #[Argument]
     #[LongOption('version')]
     #[Description("The version number of the package you want to add. If not provided, the command will add the latest available version.")]
-    string $version = null,
+    ?string $version = null,
     #[LongOption('force')]
     #[Description('Use this option to forcefully add the specified package, ignoring version compatibility checks.')]
     ?bool $force = false,

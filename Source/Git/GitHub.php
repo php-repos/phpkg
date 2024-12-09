@@ -237,7 +237,7 @@ function has_any_tag(string $owner, string $repo, ?string $token = null): bool
  * @throws UnauthenticatedRateLimitedException If unauthenticated request gets rate limited.
  * @throws NotFoundException Either the URL is not valid or user does not have access.
  */
-function find_latest_version(string $owner, string $repo, string $token = null): string
+function find_latest_version(string $owner, string $repo, ?string $token = null): string
 {
     $response = get_json("repos/$owner/$repo/tags", $token)->response;
 
