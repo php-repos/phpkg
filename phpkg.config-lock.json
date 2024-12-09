@@ -9,26 +9,26 @@
         "https:\/\/github.com\/php-repos\/datatype.git": {
             "owner": "php-repos",
             "repo": "datatype",
-            "version": "v2.0.0",
-            "hash": "7fe3a27e6b57ff31374927d14c63db07cbaee579"
+            "version": "v3.0.0",
+            "hash": "7ec9a0712e3995f9b152d8378e664579e926cf8a"
         },
         "https:\/\/github.com\/php-repos\/control-flow.git": {
             "owner": "php-repos",
             "repo": "control-flow",
-            "version": "v2.0.0",
-            "hash": "6b11f038c0bb2f6669219c5e609c0681ad0e35ab"
+            "version": "v3.0.0",
+            "hash": "c33c6246752416aaa013c4187708a7a4afbbc925"
         },
         "https:\/\/github.com\/php-repos\/file-manager.git": {
             "owner": "php-repos",
             "repo": "file-manager",
-            "version": "v3.0.0",
-            "hash": "f6b8aef10d56cd7c8d2f87a23c267d7d79c73b92"
+            "version": "v4.0.0",
+            "hash": "3923da2d07c20b981d141da834235a32ffae79a2"
         },
         "https:\/\/github.com\/php-repos\/console.git": {
             "owner": "php-repos",
             "repo": "console",
-            "version": "v2.0.0",
-            "hash": "f861efad56ed52eee15d497df2990776bfe02bac"
+            "version": "v3.0.0",
+            "hash": "78e04ada504122d1942a033b3ef20a3cf67cd682"
         }
     }
 }

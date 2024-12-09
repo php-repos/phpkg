@@ -26,7 +26,7 @@ return function(
     string $project = '',
     #[LongOption('packages-directory')]
     #[Description("Specify a custom directory where `phpkg` will save your libraries or packages. This allows you to\n structure your project with a different directory name instead of the default `Packages` directory.")]
-    string $packages_directory = null,
+    ?string $packages_directory = null,
 ) {
     $environment = System\environment();
     $project = new Project($environment->pwd->append($project));

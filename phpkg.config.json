@@ -15,10 +15,10 @@
     "packages-directory": "Packages",
     "packages": {
         "https:\/\/github.com\/php-repos\/cli.git": "v3.0.1",
-        "https:\/\/github.com\/php-repos\/datatype.git": "v2.0.0",
-        "https:\/\/github.com\/php-repos\/control-flow.git": "v2.0.0",
-        "https:\/\/github.com\/php-repos\/file-manager.git": "v3.0.0",
-        "https:\/\/github.com\/php-repos\/console.git": "v2.0.0"
+        "https:\/\/github.com\/php-repos\/datatype.git": "v3.0.0",
+        "https:\/\/github.com\/php-repos\/control-flow.git": "v3.0.0",
+        "https:\/\/github.com\/php-repos\/file-manager.git": "v4.0.0",
+        "https:\/\/github.com\/php-repos\/console.git": "v3.0.0"
     },
     "aliases": {
         "datatype": "https:\/\/github.com\/php-repos\/datatype.git",
