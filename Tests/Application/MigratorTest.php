@@ -51,6 +51,29 @@ test(
         $composer_config = [
             'autoload' => [
                 'psr-4' => [
+                    "PhpParser\\" => "lib/PhpParser",
+                ]
+            ]
+        ];
+        $result = composer($composer_config);
+
+        $expected = [
+            'map' => [
+                'PhpParser' => 'lib/PhpParser',
+            ],
+            'import-file' => 'vendor/autoload.php',
+        ];
+
+        assert_true($expected === $result, 'Map has not been detected properly!');
+    }
+);
+
+test(
+    title: 'it should ignore when an array defined in any psr-4',
+    case: function () {
+        $composer_config = [
+            'autoload' => [
+                'psr-4' => [
                     "App\\" => ["src/", "app/"],
                 ]
             ]
@@ -239,7 +262,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/myclabs/DeepCopy.git' => '1.12.1',
+                'https://github.com/myclabs/DeepCopy.git' => '1.13.0',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -295,7 +318,7 @@ test(
         $expected = [
             'packages' => [
                 'https://github.com/symfony/thanks.git' => 'v1.4.0',
-                'https://github.com/myclabs/DeepCopy.git' => '1.12.1',
+                'https://github.com/myclabs/DeepCopy.git' => '1.13.0',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -597,7 +620,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/doctrine/common.git' => '3.4.5',
+                'https://github.com/doctrine/common.git' => '3.5.0',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -624,7 +647,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/nikic/PHP-Parser.git' => 'v5.3.1',
+                'https://github.com/nikic/PHP-Parser.git' => 'v5.4.0',
             ],
             'import-file' => 'vendor/autoload.php'
         ];

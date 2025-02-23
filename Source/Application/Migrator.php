@@ -12,6 +12,7 @@ use function Phpkg\Git\Version\compare;
 use function Phpkg\Git\Version\has_major_change;
 use function Phpkg\Git\Version\is_stable;
 use function Phpkg\Packagist\git_url;
+use function PhpRepos\Datatype\Str\last_character;
 use function PhpRepos\Datatype\Str\remove_last_character;
 
 function is_dev_package(string $version_pattern): bool
@@ -55,7 +56,10 @@ function composer(array $composer_config): array
                 continue;
             }
 
-            $config['map'][remove_last_character($namespace)] = remove_last_character($path);
+            $namespace = last_character($namespace) === '\\' ? remove_last_character($namespace) : $namespace;
+            $path = last_character($path) === '/' ? remove_last_character($path) : $path;
+
+            $config['map'][$namespace] = $path;
         }
     }
 
