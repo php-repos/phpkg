@@ -372,7 +372,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/brick/math.git' => '0.12.1',
+                'https://github.com/brick/math.git' => '0.12.2',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -399,7 +399,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/brick/math.git' => '0.12.1',
+                'https://github.com/brick/math.git' => '0.12.2',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
@@ -427,7 +427,7 @@ test(
 
         $expected = [
             'packages' => [
-                'https://github.com/brick/math.git' => '0.12.1',
+                'https://github.com/brick/math.git' => '0.12.2',
             ],
             'import-file' => 'vendor/autoload.php'
         ];
