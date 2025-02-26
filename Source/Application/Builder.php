@@ -10,7 +10,7 @@ use Phpkg\Classes\NamespaceFilePair;
 use Phpkg\Classes\NamespacePathPair;
 use Phpkg\Classes\Package;
 use Phpkg\Classes\Project;
-use Phpkg\PhpFile;
+use Phpkg\Parser\NodeParser;
 use PhpRepos\Datatype\Map;
 use PhpRepos\Datatype\Str;
 use PhpRepos\Datatype\Tree;
@@ -22,7 +22,10 @@ use PhpRepos\FileManager\Path;
 use PhpRepos\FileManager\Symlink;
 use function Phpkg\Application\PackageManager\config_from_disk;
 use function Phpkg\Application\PackageManager\package_path;
+use function Phpkg\Parser\Parser\find_starting_point_for_imports;
+use function Phpkg\Parser\Parser\parse;
 use function PhpRepos\ControlFlow\Conditional\unless;
+use function PhpRepos\Datatype\Arr\has;
 use function PhpRepos\Datatype\Str\after_first_occurrence;
 
 function is_production_build(BuildMode $build_mode): bool
@@ -219,29 +222,25 @@ function compile(Path $address, Path $origin, Path $destination, Project $projec
 
 function compile_file(Project $project, Path $origin, Path $destination, Map $import_map, Map $namespace_map): void
 {
-    $php_file = PhpFile::from_content(File\content($origin));
-    $file_imports = $php_file->imports();
+    $content = File\content($origin);
+    $parser = parse($content);
 
-    $autoload = $file_imports['classes'];
+    $classes = array_filter($parser->nodes, fn ($node) => $node['type'] === 'class');
+    $constants = array_filter($parser->nodes, fn ($node) => $node['type'] === 'constant');
+    $functions = array_filter($parser->nodes, fn ($node) => $node['type'] === 'function');
 
-    foreach ($autoload as $import => $alias) {
-        $used_functions = $php_file->used_functions($alias);
-        $used_constants = $php_file->used_constants($alias);
-
-        if (count($used_functions) > 0 || count($used_constants) > 0) {
-            foreach ($used_constants as $constant) {
-                $file_imports['constants'][$import . '\\' . $constant] = $constant;
-            }
-            foreach ($used_functions as $function) {
-                $file_imports['functions'][$import . '\\' . $function] = $function;
-            }
-
-            unset($autoload[$import]);
+    foreach ($classes as $import => $node) {
+        if (has($constants, fn ($node) => $node['namespace'] === $import) || has($functions, fn ($node) => $node['namespace'] === $import)) {
+            unset($classes[$import]);
         }
     }
 
-    $imports = array_keys(array_merge($file_imports['constants'], $file_imports['functions']));
-    $autoload = array_keys($autoload);
+    $imports = array_merge(
+        array_map(fn ($node) => $node['actual_name'], $constants),
+        array_map(fn ($node) => $node['actual_name'], $functions),
+    );
+
+    $autoload = array_map(fn ($node) => $node['actual_name'], $classes);
 
     $paths = new Map([]);
 
@@ -279,9 +278,7 @@ function compile_file(Project $project, Path $origin, Path $destination, Map $im
         unless(is_null($path), fn () => $import_map->push(new NamespacePathPair($import, $path)));
     });
 
-    if ($paths->count() === 0) {
-        $content = $php_file->code();
-    } else {
+    if ($paths->count() > 0) {
         $requires = $paths->map(fn(NamespacePathPair $namespace_path) => $namespace_path->value->string());
         $require_statements = \PhpRepos\Datatype\Arr\map($requires, function (string $path) use ($project, $destination) {
             if (is_production_build($project->build_mode)) {
@@ -291,10 +288,22 @@ function compile_file(Project $project, Path $origin, Path $destination, Map $im
             return "require_once '{$path}';";
         });
 
-        $content = $php_file->add_autoloads(implode('', $require_statements))->code();
+        $single_line_require_statements = implode('', $require_statements);
+        $content = add_autoloads_to_file($content, $single_line_require_statements);
     }
 
     File\create($destination, $content, File\permission($origin));
+}
+
+function add_autoloads_to_file(string $content, string $autoloads): string
+{
+    $position = find_starting_point_for_imports($content);
+
+    if ($position === 0) {
+        return $content;
+    }
+
+    return substr_replace($content, $autoloads, $position, 0);
 }
 
 /**
@@ -338,7 +347,7 @@ function add_autoloads(Project $project, Path $target): void
 {
     $import_path = import_file_path($project);
 
-    $php_file = PhpFile::from_content(File\content($target));
+    $content = File\content($target);
 
     if (is_production_build($project->build_mode)) {
         $path = get_relative_path($target, $import_path);
@@ -347,7 +356,9 @@ function add_autoloads(Project $project, Path $target): void
         $line = "require_once '$import_path';";
     }
 
-    File\modify($target, $php_file->add_autoloads($line)->code());
+    $content = add_autoloads_to_file($content, $line);
+
+    File\modify($target, $content);
 }
 
 /**

@@ -18,13 +18,15 @@
         "https:\/\/github.com\/php-repos\/datatype.git": "v3.0.0",
         "https:\/\/github.com\/php-repos\/control-flow.git": "v3.0.0",
         "https:\/\/github.com\/php-repos\/file-manager.git": "v4.0.0",
-        "https:\/\/github.com\/php-repos\/console.git": "v3.0.0"
+        "https:\/\/github.com\/php-repos\/console.git": "v3.0.0",
+        "https:\/\/github.com\/nikic\/PHP-Parser.git": "v5.4.0"
     },
     "aliases": {
         "datatype": "https:\/\/github.com\/php-repos\/datatype.git",
         "cli": "https:\/\/github.com\/php-repos\/cli.git",
         "control-flow": "https:\/\/github.com\/php-repos\/control-flow.git",
         "file-manager": "https:\/\/github.com\/php-repos\/file-manager.git",
-        "console": "https:\/\/github.com\/php-repos\/console.git"
+        "console": "https:\/\/github.com\/php-repos\/console.git",
+        "php-parser": "https:\/\/github.com\/nikic\/PHP-Parser.git"
     }
 }

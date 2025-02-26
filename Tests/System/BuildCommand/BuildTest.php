@@ -2921,7 +2921,7 @@ EOD
 
 namespace App\Functions\JsonFile;
 
-function write('')
+function write($something = '')
 {
 
 }

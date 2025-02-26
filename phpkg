@@ -8,7 +8,7 @@ use PhpRepos\FileManager\Resolver;
 use function Phpkg\Exception\Handler\register_exception_handler;
 
 if (! empty(getopt('v::', ['version::']))) {
-    Output\success('phpkg version 2.1.0');
+    Output\success('phpkg version 2.2.0');
     exit(0);
 }
 

@@ -29,6 +29,12 @@
             "repo": "console",
             "version": "v3.0.0",
             "hash": "78e04ada504122d1942a033b3ef20a3cf67cd682"
+        },
+        "https:\/\/github.com\/nikic\/PHP-Parser.git": {
+            "owner": "nikic",
+            "repo": "PHP-Parser",
+            "version": "v5.4.0",
+            "hash": "447a020a1f875a434d62f2a401f53b82a396e494"
         }
     }
 }
