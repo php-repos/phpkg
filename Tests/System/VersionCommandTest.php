@@ -14,7 +14,7 @@ test(
 
         $lines = explode("\n", trim($output));
         assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
-        assert_success('phpkg version 2.2.0', $lines[0] . PHP_EOL);
+        assert_success('phpkg version 2.2.1', $lines[0] . PHP_EOL);
     }
 );
 
@@ -25,6 +25,6 @@ test(
 
         $lines = explode("\n", trim($output));
         assert_true(1 === count($lines), 'Number of output lines do not match' . $output);
-        assert_success('phpkg version 2.2.0', $lines[0] . PHP_EOL);
+        assert_success('phpkg version 2.2.1', $lines[0] . PHP_EOL);
     }
 );
