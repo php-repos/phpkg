@@ -274,9 +274,10 @@ class NodeParser extends NodeVisitorAbstract
         }
         // Handle class constants
         elseif ($node instanceof Node\Expr\ClassConstFetch) {
-            $class = $node->class->toString();
+            $class = $node->class instanceof Node\Name ? $node->class->toString() : null;
             $const_name = $node->name instanceof Node\Identifier ? $node->name->toString() : '';
-            if ($const_name && str_contains($class, '\\')) {
+
+            if ($const_name && $class && str_contains($class, '\\')) {
                 $clean_class = ltrim($class, '\\');
                 $full_name = $clean_class . '::' . $const_name;
                 $namespace_part = strrpos($clean_class, '\\') !== false ? substr($clean_class, 0, strrpos($clean_class, '\\')) : '';

@@ -2,6 +2,10 @@
 
 namespace Tests\Parser\ParserTest;
 
+use Doctrine\Common\Collections\Expr\Comparison;
+use Doctrine\Common\Collections\Expr\CompositeExpression;
+use Doctrine\Common\Collections\Expr\Expression;
+use Doctrine\Common\Collections\Expr\Value;
 use Phpkg\Parser\Parser;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
@@ -453,6 +457,45 @@ EOD;
                 'namespace' => 'Application',
                 'alias' => 'Repository',
                 'actual_name' => 'Application\Repository',
+                'type' => 'class'
+            ],
+        ];
+
+        $parser = Parser\parse($content);
+
+        $actual = array_filter($parser->nodes, fn ($node) => $node['type'] === 'class');
+
+        assert_true($expected === $actual);
+    },
+);
+
+test(
+    title: 'it should find imported classes',
+    case: function () {
+        $content = <<<'EOD'
+<?php
+
+declare(strict_types=1);
+
+namespace Doctrine\Common\Collections\Expr;
+
+use RuntimeException;
+
+abstract class ExpressionVisitor
+{
+    public function dispatch(Expression $expr)
+    {
+        throw new RuntimeException('Unknown Expression ' . $expr::class);
+    }
+}
+
+
+EOD;
+        $expected = [
+            'RuntimeException' => [
+                'namespace' => '',
+                'alias' => 'RuntimeException',
+                'actual_name' => 'RuntimeException',
                 'type' => 'class'
             ],
         ];
