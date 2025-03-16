@@ -32,7 +32,7 @@ All security vulnerabilities will be promptly addressed.
 
 ## Code of Conduct
 
-In order to ensure that the php-repos community is welcoming to all, please review and abide by the [Code of Conduct](https://github.com/php-repos/phpkg/blob/master/CODE_OF_CONDUCT.md).
+In order to ensure that the php-repos community is welcoming to all, please review and abide by the [Code of Conduct](https://github.com/php-repos/phpkg/blob/master/.github/CODE_OF_CONDUCT.md).
 
 ## Installation for Contributors
 
