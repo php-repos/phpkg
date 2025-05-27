@@ -109,7 +109,7 @@ function config(Dependency $dependency): Config
         return $cache[$dependency->key];
     }
 
-    if (Directory\exists(temp_path($dependency->value))) {
+    if (Directory\exists(temp_path($dependency->value)) && File\exists(temp_path($dependency->value)->append('phpkg.config.json'))) {
         $config = Config::from_array(JsonFile\to_array(temp_path($dependency->value)->append('phpkg.config.json')));
     } else if (Repositories\file_exists($dependency->value->value, 'phpkg.config.json')) {
         $config = Config::from_array(json_decode(json: Repositories\file_content($dependency->value->value, 'phpkg.config.json'), associative: true, flags: JSON_THROW_ON_ERROR));
