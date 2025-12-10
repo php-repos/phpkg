@@ -1,6 +1,9 @@
 {
     "map": {
         "Phpkg": "Source",
+        "PhpRepos\\Git": "Git",
+        "PhpRepos\\SemanticVersioning": "SemanticVersioning\/Source",
+        "PhpRepos\\SimpleCSP": "SimpleCSP\/Source",
         "Tests": "Tests"
     },
     "autoloads": [],
@@ -14,18 +17,22 @@
     "import-file": "phpkg.imports.php",
     "packages-directory": "Packages",
     "packages": {
-        "https:\/\/github.com\/php-repos\/cli.git": "v3.0.1",
-        "https:\/\/github.com\/php-repos\/datatype.git": "v3.0.0",
         "https:\/\/github.com\/php-repos\/control-flow.git": "v3.0.0",
-        "https:\/\/github.com\/php-repos\/file-manager.git": "v4.0.0",
-        "https:\/\/github.com\/php-repos\/console.git": "v3.0.0",
-        "https:\/\/github.com\/nikic\/PHP-Parser.git": "v5.4.0"
+        "https:\/\/github.com\/php-repos\/cli.git": "v3.0.1",
+        "https:\/\/github.com\/php-repos\/datatype.git": "v4.1.0",
+        "https:\/\/github.com\/php-repos\/logger.git": "v1.0.0",
+        "https:\/\/github.com\/php-repos\/observer.git": "v1.0.0",
+        "https:\/\/github.com\/php-repos\/file-manager.git": "v6.0.0",
+        "https:\/\/github.com\/php-repos\/console.git": "v6.0.0",
+        "https:\/\/github.com\/nikic\/PHP-Parser.git": "v5.7.0"
     },
     "aliases": {
         "datatype": "https:\/\/github.com\/php-repos\/datatype.git",
         "cli": "https:\/\/github.com\/php-repos\/cli.git",
         "control-flow": "https:\/\/github.com\/php-repos\/control-flow.git",
         "file-manager": "https:\/\/github.com\/php-repos\/file-manager.git",
+        "logger": "https:\/\/github.com\/php-repos\/logger.git",
+        "observer": "https:\/\/github.com\/php-repos\/observer.git",
         "console": "https:\/\/github.com\/php-repos\/console.git",
         "php-parser": "https:\/\/github.com\/nikic\/PHP-Parser.git"
     }
