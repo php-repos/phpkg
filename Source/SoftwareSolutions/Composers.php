@@ -368,7 +368,6 @@ function git_url($package): ?string
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
     $response = curl_exec($ch);
-    curl_close($ch);
 
     if ($response) {
         $data = json_decode($response, true);

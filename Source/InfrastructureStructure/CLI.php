@@ -126,7 +126,9 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
     
     // Create simple progress bar
     $bar_length = 34;
-    $filled = $size_known ? (int) ($percentage / 100 * $bar_length) : (int) (($elapsed % 4) * ($bar_length / 4));
+    $filled = $size_known 
+        ? (int) ($percentage / 100 * $bar_length) 
+        : intval(fmod($elapsed, 4.0) * ($bar_length / 4));
     $empty = $bar_length - $filled;
     $filled_bar = $bright_green . str_repeat('█', $filled) . $reset;
     $empty_bar = $gray . str_repeat('░', $empty) . $reset;

@@ -58,7 +58,6 @@ function send(Request\Message $request): Conversation
     $error = curl_error($ch);
 
     if (curl_errno($ch) > 0) {
-        curl_close($ch);
         $duration = microtime(true) - $start_time;
         Observer\broadcast(HttpResponseReceived::with($request->url, $request->method, 0, $duration));
         throw new ApiRequestException('Git curl error: ' . $error);
@@ -69,8 +68,6 @@ function send(Request\Message $request): Conversation
     $body = substr($output, $header_size);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $status_code = Status::tryFrom($http_code);
-
-    curl_close($ch);
 
     $duration = microtime(true) - $start_time;
     Observer\broadcast(HttpResponseReceived::with($request->url, $request->method, $http_code, $duration));
@@ -289,7 +286,6 @@ function download_archive(string $owner, string $repo, string $hash, ?string $to
 
     curl_exec($ch);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
     
     // Send final progress update to ensure completion is shown
     // This handles cases where the callback doesn't fire at completion
