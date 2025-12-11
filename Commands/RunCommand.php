@@ -36,7 +36,7 @@ return function (
     #[LongOption('error-pipe')]
     #[Description("Custom error configuration for the process. Format: 'pipe,w' for pipe or 'file,filename.txt,w' for file. Defaults to STDERR.")]
     ?string $error_pipe = null,
-    #[Description("Version number that you want to use for this project to run.")]
+    #[Description("Additional arguments to pass to the entry point script.")]
     #[ExcessiveArguments]
     array $entry_point_arguments = []
 ) {
@@ -51,25 +51,108 @@ return function (
 
     $entry_point_path = $outcome->data['entry_point'];
 
-    // Determine pipe configuration based on options
-    $input_pipe_config = $input_pipe ? explode(',', $input_pipe) : ['pipe', 'r'];
-    $output_pipe_config = $output_pipe ? explode(',', $output_pipe) : ['pipe', 'w'];
-    $error_pipe_config = $error_pipe ? explode(',', $error_pipe) : ['pipe', 'w'];
-
     // Build command with proper escaping for cross-platform compatibility
     $entry_point_escaped = escapeshellarg($entry_point_path);
     $arguments_escaped = array_map('escapeshellarg', $entry_point_arguments);
     $command = 'php -d memory_limit=-1 ' . $entry_point_escaped . ' ' . implode(' ', $arguments_escaped);
 
-    // Start the process
-    $process = proc_open($command,
-        [$input_pipe_config, $output_pipe_config, $error_pipe_config], 
-        $pipes
-    );
+    // Determine pipe configuration based on options
+    $input_pipe_config = $input_pipe ? explode(',', $input_pipe) : ['pipe', 'r'];
+    $output_pipe_config = $output_pipe ? explode(',', $output_pipe) : ['pipe', 'w'];
+    $error_pipe_config = $error_pipe ? explode(',', $error_pipe) : ['pipe', 'w'];
+
+    $process = proc_open($command, [$input_pipe_config, $output_pipe_config, $error_pipe_config], $pipes);
 
     if (!is_resource($process)) {
         error('Failed to start the process');
         return 1;
+    }
+
+    // Handle pipes (forward stdin, read stdout/stderr)
+    $stdin_pipe = $pipes[0] ?? null;
+    $stdout_pipe = $pipes[1] ?? null;
+    $stderr_pipe = $pipes[2] ?? null;
+
+    // Set stdout and stderr to non-blocking mode
+    if ($stdout_pipe && is_resource($stdout_pipe)) {
+        stream_set_blocking($stdout_pipe, false);
+    }
+    if ($stderr_pipe && is_resource($stderr_pipe)) {
+        stream_set_blocking($stderr_pipe, false);
+    }
+
+    // Process I/O until the process completes
+    $process_running = true;
+    while ($process_running) {
+        $status = proc_get_status($process);
+        $process_running = $status && $status['running'];
+
+        // Forward STDIN to child process if data is available
+        if ($stdin_pipe && is_resource($stdin_pipe)) {
+            $read = [STDIN];
+            $write = [];
+            $except = [];
+            if (stream_select($read, $write, $except, 0, 0) > 0) {
+                $input = fread(STDIN, 8192);
+                if ($input !== false && $input !== '') {
+                    fwrite($stdin_pipe, $input);
+                } elseif (feof(STDIN)) {
+                    fclose($stdin_pipe);
+                    $stdin_pipe = null;
+                }
+            }
+        }
+
+        // Read and output stdout (non-blocking)
+        if ($stdout_pipe && is_resource($stdout_pipe)) {
+            $output = stream_get_contents($stdout_pipe);
+            if ($output !== false && $output !== '') {
+                echo $output;
+            }
+        }
+
+        // Read and output stderr (non-blocking)
+        if ($stderr_pipe && is_resource($stderr_pipe)) {
+            $error = stream_get_contents($stderr_pipe);
+            if ($error !== false && $error !== '') {
+                fwrite(STDERR, $error);
+            }
+        }
+
+        if ($process_running) {
+            usleep(10000); // 0.01 seconds
+        }
+    }
+
+    // Read any remaining output after process completes
+    if ($stdout_pipe && is_resource($stdout_pipe)) {
+        stream_set_blocking($stdout_pipe, true);
+        while (!feof($stdout_pipe)) {
+            $output = fread($stdout_pipe, 8192);
+            if ($output !== false && $output !== '') {
+                echo $output;
+            } else {
+                break;
+            }
+        }
+        fclose($stdout_pipe);
+    }
+
+    if ($stderr_pipe && is_resource($stderr_pipe)) {
+        stream_set_blocking($stderr_pipe, true);
+        while (!feof($stderr_pipe)) {
+            $error = fread($stderr_pipe, 8192);
+            if ($error !== false && $error !== '') {
+                fwrite(STDERR, $error);
+            } else {
+                break;
+            }
+        }
+        fclose($stderr_pipe);
+    }
+
+    if ($stdin_pipe && is_resource($stdin_pipe)) {
+        fclose($stdin_pipe);
     }
 
     return proc_close($process);
