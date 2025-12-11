@@ -58,9 +58,6 @@ jobs:
       - name: Install dependencies
         run: phpkg install
 
-      - name: Prepare test env
-        run: mkdir DummyProject
-
       - name: Build
         run: phpkg build production
 
@@ -74,16 +71,18 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           cd builds/production
-          php phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
 
       - name: Execute tests (Unix)
         if: runner.os != 'Windows'
         run: |
           cd builds/production
-          ./phpkg run https://github.com/php-repos/test-runner.git
+          ./phpkg flush
+          ./phpkg run test-runner
 
       - name: Execute tests (Windows)
         if: runner.os == 'Windows'
         run: |
           cd builds/production
-          php phpkg run https://github.com/php-repos/test-runner.git
+          php phpkg flush
+          php phpkg run test-runner
