@@ -13,7 +13,7 @@ class NodeParser extends NodeVisitorAbstract
     private array $local_constants = [];
     private array $local_functions = [];
 
-    public function enterNode(Node $node): void
+    public function enterNode(Node $node): int|Node|null
     {
         // Check for namespace declaration
         if ($node instanceof Node\Stmt\Namespace_) {
@@ -289,5 +289,7 @@ class NodeParser extends NodeVisitorAbstract
                 ];
             }
         }
+        
+        return null;
     }
 }

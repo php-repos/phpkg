@@ -63,7 +63,7 @@ test(
         foreach ($solutions as $solution) {
             $a_id = 'package-a';
             $b_id = 'package-b';
-            if (isset($solution[$a_id]) && $solution[$a_id]['value'] === 'v.0.0') {
+            if (isset($solution[$a_id]) && $solution[$a_id]['value'] === 'v1.0.0') {
                 Arr\assert_equal([$solution[$b_id]['value']], ['v2.0.0']);
             }
         }
