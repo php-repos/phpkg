@@ -19,5 +19,5 @@ return function () {
 ";
     write($logo);
     success('phpkg version 3.0.0');
-    line('Copyright (c) PHPKG');
+    line('Copyright (c) 2022-' . date('Y') . ' PHPKG');
 };
