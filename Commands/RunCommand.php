@@ -52,9 +52,9 @@ return function (
     $entry_point_path = $outcome->data['entry_point'];
 
     // Determine pipe configuration based on options
-    $input_pipe_config = $input_pipe ? explode(',', $input_pipe) : STDIN;
-    $output_pipe_config = $output_pipe ? explode(',', $output_pipe) : STDOUT;
-    $error_pipe_config = $error_pipe ? explode(',', $error_pipe) : STDERR;
+    $input_pipe_config = $input_pipe ? explode(',', $input_pipe) : ['pipe', 'r'];
+    $output_pipe_config = $output_pipe ? explode(',', $output_pipe) : ['pipe', 'w'];
+    $error_pipe_config = $error_pipe ? explode(',', $error_pipe) : ['pipe', 'w'];
 
     // Build command with proper escaping for cross-platform compatibility
     $entry_point_escaped = escapeshellarg($entry_point_path);

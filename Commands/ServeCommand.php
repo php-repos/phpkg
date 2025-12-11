@@ -59,9 +59,9 @@ return function (
     $command = 'php -S ' . escapeshellarg($host) . ':' . $port . ' -t ' . escapeshellarg($document_root) . ' ' . implode(' ', $arguments_escaped);
 
     // Determine pipe configuration based on options
-    $input_pipe_config = $input_pipe ? explode(',', $input_pipe) : STDIN;
-    $output_pipe_config = $output_pipe ? explode(',', $output_pipe) : STDOUT;
-    $error_pipe_config = $error_pipe ? explode(',', $error_pipe) : STDERR;
+    $input_pipe_config = $input_pipe ? explode(',', $input_pipe) : ['pipe', 'r'];
+    $output_pipe_config = $output_pipe ? explode(',', $output_pipe) : ['pipe', 'w'];
+    $error_pipe_config = $error_pipe ? explode(',', $error_pipe) : ['pipe', 'w'];
 
     $process = proc_open($command, [$input_pipe_config, $output_pipe_config, $error_pipe_config], $pipes);
 
@@ -132,14 +132,19 @@ return function (
 
         $terminate_server = function ($signal) use ($process) {
             $status = proc_get_status($process);
-            if ($status['running']) {
+            if ($status && $status['running']) {
                 proc_terminate($process);
                 // Give it a moment to terminate gracefully
                 usleep(500000); // 0.5 seconds
                 // Force kill if still running
-                if (proc_get_status($process)['running']) {
+                $status = proc_get_status($process);
+                if ($status && $status['running']) {
                     proc_terminate($process, $signal);
                 }
+            }
+            // Close the process resource before exiting to prevent resource leak
+            if (is_resource($process)) {
+                proc_close($process);
             }
             exit();
         };
@@ -151,11 +156,17 @@ return function (
             $status = proc_get_status($process);
             
             // Check if process has exited
-            if (!$status['running']) {
-                $exit_code = $status['exitcode'];
+            if (!$status || !$status['running']) {
+                $exit_code = $status ? $status['exitcode'] : -1;
                 if ($exit_code !== 0) {
                     error("Server process exited with code: $exit_code");
+                    if (is_resource($process)) {
+                        proc_close($process);
+                    }
                     return $exit_code;
+                }
+                if (is_resource($process)) {
+                    proc_close($process);
                 }
                 break;
             }
