@@ -56,14 +56,10 @@ return function (
         $fswatch = $find_command('fswatch');
         if ($fswatch) {
             $method = 'fswatch';
-            // fswatch --exclude uses extended regex pattern (ERE)
-            // Exclude build_path and build directory (parent of build_path)
-            $builds_dir = dirname($build_path);
-            $build_path_escaped = preg_quote($build_path, '/');
-            $builds_dir_escaped = preg_quote($builds_dir, '/');
-            // Pattern: match paths starting with build_path or builds_dir
-            $exclude_pattern = '^(' . $build_path_escaped . '|' . $builds_dir_escaped . ')';
-            $command = escapeshellarg($fswatch) . ' -r -1 --exclude=' . escapeshellarg($exclude_pattern) . ' ' . escapeshellarg($root);
+            // Don't use --exclude to avoid regex pattern issues
+            // Instead, filter excluded paths in PHP after receiving events
+            // Use continuous mode (without -1) and read line by line for better reliability
+            $command = escapeshellarg($fswatch) . ' -r ' . escapeshellarg($root);
         }
     }
     
@@ -82,48 +78,70 @@ return function (
     // Use detected method
     if ($method === 'fswatch') {
         line('Using native file watching (fswatch)...');
-        $debounce_seconds = 1; // Wait 1 second after last change
-        $last_change = 0;
-        $pending_rebuild = false;
         
-        $builds_dir = dirname($build_path);
-        
-        while (true) {
-            // fswatch -1 exits after one event, so we loop and call it again
-            $output = shell_exec($command);
+        $process = popen($command, 'r');
+        if ($process) {
+            $debounce_seconds = 1; // Wait 1 second after last change
+            $last_change = 0;
+            $pending_rebuild = false;
             
-            if ($output !== null) {
-                $event_path = trim($output);
+            // Set non-blocking mode so we can check time
+            stream_set_blocking($process, false);
+            
+            while (true) {
+                $line = fgets($process);
                 
-                // Skip events from build output directory (safety check)
-                if (str_starts_with($event_path, $build_path) || str_starts_with($event_path, $builds_dir)) {
-                    continue;
-                }
-                
-                $last_change = time();
-                $pending_rebuild = true;
-                
-                // Wait for debounce period (check if more events come)
-                while ((time() - $last_change) < $debounce_seconds) {
-                    usleep(100000); // 0.1 seconds
-                }
-                
-                if ($pending_rebuild) {
-                    line('Changes detected. Rebuilding...');
-                    try {
-                        $outcome = Project\build($project);
-                        if (!$outcome->success) {
-                            error($outcome->message);
-                        } else {
-                            success($outcome->message);
-                        }
-                    } catch (\Throwable $e) {
-                        error('Build error: ' . $e->getMessage());
+                if ($line !== false) {
+                    $event_path = trim($line);
+                    
+                    // Skip empty lines
+                    if ($event_path === '') {
+                        continue;
                     }
-                    // Continue watching even if build fails or throws exception
-                    $pending_rebuild = false;
+                    
+                    // fswatch outputs absolute paths, but ensure we have the full path
+                    // If it's relative, make it absolute
+                    if (!str_starts_with($event_path, '/')) {
+                        $event_path = rtrim($root, '/') . '/' . ltrim($event_path, '/');
+                    }
+                    
+                    // Skip events from build output directory
+                    // build_path is something like /root/build, so we exclude anything under /root/build
+                    if (str_starts_with($event_path, $build_path)) {
+                        continue;
+                    }
+                    
+                    // Event detected
+                    $last_change = time();
+                    $pending_rebuild = true;
+                } else {
+                    // No event, check if we should rebuild
+                    if ($pending_rebuild && $last_change > 0) {
+                        $time_since_last_change = time() - $last_change;
+                        if ($time_since_last_change >= $debounce_seconds) {
+                            line('Changes detected. Rebuilding...');
+                            try {
+                                $outcome = Project\build($project);
+                                if (!$outcome->success) {
+                                    error($outcome->message);
+                                } else {
+                                    success($outcome->message);
+                                }
+                            } catch (\Throwable $e) {
+                                error('Build error: ' . $e->getMessage());
+                            }
+                            // Continue watching even if build fails or throws exception
+                            $pending_rebuild = false;
+                            $last_change = 0;
+                        }
+                    }
+                    usleep(100000); // 0.1 seconds - small sleep when no events
                 }
             }
+            pclose($process);
+        } else {
+            error('Failed to start fswatch process');
+            return 1;
         }
     } elseif ($method === 'inotifywait') {
         line('Using native file watching (inotifywait)...');
