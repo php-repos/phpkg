@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         php: [8.3, 8.4, 8.5]
 
     name: P${{ matrix.php }} - ${{ matrix.os }}
@@ -38,28 +38,57 @@ jobs:
       - name: Install phpkg (Unix)
         if: runner.os != 'Windows'
         run: | 
-          bash -c "$(curl -fsSL https://raw.github.com/php-repos/phpkg-installation/master/install.sh)"
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/php-repos/phpkg-installation/master/install.sh)"
           echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
 
       - name: Install phpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $installScript = Invoke-WebRequest -Uri "https://raw.github.com/php-repos/phpkg-installation/master/install.sh" -UseBasicParsing
-          bash -c $installScript.Content
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/php-repos/phpkg-installation/master/install.ps1" -OutFile install.ps1 -UseBasicParsing
+          powershell -ExecutionPolicy Bypass -File install.ps1
           $phpkgPath = "$env:USERPROFILE\.phpkg"
-          if (Test-Path $phpkgPath) {
-            echo "$phpkgPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          if (-not (Test-Path $phpkgPath)) {
+            Write-Error "phpkg installation directory not found at $phpkgPath"
+            exit 1
           }
+          echo "$phpkgPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # Verify phpkg is available
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+          phpkg --version
 
-      - name: Set Credentials for main PHPKG
+      - name: Set Credentials for main PHPKG (Unix)
+        if: runner.os != 'Windows'
         run: phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
 
-      - name: Install dependencies
+      - name: Set Credentials for main PHPKG (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+          phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
         run: phpkg install
 
-      - name: Build
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+          phpkg install
+
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
         run: phpkg build production
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+          phpkg build production
 
       - name: Set Credentials (Unix)
         if: runner.os != 'Windows'
@@ -69,9 +98,10 @@ jobs:
 
       - name: Set Credentials (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           cd builds/production
-          php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          php phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
 
       - name: Execute tests (Unix)
         if: runner.os != 'Windows'
@@ -82,6 +112,7 @@ jobs:
 
       - name: Execute tests (Windows)
         if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           cd builds/production
           php phpkg flush
