@@ -6,6 +6,28 @@ use PhpRepos\TestRunner\Assertions;
 use Phpkg\InfrastructureStructure\Files;
 use Tests\CliRunner;
 
+/**
+ * Normalizes path strings in PHP code by converting backslashes to forward slashes.
+ * This ensures cross-platform compatibility since PHP accepts forward slashes on all platforms.
+ * Normalizes paths in patterns like __DIR__ . '/path/to/file.php' and require_once statements.
+ */
+function normalize_paths_in_code(string $code): string
+{
+    // Replace backslashes with forward slashes in path-like strings
+    // This handles:
+    // - __DIR__ . '/path/to/file.php' or __DIR__ . "\path\to\file.php"
+    // - require_once __DIR__ . '/path/to/file.php';
+    // - 'Application\Model' => __DIR__ . '/Source/Model.php'
+    return preg_replace_callback(
+        "/(__DIR__\s*\.\s*['\"])([^'\"]+)(['\"])/",
+        function ($matches) {
+            $normalized_path = str_replace('\\', '/', $matches[2]);
+            return $matches[1] . $normalized_path . $matches[3];
+        },
+        $code
+    );
+}
+
 test(
     title: 'it should show error when building uninitialized project',
     case: function (string $temp_dir) {
@@ -461,8 +483,8 @@ spl_autoload_register(function ($class) {
 });
 
 EOD;
-
-        Str\assert_equal($import_content, $expected_import_content);
+        
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -606,7 +628,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -724,7 +746,7 @@ class Model
 }
 EOD;
         
-        Str\assert_equal($model_content, $expected_model_content);
+        Str\assert_equal(normalize_paths_in_code($model_content), normalize_paths_in_code($expected_model_content));
         
         // Verify ModelDto.php was copied and modified with require_once injection
         $model_dto_file = $source_dir . '/DTO/ModelDto.php';
@@ -751,8 +773,8 @@ class ModelDto
     }
 }
 EOD;
-
-        Str\assert_equal($model_dto_content, $expected_model_dto_content);
+        
+        Str\assert_equal(normalize_paths_in_code($model_dto_content), normalize_paths_in_code($expected_model_dto_content));
         
         // Verify Service.php was copied with same content
         $service_file = $source_dir . '/Service.php';
@@ -823,7 +845,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -982,7 +1004,7 @@ require_once __DIR__ . '/../phpkg.imports.php';
 echo "Hello World!";
 EOD;
         
-        Str\assert_equal($index_content, $expected_index_content);
+        Str\assert_equal(normalize_paths_in_code($index_content), normalize_paths_in_code($expected_index_content));
         
         // Verify phpkg.imports.php was created with correct content (no entry point import needed)
         $import_file = $build_dir . '/phpkg.imports.php';
@@ -1026,7 +1048,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1143,7 +1165,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1269,7 +1291,7 @@ class TestClass
 }
 EOD;
         
-        Str\assert_equal($package_class_content, $expected_package_class_content);
+        Str\assert_equal(normalize_paths_in_code($package_class_content), normalize_paths_in_code($expected_package_class_content));
         
         // Verify main project Model.php was copied and modified with require_once injection
         $model_file = $source_dir . '/Model.php';
@@ -1294,7 +1316,7 @@ class Model
 }
 EOD;
         
-        Str\assert_equal($model_content, $expected_model_content);
+        Str\assert_equal(normalize_paths_in_code($model_content), normalize_paths_in_code($expected_model_content));
         
         // Verify phpkg.imports.php was created with correct package namespace and class mappings
         $import_file = $build_dir . '/phpkg.imports.php';
@@ -1341,7 +1363,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1532,7 +1554,7 @@ EOD;
         // Replace placeholder with relative path (empty string for current directory)
         $expected_repo_cli_content = str_replace('@BUILDS_DIRECTORY', '', $expected_repo_cli_content);
         
-        Str\assert_equal($repo_cli_content, $expected_repo_cli_content);
+        Str\assert_equal(normalize_paths_in_code($repo_cli_content), normalize_paths_in_code($expected_repo_cli_content));
         
         // Verify repo package RepoClass.php was copied and modified with require_once injection
         $repo_class_content = file_get_contents($repo_class_file);
@@ -1557,7 +1579,7 @@ class RepoClass
 }
 EOD;
         
-        Str\assert_equal($repo_class_content, $expected_repo_class_content);
+        Str\assert_equal(normalize_paths_in_code($repo_class_content), normalize_paths_in_code($expected_repo_class_content));
         
         // Verify utils package UtilsHelper.php was copied with same content
         $utils_helper_content = file_get_contents($utils_helper_file);
@@ -1571,7 +1593,13 @@ EOD;
         // Verify symlink points to the correct file
         $symlink_target = readlink($executable_symlink);
         $expected_target = $repo_package_dir . '/console/cli.php';
-        Assertions\assert_true($symlink_target === $expected_target, 'Symlink should point to cli.php');
+        // Normalize paths for comparison (symlinks may use different separators on Windows)
+        // Try to resolve paths, but fall back to original if realpath fails
+        $resolved_target = @Files\realpath($symlink_target);
+        $resolved_expected = @Files\realpath($expected_target);
+        $normalized_target = str_replace('\\', '/', $resolved_target ?: $symlink_target);
+        $normalized_expected = str_replace('\\', '/', $resolved_expected ?: $expected_target);
+        Assertions\assert_true($normalized_target === $normalized_expected, 'Symlink should point to cli.php');
         
         // Verify symlink has executable permissions
         $symlink_permissions = fileperms($executable_symlink);
@@ -1623,7 +1651,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1971,7 +1999,7 @@ require_once __DIR__ . '/Source/ProjectUtils.php';
 
 EOD;
 
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
 
         return $temp_dir;
     },
@@ -2184,7 +2212,7 @@ class App
 }
 EOD;
         
-        Str\assert_equal($app_content, $expected_app_content);
+        Str\assert_equal(normalize_paths_in_code($app_content), normalize_paths_in_code($expected_app_content));
         
         // Verify entry points were copied and have correct import file paths
         $cli_file = $build_dir . '/cli.php';
@@ -2204,7 +2232,7 @@ $app = new App();
 $result = $app->run();
 echo "CLI Result: $result\n";
 EOD;
-        Str\assert_equal($cli_content, $expected_cli_content);
+        Str\assert_equal(normalize_paths_in_code($cli_content), normalize_paths_in_code($expected_cli_content));
         
         // Verify index.php content with injected require statement
         $index_content = file_get_contents($index_file);
@@ -2217,7 +2245,7 @@ $app = new App();
 $result = $app->run();
 echo "Web Result: $result\n";
 EOD;
-        Str\assert_equal($index_content, $expected_index_content);
+        Str\assert_equal(normalize_paths_in_code($index_content), normalize_paths_in_code($expected_index_content));
         
         // Verify Logger.php was modified with require_once injection for UtilsHelper
         $logger_content = file_get_contents($logger_class_file);
@@ -2346,7 +2374,7 @@ require_once __DIR__ . '/Source/ProjectUtils.php';
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
         
         // Verify project autoload files were copied correctly
         $project_helper_file = $build_dir . '/Source/ProjectHelper.php';
@@ -2732,7 +2760,7 @@ interface Model
     public function getName(): string;
 }
 EOD;
-        Str\assert_equal($model_content, $expected_model_content);
+        Str\assert_equal(normalize_paths_in_code($model_content), normalize_paths_in_code($expected_model_content));
         
         // Verify phpkg.imports.php was created with correct namespace and file mappings
         $import_file = $build_dir . '/phpkg.imports.php';
@@ -2865,12 +2893,15 @@ test(
             'Hashbang should be preserved in compiled entry point'
         );
         
+        // Normalize paths in entry point content for comparison
+        $normalized_entry_point_content = normalize_paths_in_code($entry_point_content);
+        
         // Verify import file is added to entry point
         // Entry point is at: build/cli
         // Import file is at: build/phpkg.imports.php
         // They are in the same directory, so relative path is just the filename
         Assertions\assert_true(
-            str_contains($entry_point_content, "require_once __DIR__ . '/phpkg.imports.php';"),
+            str_contains($normalized_entry_point_content, "require_once __DIR__ . '/phpkg.imports.php';"),
             'Import file should be added to entry point. Content: ' . $entry_point_content
         );
         
@@ -2879,13 +2910,13 @@ test(
         // Helper is at: build/Source/Helper.php
         // Relative path from cli to Helper.php: Source/Helper.php
         Assertions\assert_true(
-            str_contains($entry_point_content, "require_once __DIR__ . '/Source/Helper.php';"),
+            str_contains($normalized_entry_point_content, "require_once __DIR__ . '/Source/Helper.php';"),
             'Function import should be added to entry point. Content: ' . $entry_point_content
         );
         
         // Verify the entry point content structure
         // Should have: hashbang, function import (from compilation), import file (from entry point processing), then the original code
-        $lines = explode("\n", $entry_point_content);
+        $lines = explode("\n", $normalized_entry_point_content);
         $hashbang_line = trim($lines[0]);
         Assertions\assert_true(
             $hashbang_line === '#!/usr/bin/env php',
