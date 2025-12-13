@@ -205,7 +205,12 @@ test(
         if (PHP_OS_FAMILY === 'Windows') {
             // On Windows, try a path that likely doesn't exist or isn't writable
             // Use a path in a system directory that regular users can't write to
+            // Try System32 first, but if that's writable (unlikely), try a non-existent drive
             $invalid_path = 'C:\\Windows\\System32\\invalid_phpkg_test_path_' . uniqid();
+            // If System32 is somehow writable, try a non-existent drive path
+            if (@is_writable('C:\\Windows\\System32')) {
+                $invalid_path = 'Z:\\nonexistent\\path\\' . uniqid();
+            }
         } else {
             $invalid_path = '/root/invalid/path';
         }
@@ -214,7 +219,7 @@ test(
             "--project=$invalid_path",
         ]);
         
-        Assertions\assert_true(str_contains($output, 'is not writable') || str_contains($output, 'not writable'), 'Should show proper permission error message:' . $output);
+        Assertions\assert_true(str_contains($output, 'is not writable'), 'Should show proper permission error message:' . $output);
     }
 );
 

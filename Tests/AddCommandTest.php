@@ -433,9 +433,11 @@ test(
             Assertions\assert_true($dep_package_info['hash'] === $dep_info['hash'], "Dependency package $dep_url should have correct hash. Expected: {$dep_info['hash']}, Actual: {$dep_package_info['hash']}");
         }
         
-        // Verify the package directory exists
+        // Verify the package directory exists (normalize path for cross-platform compatibility)
         $package_dir = $temp_dir . '/Packages/ramsey/uuid';
-        Assertions\assert_true(is_dir($package_dir), 'Ramsey UUID package directory should exist');
+        // Normalize the path using realpath to handle Windows backslashes
+        $normalized_dir = realpath($package_dir) ?: $package_dir;
+        Assertions\assert_true(is_dir($normalized_dir), 'Ramsey UUID package directory should exist');
         
         // Verify the project config has the package
         $project_config = $temp_dir . '/phpkg.config.json';

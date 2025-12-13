@@ -2816,7 +2816,10 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        // Normalize paths in both actual and expected content for cross-platform compatibility
+        $normalized_actual = normalize_paths_in_code($import_content);
+        $normalized_expected = normalize_paths_in_code($expected_import_content);
+        Str\assert_equal($normalized_actual, $normalized_expected);
         
         return $temp_dir;
     },
