@@ -3,6 +3,7 @@
 use function PhpRepos\TestRunner\Runner\test;
 use PhpRepos\Datatype\Str;
 use PhpRepos\TestRunner\Assertions;
+use Phpkg\SoftwareSolutions\PHPKGs;
 use Phpkg\InfrastructureStructure\Files;
 use function Phpkg\InfrastructureStructure\Logs\notice;
 use Tests\CliRunner;
@@ -1397,6 +1398,7 @@ EOD;
                 'hash' => 'test-hash-12345'
             ]
         ];
+        $lock_data['checksum'] = PHPKGs\lock_checksum($lock_data['packages']);
         Files\save_array_as_json($lock_file, $lock_data);
         
         // Create Packages directory structure
@@ -1700,6 +1702,7 @@ EOD;
                 'hash' => 'utils-hash-67890'
             ]
         ];
+        $lock_data['checksum'] = PHPKGs\lock_checksum($lock_data['packages']);
         Files\save_array_as_json($lock_file, $lock_data);
         
         // Create Packages directory structure for repo package
@@ -1861,6 +1864,7 @@ test(
                 'hash' => 'autoload-hash-12345'
             ]
         ];
+        $lock_data['checksum'] = PHPKGs\lock_checksum($lock_data['packages']);
         Files\save_array_as_json($lock_file, $lock_data);
         
         // Create project source files for autoloads
@@ -1942,11 +1946,11 @@ PHP;
         Files\file_write($autoload_source_dir . '/PackageUtils.php', $package_utils_content);
         
             // Build the project
-    $build_output = CliRunner\phpkg('build', ["--project=$temp_dir"]);
-    Assertions\assert_true(
-        str_contains($build_output, 'Build finished successfully') || str_contains($build_output, 'Project built successfully'),
-        'Build should complete successfully. Output: ' . $build_output
-    );
+        $build_output = CliRunner\phpkg('build', ["--project=$temp_dir"]);
+        Assertions\assert_true(
+            str_contains($build_output, 'Build finished successfully') || str_contains($build_output, 'Project built successfully'),
+            'Build should complete successfully. Output: ' . $build_output
+        );
         
         // Verify the build directory was created
         $build_dir = $temp_dir . '/build';
@@ -2046,6 +2050,7 @@ EOD;
                 'hash' => 'autoload-hash-12345'
             ]
         ];
+        $lock_data['checksum'] = PHPKGs\lock_checksum($lock_data['packages']);
         Files\save_array_as_json($lock_file, $lock_data);
         
         // Create project source files for autoloads
@@ -2467,6 +2472,7 @@ EOD;
                 'hash' => 'logger-hash-12345'
             ]
         ];
+        $lock_data['checksum'] = PHPKGs\lock_checksum($lock_data['packages']);
         Files\save_array_as_json($lock_file, $lock_data);
         
         // Create project source files

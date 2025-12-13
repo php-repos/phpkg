@@ -2,9 +2,11 @@
 
 namespace Tests\InitCommandTest;
 
+use Phpkg\SoftwareSolutions\PHPKGs;
 use Phpkg\InfrastructureStructure\Files;
 use PhpRepos\Cli\Output;
 use PhpRepos\Datatype\Arr;
+use PhpRepos\Datatype\Str;
 use Tests\CliRunner;
 use PhpRepos\TestRunner\Assertions;
 use function PhpRepos\TestRunner\Runner\test;
@@ -34,7 +36,10 @@ test(
             'packages' => [],
             'aliases' => [],
         ], Files\read_json_as_array($temp_dir . '/phpkg.config.json'));
-        Arr\assert_equal(['packages' => []], Files\read_json_as_array($temp_dir . '/phpkg.config-lock.json'));
+        $meta = Files\read_json_as_array($temp_dir . '/phpkg.config-lock.json');
+        Arr\assert_equal([], $meta['packages']);
+        Str\assert_equal($meta['version'], 2);
+        Str\assert_equal($meta['checksum'], PHPKGs\lock_checksum([]));
     },
     before: function () {
         $temp_dir = sys_get_temp_dir() . '/' . uniqid('phpkg_init_test');
@@ -84,8 +89,10 @@ test(
             'packages' => [],
             'aliases' => [],
         ], Files\read_json_as_array($non_existent_dir . '/phpkg.config.json'));
-        
-        Arr\assert_equal(['packages' => []], Files\read_json_as_array($non_existent_dir . '/phpkg.config-lock.json'));
+        $meta = Files\read_json_as_array($non_existent_dir . '/phpkg.config-lock.json');
+        Str\assert_equal($meta['version'], 2);
+        Str\assert_equal($meta['checksum'], PHPKGs\lock_checksum([]));
+        Arr\assert_equal([], $meta['packages']);
         
         return $non_existent_dir;
     },
@@ -289,7 +296,7 @@ test(
         Arr\assert_equal([], $config['aliases'], 'Aliases should be empty array');
         
         // Verify lock file content
-        Arr\assert_equal(['packages' => []], $lock, 'Lock file should contain empty packages array');
+        Arr\assert_equal([], $lock['packages'], 'Lock file should contain empty packages array');
     },
     before: function () {
         $temp_dir = sys_get_temp_dir() . '/' . uniqid('phpkg_init_config_structure_test');

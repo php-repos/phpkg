@@ -231,7 +231,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
             ]));
-            return new Outcome(false, '📦 Could not read current dependencies for the project.');
+            return new Outcome(false, '📦 Could not read current dependencies for the project. ' . $outcome->message);
         }
 
         $packages = $outcome->data['packages'];
@@ -442,7 +442,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
             ]));
-            return new Outcome(false, '📦 Could not read current dependencies for the project.');
+            return new Outcome(false, '📦 Could not read current dependencies for the project. ' . $outcome->message);
         }
 
         $packages = $outcome->data['packages'];
@@ -647,7 +647,7 @@ function remove(string $project, string $identifier): Outcome
                 'identifier' => $identifier,
             ]));
 
-            return new Outcome(false, '📦 Could not read current dependencies for the project.');
+            return new Outcome(false, '📦 Could not read current dependencies for the project. ' . $outcome->message);
         }
 
         $packages = $outcome->data['packages'];

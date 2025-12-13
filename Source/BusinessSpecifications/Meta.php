@@ -4,6 +4,7 @@ namespace Phpkg\BusinessSpecifications\Meta;
 
 use Phpkg\SoftwareSolutions\Dependencies;
 use Phpkg\SoftwareSolutions\Paths;
+use Phpkg\SoftwareSolutions\PHPKGs;
 use Phpkg\BusinessSpecifications\Config;
 use Phpkg\BusinessSpecifications\Outcome;
 use function PhpRepos\Observer\Observer\propose;
@@ -30,6 +31,20 @@ function read(string $root, string $vendor): Outcome
     }
 
     $meta = Paths\to_array($meta_path);
+
+    if (!isset($meta['version'])) {
+        $meta['checksum'] = PHPKGs\lock_checksum($meta['packages']);
+    }
+
+    if (!PHPKGs\verify_lock($meta['checksum'], $meta['packages'])) {
+        broadcast(Event::create('Meta lock verification failed!', [
+            'root' => $root,
+            'vendor' => $vendor,
+            'meta_path' => $meta_path,
+            'meta' => $meta,
+        ]));
+        return new Outcome(false, '🔒 Meta lock verification failed. Please run install command to regenerate the meta file.');
+    }
 
     if (!empty($meta['packages']) && !Paths\find($vendor)) {
         broadcast(Event::create('There are some packages but the packages directory does not exist!', [
@@ -102,7 +117,7 @@ function save(string $root, array $packages): Outcome
         'packages' => $packages,
     ]));
 
-    $meta = ['packages' => []];
+    $meta = ['version' => 2, 'checksum' => null, 'packages' => []];
 
     foreach ($packages as $package) {
         $meta['packages'][$package->commit->version->repository->url] = [
@@ -115,6 +130,8 @@ function save(string $root, array $packages): Outcome
             $meta['packages'][$package->commit->version->repository->url]['checksum'] = $package->checksum;
         }
     }
+
+    $meta['checksum'] = PHPKGs\lock_checksum($meta['packages']);
 
     $meta_path = Paths\phpkg_meta_path($root);
 

@@ -298,6 +298,13 @@ function unique(iterable $array, ?callable $callback = null): array
     return $result;
 }
 
+function sort_keys(iterable $array): array
+{
+    $array = to_array($array);
+    ksort($array, SORT_STRING);
+    return $array;
+}
+
 function sort_by_keys(iterable $array, callable $callback): array
 {
     uksort($array, $callback);
@@ -307,4 +314,20 @@ function sort_by_keys(iterable $array, callable $callback): array
 function sort_by_keys_desc(iterable $array, callable $callback): array
 {
     return sort_by_keys($array, fn ($a, $b) => $callback($b, $a));
+}
+
+function canonical_json_encode(iterable $array): string
+{
+    $sorted = sort_keys_recursively($array);
+    return json_encode($sorted, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+}
+
+function sort_keys_recursively(iterable $value): mixed
+{
+    $sorted = [];
+    foreach (sort_keys($value) as $key => $item) {
+        $sorted[$key] = is_iterable($item) ? sort_keys_recursively($item) : $item;
+    }
+
+    return $sorted;
 }

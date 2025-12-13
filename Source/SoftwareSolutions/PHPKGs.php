@@ -3,6 +3,8 @@
 namespace Phpkg\SoftwareSolutions\PHPKGs;
 
 use Phpkg\SoftwareSolutions\Versions;
+use Phpkg\InfrastructureStructure\Arrays;
+use Phpkg\InfrastructureStructure\Strings;
 use function Phpkg\InfrastructureStructure\Logs\log;
 
 function config(array $config): array
@@ -68,3 +70,22 @@ function has_executable(array $config, string $path): bool
     return in_array($path, $config['executables'], true);
 }
 
+function lock_checksum(array $packages): string
+{
+    log('Calculating lock checksum for packages', [
+        'packages' => $packages,
+    ]);
+
+    return Strings\hash(Arrays\canonical_json_encode($packages));
+}
+
+function verify_lock(string $hash, array $packages): bool
+{
+    log('Verifying lock checksum for packages', [
+        'expected_hash' => $hash,
+        'packages' => $packages,
+    ]);
+
+    $calculated_hash = lock_checksum($packages);
+    return $calculated_hash === $hash;
+}
