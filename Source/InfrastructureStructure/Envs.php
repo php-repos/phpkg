@@ -2,6 +2,8 @@
 
 namespace Phpkg\InfrastructureStructure\Envs;
 
+use function Phpkg\InfrastructureStructure\Files\read_json_as_array;
+
 /**
  * Retrieves an environment variable value with an optional default.
  *
@@ -41,7 +43,28 @@ function get(string $key, mixed $default = null): mixed
  */
 function temp_dir(): string
 {
-    return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'phpkg';
+    return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'phpkg' . DIRECTORY_SEPARATOR . phpkg_version();
 }
 
+/**
+ * Reads the phpkg config.json file and returns its contents.
+ *
+ * @return array The config array with version and modules
+ */
+function phpkg_config(): array
+{
+    $phpkg_root = get('PHPKG_ROOT');
+    $config_path = $phpkg_root . DIRECTORY_SEPARATOR . 'config.json';
+    return read_json_as_array($config_path);
+}
 
+/**
+ * Gets the phpkg version from config.json.
+ *
+ * @return string The version string
+ */
+function phpkg_version(): string
+{
+    $config = phpkg_config();
+    return $config['version'] ?? '3.0.0';
+}
