@@ -4,6 +4,7 @@ use function PhpRepos\TestRunner\Runner\test;
 use PhpRepos\Datatype\Str;
 use PhpRepos\TestRunner\Assertions;
 use Phpkg\InfrastructureStructure\Files;
+use function Phpkg\InfrastructureStructure\Logs\notice;
 use Tests\CliRunner;
 
 /**
@@ -1490,6 +1491,12 @@ PHP;
 test(
     title: 'it should handle package executables with symlinks and dependencies',
     case: function (string $temp_dir) {
+        // Skip this test on Windows as symlinks require special permissions and behave differently
+        if (PHP_OS_FAMILY === 'Windows') {
+            notice('Skipping symlink test on Windows - symlinks require administrator privileges or developer mode');
+            return;
+        }
+        
         // Build the project with package executables
         $build_output = CliRunner\phpkg('build', ["--project=$temp_dir"]);
         // Should show success message
