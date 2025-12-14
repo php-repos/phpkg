@@ -367,6 +367,18 @@ function install(string $project, bool $force): Outcome
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "🔒 Path '$root' is not writable.");
+    } catch(DependencyResolutionException $e) {
+        broadcast(Event::create('I could not resolve dependencies during installation!', [
+            'root' => $root,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '🔗 Could not resolve dependencies during installation. ' . $e->getMessage());
+    } catch (ArchiveDownloadException $e) {
+        broadcast(Event::create('I could not download an archive during installation!', [
+            'root' => $root,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '⬇️ Could not download an archive during installation. ' . $e->getMessage());
     }
 }
 
@@ -803,31 +815,34 @@ function build(string $project): Outcome
         $excludes = [];
 
         foreach ($packages as $package) {
-            $excluded_paths = [
+            // Build excludes array: absolute paths + patterns prepended with package root
+            $package_excludes = [
                 Paths\under($package->root, '.git'),
-                ...map($package->config['excludes'], fn (string $excluded) => Paths\under($package->root, $excluded)),
+                ...map($package->config['excludes'] ?? [], fn (string $excluded) => PHPKGs\exclude_path($package->root, $excluded)),
             ];
-            foreach (Directories\ls_all_recursively($package->root, fn ($current, $key, $iterator) => ! any($excluded_paths, fn (string $excluded) => $current === $excluded)) as $path) {
-                $compile(Paths\under($path), $package->root, $package->config);
+            
+            foreach (Directories\ls_all_recursively($package->root, fn ($current, $key, $iterator) => ! Paths\is_excluded($package_excludes, Paths\normalize($current))) as $path) {
+                $compile($path, $package->root, $package->config);
             }
-            $excludes = [...$excludes, ...$excluded_paths];
+            $excludes = [...$excludes, ...$package_excludes];
         }
 
         // Build project
-        $excluded_paths = [
+        // Build excludes array: absolute paths + patterns prepended with project root
+        $project_excludes = [
             Paths\under($root, '.git'),
             Paths\under($root, '.idea'),
             Paths\under($root, '.phpstorm.meta.php'),
             Paths\under($root, 'build'),
             $vendor,
             $builds,
-            ...map($config['excludes'], fn (string $excluded) => Paths\under($root, $excluded)),
+            ...map($config['excludes'] ?? [], fn (string $excluded) => PHPKGs\exclude_path($root, $excluded)),
         ];
 
-        $excludes = [...$excludes, ...$excluded_paths];
+        $excludes = [...$excludes, ...$project_excludes];
 
-        foreach (Directories\ls_all_recursively($root, fn ($current, $key, $iterator) => ! any($excluded_paths, fn (string $excluded) => $current === $excluded)) as $path) {
-            $compile(Paths\under($path), $root, $config);
+        foreach (Directories\ls_all_recursively($root, fn ($current, $key, $iterator) => ! Paths\is_excluded($project_excludes, Paths\normalize($current))) as $path) {
+            $compile($path, $root, $config);
         }
 
         $content = <<<'EOD'

@@ -38,7 +38,7 @@ function phpkg_root(): string
 function credentials(): string
 {
     log('Retrieving credentials file path');
-    return Files\append(phpkg_root(), 'credentials.json');
+    return under(phpkg_root(), 'credentials.json');
 }
 
 function detect_project(string $project): string
@@ -326,7 +326,7 @@ function preserve_copy_directory_content(string $source, string $destination): b
 
     foreach ($items as $item) {
         $item_name = basename($item);
-        $dest_path = Files\append($destination, $item_name);
+        $dest_path = under($destination, $item_name);
 
         if (Files\is_directory($item)) {
             if (!Files\directory_exists($dest_path)) {
@@ -430,4 +430,69 @@ function delete_owner_when_empty(string $repo_path): bool
     }
 
     return Files\delete_directory(Files\parent($repo_path));
+}
+
+/**
+ * Normalizes a path to Linux-style format (forward slashes).
+ * Converts Windows backslashes to forward slashes for cross-platform compatibility.
+ * This ensures consistent path representation regardless of the operating system.
+ *
+ * @param string $path The path to normalize
+ * @return string The normalized path with forward slashes
+ *
+ * @example
+ * ```php
+ * $normalized = normalize('Source\\Test*.php');
+ * // Returns: 'Source/Test*.php'
+ *
+ * $normalized = normalize('C:\\project\\Source\\File.php');
+ * // Returns: 'C:/project/Source/File.php'
+ * ```
+ */
+function normalize(string $path): string
+{
+    log('Normalizing path to Linux-style format', ['path' => $path]);
+    return str_replace('\\', '/', $path);
+}
+
+/**
+ * Checks if a path matches any exclude pattern in the given excludes array.
+ *
+ * The excludes array can contain both exact paths and glob patterns.
+ * Patterns are checked using glob matching, while exact paths are checked directly.
+ *
+ * @param array $excludes Array of exclude patterns/paths (can be absolute paths or glob patterns)
+ * @param string $path The absolute path to check
+ * @return bool True if the path matches any exclude pattern, false otherwise
+ *
+ * @example
+ * ```php
+ * $excludes = ['/path/to/project/Source/Test*.php', '/path/to/project/Source/ExcludedFile.php'];
+ * $is_excluded = is_excluded($excludes, '/path/to/project/Source/Test1.php');
+ * // Returns: true
+ * ```
+ */
+function is_excluded(array $excludes, string $path): bool
+{
+    log('Checking if path is excluded', [
+        'path' => $path,
+        'excludes' => $excludes,
+    ]);
+    
+    foreach ($excludes as $exclude) {
+        // Check exact path match first
+        if ($path === $exclude) {
+            return true;
+        }
+        
+        // Check if it's a glob pattern using Strings\is_pattern
+        if (Strings\is_pattern($exclude)) {
+            // Use glob pattern matching
+            if (Files\path_matches_pattern($exclude, $path)) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }

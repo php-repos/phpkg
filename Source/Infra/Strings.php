@@ -62,3 +62,27 @@ function truncate(string $string, int $max_length): string
     
     return substr($string, 0, $max_length - 3) . '...';
 }
+
+/**
+ * Checks if a string contains glob pattern characters.
+ *
+ * Determines if a string is a glob pattern by checking for wildcard characters
+ * (*, ?, or [) that are used in pattern matching.
+ * Note: This function only checks for pattern characters, it does not normalize paths.
+ *
+ * @param string $string The string to check
+ * @return bool True if the string contains glob pattern characters, false otherwise
+ *
+ * @example
+ * ```php
+ * $is_pattern = is_pattern('Source/Test*.php');
+ * // Returns: true
+ *
+ * $is_pattern = is_pattern('Source/Service.php');
+ * // Returns: false
+ * ```
+ */
+function is_pattern(string $string): bool
+{
+    return str_contains($string, '*') || str_contains($string, '?') || str_contains($string, '[');
+}

@@ -138,7 +138,7 @@ function download_to(Package $package, string $destination): bool
 
     Paths\ensure_directory_exists($destination);
 
-    $archive = Files\append($destination, $package->commit->hash . '.zip');
+    $archive = Paths\under($destination, $package->commit->hash . '.zip');
     $download_status = GitHosts\download(
         $package->commit->version->repository->domain,
         $package->commit->version->repository->owner,
@@ -165,7 +165,7 @@ function download_to(Package $package, string $destination): bool
         return false;
     }
 
-    $zip_root = Files\append($destination, Files\zip_root($archive));
+    $zip_root = Paths\under($destination, Files\zip_root($archive));
 
     Paths\delete_file($archive);
 

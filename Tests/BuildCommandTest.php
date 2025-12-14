@@ -1231,6 +1231,163 @@ PHP;
 );
 
 test(
+    title: 'it should exclude files matching the given patterns from config',
+    case: function (string $temp_dir) {
+        // Build the project with glob pattern excludes configuration
+        $build_output = CliRunner\phpkg('build', ["--project=$temp_dir"]);
+        
+        // Should show success message
+        Assertions\assert_true(
+            str_contains($build_output, 'Build finished successfully') || 
+            str_contains($build_output, 'successfully') ||
+            str_contains($build_output, 'success'),
+            'Should show success message. Output: ' . $build_output
+        );
+        
+        // Verify build directory was created
+        $build_dir = $temp_dir . '/build';
+        Assertions\assert_true(is_dir($build_dir), 'Build directory should be created');
+        
+        // Verify the Source directory structure is preserved
+        $source_dir = $build_dir . '/Source';
+        Assertions\assert_true(is_dir($source_dir), 'Source directory should be preserved');
+        
+        // Verify Test1.php was NOT copied (excluded by glob pattern)
+        $test1_file = $source_dir . '/Test1.php';
+        Assertions\assert_true(!file_exists($test1_file), 'Test1.php should NOT be copied to Source directory when excluded by glob pattern');
+        
+        // Verify Test2.php was NOT copied (excluded by glob pattern)
+        $test2_file = $source_dir . '/Test2.php';
+        Assertions\assert_true(!file_exists($test2_file), 'Test2.php should NOT be copied to Source directory when excluded by glob pattern');
+        
+        // Verify Service.php was copied with same content (not matching the pattern)
+        $service_file = $source_dir . '/Service.php';
+        Assertions\assert_true(file_exists($service_file), 'Service.php should be copied to Source directory');
+        
+        $service_content = file_get_contents($service_file);
+        $original_service = file_get_contents($temp_dir . '/Source/Service.php');
+        Str\assert_equal($service_content, $original_service);
+        
+        // Verify phpkg.imports.php was created with correct content
+        $import_file = $build_dir . '/phpkg.imports.php';
+        Assertions\assert_true(file_exists($import_file), 'phpkg.imports.php file should be created');
+        
+        $import_content = file_get_contents($import_file);
+        $expected_import_content = <<<'EOD'
+<?php
+
+spl_autoload_register(function ($class) {
+    $classes = [
+    ];
+
+    if (array_key_exists($class, $classes)) {
+        require $classes[$class];
+    }
+
+}, true, true);
+
+spl_autoload_register(function ($class) {
+    $namespaces = [
+        'Application' => __DIR__ . '/Source',
+    ];
+
+    $realpath = null;
+
+    foreach ($namespaces as $namespace => $path) {
+        if (str_starts_with($class, $namespace)) {
+            $pos = strpos($class, $namespace);
+            if ($pos !== false) {
+                $realpath = substr_replace($class, $path, $pos, strlen($namespace));
+            }
+            $realpath = str_replace("\\", DIRECTORY_SEPARATOR, $realpath) . '.php';
+            if (file_exists($realpath)) {
+                require $realpath;
+            }
+
+            return ;
+        }
+    }
+});
+
+EOD;
+        
+        Str\assert_equal(normalize_paths_in_code($import_content), normalize_paths_in_code($expected_import_content));
+    },
+    before: function () {
+        // Create a temporary directory and initialize it as a phpkg project
+        $temp_dir = sys_get_temp_dir() . '/' . uniqid('phpkg_build_glob_excludes_test');
+        Files\make_directory_recursively($temp_dir);
+        
+        // Initialize the project
+        $init_output = CliRunner\phpkg('init', ["--project=$temp_dir"]);
+        Assertions\assert_true(
+            str_contains($init_output, 'Project has been initialized') || 
+            str_contains($init_output, 'initialized'),
+            'Project should be initialized. Output: ' . $init_output
+        );
+        
+        // Update config to have custom namespace mapping and glob pattern excludes
+        $config_file = $temp_dir . '/phpkg.config.json';
+        $config = Files\read_json_as_array($config_file);
+        $config['map'] = ['Application' => 'Source'];
+        $config['excludes'] = ['Source/Test*.php'];
+        Files\save_array_as_json($config_file, $config);
+        
+        // Create Source directory with Test1.php and Test2.php that should be excluded
+        $source_dir = $temp_dir . '/Source';
+        Files\make_directory_recursively($source_dir);
+        
+        $test1_content = <<<'PHP'
+<?php
+
+namespace Application;
+
+class Test1
+{
+    public function do_something()
+    {
+        // Test1 implementation
+    }
+}
+PHP;
+        Files\file_write($source_dir . '/Test1.php', $test1_content);
+        
+        $test2_content = <<<'PHP'
+<?php
+
+namespace Application;
+
+class Test2
+{
+    public function do_something()
+    {
+        // Test2 implementation
+    }
+}
+PHP;
+        Files\file_write($source_dir . '/Test2.php', $test2_content);
+        
+        // Create Service.php that should NOT be excluded
+        $service_content = <<<'PHP'
+<?php
+
+namespace Application\Service;
+
+function run(): void {
+    // Service implementation
+}
+PHP;
+        Files\file_write($source_dir . '/Service.php', $service_content);
+        
+        return $temp_dir;
+    },
+    after: function (string $temp_dir) {
+        // Clean up: remove temp dir
+        Files\force_delete_recursive($temp_dir);
+    }
+);
+
+test(
     title: 'it should handle package dependencies correctly',
     case: function (string $temp_dir) {
         // Build the project with package dependencies

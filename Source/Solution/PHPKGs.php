@@ -3,7 +3,9 @@
 namespace Phpkg\Solution\PHPKGs;
 
 use Phpkg\Solution\Versions;
+use Phpkg\Solution\Paths;
 use Phpkg\Infra\Arrays;
+use Phpkg\Infra\Files;
 use Phpkg\Infra\Strings;
 use function Phpkg\Infra\Logs\log;
 
@@ -16,7 +18,10 @@ function config(array $config): array
     $result = [];
     $result['map'] = $config['map'] ?? [];
     $result['autoloads'] = $config['autoloads'] ?? [];
-    $result['excludes'] = $config['excludes'] ?? [];
+    // Normalize excludes to Linux-style paths (forward slashes) for consistency
+    $result['excludes'] = isset($config['excludes']) 
+        ? array_map(fn (string $exclude) => Paths\normalize($exclude), $config['excludes'])
+        : [];
     $result['entry-points'] = $config['entry-points'] ?? [];
     $result['executables'] = $config['executables'] ?? [];
     $result['packages-directory'] = $config['packages-directory'] ?? 'Packages';
@@ -88,4 +93,38 @@ function verify_lock(string $hash, array $packages): bool
 
     $calculated_hash = lock_checksum($packages);
     return $calculated_hash === $hash;
+}
+
+/**
+ * Prepends a root path to an exclude pattern.
+ * If the exclude is a glob pattern, uses Files\append (no resolution).
+ * If the exclude is an exact path, uses Paths\under (with resolution).
+ *
+ * @param string $root The root path to prepend
+ * @param string $exclude The exclude pattern or path
+ * @return string The absolute exclude path or pattern
+ *
+ * @example
+ * ```php
+ * $pattern = exclude_path('/path/to/project', 'Source/Test*.php');
+ * // Returns: '/path/to/project/Source/Test*.php' (not resolved)
+ *
+ * $path = exclude_path('/path/to/project', 'Source/ExcludedFile.php');
+ * // Returns: '/path/to/project/Source/ExcludedFile.php' (resolved)
+ * ```
+ */
+function exclude_path(string $root, string $exclude): string
+{
+    log('Prepending root to exclude path', [
+        'root' => $root,
+        'exclude' => $exclude,
+    ]);
+    
+    if (Strings\is_pattern($exclude)) {
+        // For glob patterns, use Files\append without resolving (realpath would fail)
+        return Files\append($root, $exclude);
+    } else {
+        // For exact paths, use Paths\under to resolve the path
+        return Paths\under($root, $exclude);
+    }
 }

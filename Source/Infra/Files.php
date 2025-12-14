@@ -21,9 +21,32 @@ function realpath(string $path): string
     return Paths\realpath($path);
 }
 
+/**
+ * Appends one or more relative paths to an absolute base path.
+ * This is a simple path concatenation function that does not resolve paths,
+ * making it suitable for glob patterns that cannot be resolved.
+ * For exact paths that should be resolved, use Paths\under instead.
+ *
+ * @param string $absolute The absolute base path
+ * @param string ...$relatives The relative paths to append
+ * @return string The concatenated path with directory separators
+ *
+ * @example
+ * ```php
+ * $path = append('/path/to/project', 'Source', 'Test*.php');
+ * // Returns: '/path/to/project/Source/Test*.php' (not resolved)
+ * ```
+ */
 function append(string $absolute, string ...$relatives): string
 {
-    return Paths\append($absolute, ...$relatives);
+    $result = rtrim($absolute, '/\\');
+    foreach ($relatives as $relative) {
+        $relative = ltrim($relative, '/\\');
+        if ($relative !== '') {
+            $result .= DIRECTORY_SEPARATOR . $relative;
+        }
+    }
+    return $result;
 }
 
 function parent(string $path): string
@@ -436,4 +459,25 @@ function zip_root(string $zip_file): string
 function delete_directory(string $path): bool
 {
     return Directories\delete($path);
+}
+
+/**
+ * Checks if a path matches a glob pattern.
+ *
+ * @param string $pattern The glob pattern to match against (e.g., 'Source/Test*.php')
+ * @param string $path The path to check against the pattern
+ * @return bool True if the path matches the pattern, false otherwise
+ *
+ * @example
+ * ```php
+ * $matches = path_matches_pattern('Source/Test*.php', 'Source/Test1.php');
+ * // Returns: true
+ *
+ * $matches = path_matches_pattern('Source/Test*.php', 'Source/Service.php');
+ * // Returns: false
+ * ```
+ */
+function path_matches_pattern(string $pattern, string $path): bool
+{
+    return fnmatch($pattern, $path, FNM_PATHNAME | FNM_PERIOD);
 }
