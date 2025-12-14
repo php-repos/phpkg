@@ -812,36 +812,33 @@ function build(string $project): Outcome
             return Paths\write($destination, $content, Paths\permission($path));
         };
 
-        $excludes = [];
-
         foreach ($packages as $package) {
-            // Build excludes array: absolute paths + patterns prepended with package root
-            $package_excludes = [
-                Paths\under($package->root, '.git'),
-                ...map($package->config['excludes'] ?? [], fn (string $excluded) => PHPKGs\exclude_path($package->root, $excluded)),
-            ];
-            
-            foreach (Directories\ls_all_recursively($package->root, fn ($current, $key, $iterator) => ! Paths\is_excluded($package_excludes, Paths\normalize($current))) as $path) {
+            $excludes = [];
+            $excludes[] = PHPKGs\exclude_path($package->root, '.git');
+            foreach ($package->config['excludes'] as $exclude) {
+                $excludes[] = PHPKGs\exclude_path($package->root, $exclude);
+            }
+            foreach (Directories\ls_all_recursively($package->root, fn ($current, $key, $iterator)
+                => ! Paths\is_excluded($excludes, Paths\normalize($current))) as $path) {
                 $compile($path, $package->root, $package->config);
             }
-            $excludes = [...$excludes, ...$package_excludes];
         }
 
-        // Build project
-        // Build excludes array: absolute paths + patterns prepended with project root
-        $project_excludes = [
-            Paths\under($root, '.git'),
-            Paths\under($root, '.idea'),
-            Paths\under($root, '.phpstorm.meta.php'),
-            Paths\under($root, 'build'),
+        $excludes = [
+            '.git',
+            '.idea',
+            '.phpstorm.meta.php',
+            'build',
             $vendor,
-            $builds,
-            ...map($config['excludes'] ?? [], fn (string $excluded) => PHPKGs\exclude_path($root, $excluded)),
+            ...$config['excludes'],
         ];
 
-        $excludes = [...$excludes, ...$project_excludes];
+        foreach ($excludes as $key => $exclude) {
+             $excludes[$key] = PHPKGs\exclude_path($root, $exclude);
+        }
 
-        foreach (Directories\ls_all_recursively($root, fn ($current, $key, $iterator) => ! Paths\is_excluded($project_excludes, Paths\normalize($current))) as $path) {
+        foreach (Directories\ls_all_recursively($root, fn ($current, $key, $iterator)
+            => ! Paths\is_excluded($excludes, Paths\normalize($current))) as $path) {
             $compile($path, $root, $config);
         }
 
