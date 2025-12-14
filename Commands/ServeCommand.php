@@ -1,6 +1,6 @@
 <?php
 
-use Phpkg\BusinessSpecifications\Project;
+use Phpkg\Business\Project;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\ExcessiveArguments;

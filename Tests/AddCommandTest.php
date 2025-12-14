@@ -2,7 +2,7 @@
 
 namespace Tests\AddCommandTest;
 
-use Phpkg\InfrastructureStructure\Files;
+use Phpkg\Infra\Files;
 use Tests\CliRunner;
 use PhpRepos\TestRunner\Assertions;
 use function PhpRepos\TestRunner\Runner\test;

@@ -1,8 +1,6 @@
 #!/usr/bin/env php
 <?php
 
-use Phpkg\Signals\ConfirmationInquiry;
-use Phpkg\Signals\InputPromptMessage;
 use PhpRepos\Cli\Output;
 use PhpRepos\Console\Input;
 use PhpRepos\FileManager\Path;
@@ -18,9 +16,9 @@ use PhpRepos\Observer\Signals\Internals\HandlerFound;
 use PhpRepos\Observer\Signals\Internals\NoHandlerFound;
 use PhpRepos\Observer\Signals\Signal;
 use function Phpkg\Cli\Runner\execute;
-use function Phpkg\InfrastructureStructure\CLI\progressbar;
-use function Phpkg\InfrastructureStructure\CLI\show_spinner;
-use function Phpkg\InfrastructureStructure\CLI\hide_spinner;
+use function Phpkg\Infra\CLI\progressbar;
+use function Phpkg\Infra\CLI\show_spinner;
+use function Phpkg\Infra\CLI\hide_spinner;
 use function PhpRepos\Console\Runner\from_path;
 use function PhpRepos\Logger\Media\file_lock;
 
@@ -75,11 +73,6 @@ Observer\subscribe(function (Signal $signal) use ($verbosity_level, $cli_logger)
     }
 
     $cli_logger(Message::info("Signal $signal->title", $signal->details));
-});
-
-Observer\subscribe(function (ConfirmationInquiry $inquiry) {
-    Output\line($inquiry->time->format('Y-m-d\TH:i:s.uP') . ': ' . $inquiry->details['prompt'] . ' ');
-    return InputPromptMessage::create('Input Prompt Received', ['prompt' => $inquiry->details['prompt'], 'answer' => trim(fgets(STDIN))]);
 });
 
 Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_level) {

@@ -3,7 +3,7 @@
 use function PhpRepos\Cli\Output\line;
 use function PhpRepos\Cli\Output\success;
 use function PhpRepos\Cli\Output\write;
-use function Phpkg\InfrastructureStructure\Envs\phpkg_version;
+use function Phpkg\Infra\Envs\phpkg_version;
 
 /**
  * Show the current running version of phpkg

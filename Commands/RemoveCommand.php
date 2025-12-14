@@ -1,6 +1,6 @@
 <?php
 
-use Phpkg\BusinessSpecifications\Package;
+use Phpkg\Business\Package;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use PhpRepos\Console\Attributes\LongOption;

@@ -1,9 +1,9 @@
 <?php
 
-use function Phpkg\InfrastructureStructure\Files\file_write;
-use function Phpkg\InfrastructureStructure\Files\make_directory_recursively;
-use function Phpkg\InfrastructureStructure\Files\read_json_as_array;
-use function Phpkg\InfrastructureStructure\Files\save_array_as_json;
+use function Phpkg\Infra\Files\file_write;
+use function Phpkg\Infra\Files\make_directory_recursively;
+use function Phpkg\Infra\Files\read_json_as_array;
+use function Phpkg\Infra\Files\save_array_as_json;
 use function PhpRepos\TestRunner\Runner\test;
 use PhpRepos\TestRunner\Assertions;
 use Tests\CliRunner;

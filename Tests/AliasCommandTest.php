@@ -1,7 +1,7 @@
 <?php
 
 use PhpRepos\TestRunner\Assertions;
-use Phpkg\InfrastructureStructure\Files;
+use Phpkg\Infra\Files;
 use Tests\CliRunner;
 use function PhpRepos\TestRunner\Runner\test;
 

@@ -2,8 +2,8 @@
 
 namespace Tests\InitCommandTest;
 
-use Phpkg\SoftwareSolutions\PHPKGs;
-use Phpkg\InfrastructureStructure\Files;
+use Phpkg\Solution\PHPKGs;
+use Phpkg\Infra\Files;
 use PhpRepos\Cli\Output;
 use PhpRepos\Datatype\Arr;
 use PhpRepos\Datatype\Str;

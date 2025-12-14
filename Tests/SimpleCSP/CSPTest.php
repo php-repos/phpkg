@@ -2,7 +2,7 @@
 
 use PhpRepos\SimpleCSP\CSP;
 use function PhpRepos\SimpleCSP\CSPs\solve;
-use function Phpkg\InfrastructureStructure\Arrays\first;
+use function Phpkg\Infra\Arrays\first;
 use PhpRepos\Datatype\Arr;
 use function PhpRepos\TestRunner\Runner\test;
 

@@ -2,7 +2,7 @@
 
 namespace Phpkg\Commands\Credential;
 
-use Phpkg\BusinessSpecifications\Credential;
+use Phpkg\Business\Credential;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
 use function PhpRepos\Cli\Output\error;

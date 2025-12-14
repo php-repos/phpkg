@@ -3,9 +3,9 @@
 use function PhpRepos\TestRunner\Runner\test;
 use PhpRepos\Datatype\Str;
 use PhpRepos\TestRunner\Assertions;
-use Phpkg\SoftwareSolutions\PHPKGs;
-use Phpkg\InfrastructureStructure\Files;
-use function Phpkg\InfrastructureStructure\Logs\notice;
+use Phpkg\Solution\PHPKGs;
+use Phpkg\Infra\Files;
+use function Phpkg\Infra\Logs\notice;
 use Tests\CliRunner;
 
 /**
