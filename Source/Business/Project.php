@@ -829,7 +829,7 @@ function build(string $project): Outcome
             '.idea',
             '.phpstorm.meta.php',
             'build',
-            $vendor,
+            $config['packages-directory'],
             ...$config['excludes'],
         ];
 
