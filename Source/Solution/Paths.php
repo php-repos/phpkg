@@ -480,17 +480,12 @@ function is_excluded(array $excludes, string $path): bool
     ]);
 
     foreach ($excludes as $exclude) {
-        if ($path === $exclude) {
+        if ($path === $exclude) return true;
+        if (Strings\is_pattern($exclude)) {
+            if (Files\path_matches_pattern($exclude, $path)) return true;
+        } else if (Strings\starts_with($path, $exclude)) {
             return true;
         }
-        // Check if it's a glob pattern using Strings\is_pattern
-        if (Strings\is_pattern($exclude)) {
-            // Use glob pattern matching
-            if (Files\path_matches_pattern($exclude, $path)) {
-                return true;
-            }
-        }
-        return Strings\starts_with($path, $exclude);
     }
 
     return false;
