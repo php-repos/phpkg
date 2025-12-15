@@ -86,3 +86,8 @@ function is_pattern(string $string): bool
 {
     return str_contains($string, '*') || str_contains($string, '?') || str_contains($string, '[');
 }
+
+function split(string $string, string $delimiter): array
+{
+    return explode($delimiter, $string);
+}

@@ -120,7 +120,7 @@ function exclude_path(string $root, string $exclude): string
         'root' => $root,
         'exclude' => $exclude,
     ]);
-    
+
     if (Strings\is_pattern($exclude)) {
         // For glob patterns, use Files\append without resolving (realpath would fail)
         $path = Files\append($root, $exclude);
@@ -130,4 +130,21 @@ function exclude_path(string $root, string $exclude): string
     }
 
     return normalize($path);
+}
+
+function portable_require_path(string $origin, string $destination): string
+{
+    log('Calculating portable require path', [
+        'origin' => $origin,
+        'destination' => $destination,
+    ]);
+
+    $relative_path = Files\relative_path($origin, $destination);
+
+    $portable = "__DIR__";
+    foreach (Strings\split($relative_path, DIRECTORY_SEPARATOR) as $segment) {
+        $portable .= " . DIRECTORY_SEPARATOR . '$segment'";
+    }
+
+    return $portable;
 }

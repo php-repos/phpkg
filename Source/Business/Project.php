@@ -799,8 +799,7 @@ function build(string $project): Outcome
 
             if (count($file_imports) > 0) {
                 $require_statements = map($file_imports, function (string $import) use ($destination, $path) {
-                    $import = relative_path(parent($destination), $import);
-                    return "require_once __DIR__ . '/$import';";
+                    return "require_once " . PHPKGs\portable_require_path(parent($destination), $import) . ';';
                 });
 
                 $single_line_require_statements = implode('', $require_statements);
@@ -854,9 +853,9 @@ function build(string $project): Outcome
         foreach ($import_map as $map_namespace => $map_path) {
             $build_namespace_path = Paths\under($builds, relative_path($root, $map_path));
             if (Files\exists($build_namespace_path)) {
-                $path = relative_path(parent($import_file), $build_namespace_path);
+                $require_path = PHPKGs\portable_require_path(parent($import_file), $build_namespace_path);
                 $content .= <<<EOD
-            '{$map_namespace}' => __DIR__ . '/$path',
+            '{$map_namespace}' => {$require_path},
 
     EOD;
             }
@@ -878,9 +877,9 @@ function build(string $project): Outcome
 
         foreach ($namespace_map as $map_namespace => $map_path) {
             $build_namespace_path = Paths\under($builds, relative_path($root, $map_path));
-            $path = relative_path(parent($import_file), $build_namespace_path);
+            $require_path = PHPKGs\portable_require_path(parent($import_file), $build_namespace_path);
             $content .= <<<EOD
-            '{$map_namespace}' => __DIR__ . '/$path',
+            '{$map_namespace}' => {$require_path},
 
     EOD;
         }
@@ -918,8 +917,8 @@ function build(string $project): Outcome
                 }
                 $file_path = Paths\under($package_build_directory, $autoload);
                 if (Files\exists($file_path)) {
-                    $path = relative_path(parent($import_file), $file_path);
-                    $content .= "require_once __DIR__ . '/$path';" . PHP_EOL;
+                    $require_path = PHPKGs\portable_require_path(parent($import_file), $file_path);
+                    $content .= "require_once $require_path;" . PHP_EOL;
                 }
             }
         }
@@ -928,8 +927,8 @@ function build(string $project): Outcome
             if (str_ends_with($autoload, '.php')) {
                 $file_path = Paths\under($builds, $autoload);
                 if (Files\exists($file_path)) {
-                    $path = relative_path(parent($import_file), $file_path);
-                    $content .= "require_once __DIR__ . '/$path';" . PHP_EOL;
+                    $require_path = PHPKGs\portable_require_path(parent($import_file), $file_path);
+                    $content .= "require_once $require_path;" . PHP_EOL;
                 }
             }
         }
@@ -945,8 +944,8 @@ function build(string $project): Outcome
             }
 
             $content = Paths\read($entry_point_path); // For entry point, we add the import to the transpiled file.
-            $path = relative_path(parent($entry_point_path), $import_file);
-            $line = "require_once __DIR__ . '/$path';";
+            $require_path = PHPKGs\portable_require_path(parent($entry_point_path), $import_file);
+            $line = "require_once $require_path;";
 
             $position = find_starting_point_for_imports($content);
 
@@ -973,8 +972,8 @@ function build(string $project): Outcome
                     continue;
                 }
 
-                $path = relative_path(parent($source), $import_file);
-                $line = "require_once __DIR__ . '/$path';";
+                $require_path = PHPKGs\portable_require_path(parent($source), $import_file);
+                $line = "require_once $require_path;";
 
                 $content = Paths\read($source);
                 $position = find_starting_point_for_imports($content);

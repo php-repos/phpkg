@@ -481,3 +481,8 @@ function path_matches_pattern(string $pattern, string $path): bool
 {
     return fnmatch($pattern, $path, FNM_PATHNAME | FNM_PERIOD);
 }
+
+function relative_path(string $origin, string $destination): string
+{
+    return Paths\relative_path($origin, $destination);
+}
