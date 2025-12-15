@@ -478,13 +478,11 @@ function is_excluded(array $excludes, string $path): bool
         'path' => $path,
         'excludes' => $excludes,
     ]);
-    
+
     foreach ($excludes as $exclude) {
-        // Check exact path match first
         if ($path === $exclude) {
             return true;
         }
-        
         // Check if it's a glob pattern using Strings\is_pattern
         if (Strings\is_pattern($exclude)) {
             // Use glob pattern matching
@@ -492,7 +490,8 @@ function is_excluded(array $excludes, string $path): bool
                 return true;
             }
         }
+        return Strings\starts_with($path, $exclude);
     }
-    
+
     return false;
 }
