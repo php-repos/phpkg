@@ -154,9 +154,11 @@ class PHPKGCSP extends CSP
             ]);
 
             foreach ($this->project_config['packages'] as $package_url => $version) {
-                if ($assignment[$version->repository->identifier()] === 'absence') return false;
+                if (!isset($assignment[$version->repository->identifier()])) return false;
                 if ($assignment[$version->repository->identifier()] === 'project') return false; // Duplicate check, but safe
+                if ($assignment[$version->repository->identifier()] === 'absence') return false;
                 foreach ($assignment[$version->repository->identifier()]->config['packages'] as $dep_package_url => $dep_version) {
+                    if (!isset($assignment[$dep_version->repository->identifier()])) continue; // Probably it is a circular dependency to the current project
                     if ($assignment[$dep_version->repository->identifier()] === 'absence') return false;
                 }
             }
@@ -180,6 +182,7 @@ class PHPKGCSP extends CSP
                     || Dependencies\is_main_package($this->project_config, $assigned_package)) continue;
 
                 foreach ($assigned_package->config['packages'] as $package_url => $version) {
+                    if (!isset($assignment[$version->repository->identifier()])) continue; // Probably it is a circular dependency to the current project
                     if ($assignment[$version->repository->identifier()] === 'absence') return false;
                 }
             }
