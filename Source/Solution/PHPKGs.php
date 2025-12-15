@@ -8,6 +8,7 @@ use Phpkg\Infra\Arrays;
 use Phpkg\Infra\Files;
 use Phpkg\Infra\Strings;
 use function Phpkg\Infra\Logs\log;
+use function Phpkg\Solution\Paths\normalize;
 
 function config(array $config): array
 {
@@ -122,9 +123,11 @@ function exclude_path(string $root, string $exclude): string
     
     if (Strings\is_pattern($exclude)) {
         // For glob patterns, use Files\append without resolving (realpath would fail)
-        return Files\append($root, $exclude);
+        $path = Files\append($root, $exclude);
     } else {
         // For exact paths, use Paths\under to resolve the path
-        return Paths\under($root, $exclude);
+        $path = Paths\under($root, $exclude);
     }
+
+    return normalize($path);
 }

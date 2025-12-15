@@ -16,7 +16,7 @@ use PhpRepos\Observer\Signals\Internals\HandlerFound;
 use PhpRepos\Observer\Signals\Internals\NoHandlerFound;
 use PhpRepos\Observer\Signals\Signal;
 use function Phpkg\Cli\Runner\execute;
-use function Phpkg\Infra\CLI\progressbar;
+use function Phpkg\Infra\CLI\download_progressbar;
 use function Phpkg\Infra\CLI\show_spinner;
 use function Phpkg\Infra\CLI\hide_spinner;
 use function PhpRepos\Console\Runner\from_path;
@@ -99,7 +99,7 @@ Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_
         );
     }
     
-    progressbar(
+    download_progressbar(
         $id,
         $url,
         $details['downloaded'],

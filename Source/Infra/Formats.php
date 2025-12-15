@@ -7,7 +7,7 @@ namespace Phpkg\Infra\Formats;
  * Keeps values in the same unit until reaching 4 digits (10000).
  * 
  * @param int|float $bytes Number of bytes
- * @return string Formatted string without width padding (padding handled in progressbar)
+ * @return string Formatted string without width padding
  */
 function bytes(int|float $bytes): string
 {

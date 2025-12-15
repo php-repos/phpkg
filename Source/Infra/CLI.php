@@ -8,6 +8,52 @@ use function Phpkg\Infra\Formats\duration;
 use function Phpkg\Infra\Strings\truncate;
 
 /**
+ * Get the terminal width in columns.
+ * Falls back to 80 if unable to detect.
+ * 
+ * @return int Terminal width in columns
+ */
+function get_terminal_width(): int
+{
+    // Try to get from COLUMNS environment variable
+    $columns = getenv('COLUMNS');
+    if ($columns !== false && is_numeric($columns) && $columns > 0) {
+        return (int) $columns;
+    }
+    
+    // Try to get from stty (Unix-like systems)
+    if (function_exists('shell_exec') && !in_array(strtolower(ini_get('shell_exec')), ['', 'off', '0', 'false'])) {
+        $stty = @shell_exec('stty size 2>/dev/null');
+        if ($stty !== null && preg_match('/\d+\s+(\d+)/', trim($stty), $matches)) {
+            return (int) $matches[1];
+        }
+    }
+    
+    // Try tput (if available)
+    if (function_exists('shell_exec') && !in_array(strtolower(ini_get('shell_exec')), ['', 'off', '0', 'false'])) {
+        $tput = @shell_exec('tput cols 2>/dev/null');
+        if ($tput !== null && is_numeric(trim($tput))) {
+            return (int) trim($tput);
+        }
+    }
+    
+    // Default fallback
+    return 80;
+}
+
+/**
+ * Strip ANSI color codes from a string to get its actual display width.
+ * 
+ * @param string $text Text that may contain ANSI codes
+ * @return string Text with ANSI codes removed
+ */
+function strip_ansi_codes(string $text): string
+{
+    // Remove ANSI escape sequences (colors, formatting, etc.)
+    return preg_replace('/\033\[[0-9;]*m/', '', $text);
+}
+
+/**
  * Display a progress bar for download progress.
  * 
  * @param string $id Unique identifier for this download (e.g., "github.com/owner/repo@hash")
@@ -17,7 +63,7 @@ use function Phpkg\Infra\Strings\truncate;
  * @param float $time Elapsed time in seconds
  * @return void
  */
-function progressbar(string $id, ?string $url, int|float $downloaded, int|float $download_size, float $time)
+function download_progressbar(string $id, ?string $url, int|float $downloaded, int|float $download_size, float $time)
 {
     $cache = Cache::load();
     $downloads_key = 'progressbar:downloads';
@@ -93,12 +139,8 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
     $bright_green = "\033[92m";
     $yellow = "\033[33m";
     $blue = "\033[34m";
-    $dark_blue = "\033[34m"; // Dark blue for Windows 98 style
     $magenta = "\033[35m";
     $gray = "\033[90m";
-    
-    // Clear the line
-    echo "\r\033[K";
     
     // Truncate id to fit nicely (120 chars since we have two-line format)
     $id_display = truncate($id, 120);
@@ -121,11 +163,21 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
     }
     
     $shown_ids = $items[$shown_ids_key] ?? [];
-    if (!isset($shown_ids[$id])) {
-        echo "📦 " . $cyan . $id_display . $reset . "\n";
+    $package_id_shown = isset($shown_ids[$id]);
+    
+    // Show package id on first line (only once per download)
+    if (!$package_id_shown) {
+        fwrite(STDOUT, "📦 " . $cyan . $id_display . $reset . "\n");
         $shown_ids[$id] = true;
         $cache->update($shown_ids_key, $shown_ids);
     }
+    
+    // Get terminal width to ensure output fits
+    $terminal_width = get_terminal_width();
+    
+    // Always clear the current line and move to beginning before printing progress
+    // Clear the entire line width to handle wrapped text
+    fwrite(STDOUT, "\r\033[K");
     
     // Create simple progress bar
     $bar_length = 34;
@@ -156,13 +208,13 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
     // Format elapsed time
     $elapsed_formatted = duration((int)$elapsed);
     
-    // Build the progress line
+    // Build the progress line with full details first
     if ($size_known) {
         $eta_str = $blue . $eta_formatted . $reset;
         $finish_str = $magenta . $finish_time_formatted . $reset;
         $time_str = $dim . $elapsed_formatted . $reset;
         
-        printf(
+        $progress_line = sprintf(
             "   ⬇️  %s %s %s | Speed: %s (avg: %s) | ETA: %s (finish: %s) | Time: %s",
             $bar,
             $percentage_str,
@@ -176,7 +228,7 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
     } else {
         // Unknown size - show indeterminate progress
         $time_str = $dim . $elapsed_formatted . $reset;
-        printf(
+        $progress_line = sprintf(
             "   ⬇️  %s %s | Speed: %s (avg: %s) | Time: %s",
             $bar,
             $size_display,
@@ -186,8 +238,81 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
         );
     }
     
-    // Flush output
-    flush();
+    // Check if the line fits in terminal width (accounting for ANSI codes)
+    $display_width = mb_strlen(strip_ansi_codes($progress_line));
+    
+    // If too wide, create a simplified version
+    if ($display_width > $terminal_width) {
+        // Simplified format: just bar, percentage, size, and time
+        if ($size_known) {
+            $progress_line = sprintf(
+                "   ⬇️  %s %s %s | Time: %s",
+                $bar,
+                $percentage_str,
+                $size_display,
+                $time_str
+            );
+        } else {
+            $progress_line = sprintf(
+                "   ⬇️  %s %s | Time: %s",
+                $bar,
+                $size_display,
+                $time_str
+            );
+        }
+        
+        // If still too wide, truncate the bar
+        $display_width = mb_strlen(strip_ansi_codes($progress_line));
+        if ($display_width > $terminal_width) {
+            // Calculate how much space we have for the bar
+            $prefix = "   ⬇️  [";
+            $suffix = $size_known 
+                ? "] " . $percentage_str . " " . $size_display . " | Time: " . $time_str
+                : "] " . $size_display . " | Time: " . $time_str;
+            $suffix_width = mb_strlen(strip_ansi_codes($suffix));
+            $available_width = $terminal_width - mb_strlen(strip_ansi_codes($prefix)) - $suffix_width;
+            
+            if ($available_width > 5) {
+                // Adjust bar length to fit
+                $bar_length = max(5, $available_width - 2); // -2 for brackets
+                $filled = $size_known 
+                    ? (int) ($percentage / 100 * $bar_length) 
+                    : intval(fmod($elapsed, 4.0) * ($bar_length / 4));
+                $empty = $bar_length - $filled;
+                $filled_bar = $bright_green . str_repeat('█', $filled) . $reset;
+                $empty_bar = $gray . str_repeat('░', $empty) . $reset;
+                $bar = '[' . $filled_bar . $empty_bar . ']';
+                
+                if ($size_known) {
+                    $progress_line = sprintf(
+                        "   ⬇️  %s %s %s | Time: %s",
+                        $bar,
+                        $percentage_str,
+                        $size_display,
+                        $time_str
+                    );
+                } else {
+                    $progress_line = sprintf(
+                        "   ⬇️  %s %s | Time: %s",
+                        $bar,
+                        $size_display,
+                        $time_str
+                    );
+                }
+            } else {
+                // Very narrow terminal - minimal display
+                $progress_line = $size_known
+                    ? sprintf("   ⬇️  %s %s", $percentage_str, $size_display)
+                    : sprintf("   ⬇️  %s", $size_display);
+            }
+        }
+    }
+    
+    // Print the progress line
+    fwrite(STDOUT, $progress_line);
+    
+    // Flush output immediately to ensure it's displayed
+    fflush(STDOUT);
     
     // Update tracking variables
     $state['last_update'] = $time;
@@ -207,8 +332,17 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
         $bright_green = "\033[92m";
         $yellow = "\033[33m";
         
-        echo "\r\033[K";
-        $bar = '[' . $bright_green . str_repeat('█', 34) . $reset . ']';
+        // Clear the line and show completion message
+        fwrite(STDOUT, "\r\033[K");
+        
+        // Use the maximum elapsed time we've tracked to ensure accuracy
+        // This handles cases where the final $time might be 0 or incorrect
+        $final_elapsed = max($max_elapsed, $elapsed, 0);
+        $final_avg_speed = $final_elapsed > 0 ? $downloaded / $final_elapsed : 0;
+        
+        // Build completion bar - adjust length to fit terminal
+        $completion_bar_length = min(34, max(10, $terminal_width - 60));
+        $bar = '[' . $bright_green . str_repeat('█', $completion_bar_length) . $reset . ']';
         $downloaded_raw = bytes($downloaded);
         $total_raw = bytes($download_size);
         // Center each part within 9 characters for consistent alignment
@@ -217,13 +351,9 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
         $size_display = $downloaded_padded . '/' . $total_padded;
         $percentage_str = $bold . $yellow . "100%" . $reset;
         
-        // Use the maximum elapsed time we've tracked to ensure accuracy
-        // This handles cases where the final $time might be 0 or incorrect
-        $final_elapsed = max($max_elapsed, $elapsed, 0);
-        $final_avg_speed = $final_elapsed > 0 ? $downloaded / $final_elapsed : 0;
-        
-        printf(
-            "   ⬇️  %s %s %s | %sCompleted%s in %s%s%s | Avg Speed: %s%s%s\n",
+        // Build completion message
+        $completion_line = sprintf(
+            "   ⬇️  %s %s %s | %sCompleted%s in %s%s%s | Avg Speed: %s%s%s",
             $bar,
             $percentage_str,
             $size_display,
@@ -236,6 +366,38 @@ function progressbar(string $id, ?string $url, int|float $downloaded, int|float 
             bytes($final_avg_speed) . '/s',
             $reset
         );
+        
+        // Check if completion line fits, simplify if needed
+        $completion_width = mb_strlen(strip_ansi_codes($completion_line));
+        if ($completion_width > $terminal_width) {
+            // Simplified completion message
+            $completion_line = sprintf(
+                "   ⬇️  %s %s %s | %sCompleted%s in %s%s%s",
+                $bar,
+                $percentage_str,
+                $size_display,
+                $bold . $green,
+                $reset,
+                $dim,
+                duration((int)$final_elapsed),
+                $reset
+            );
+            
+            // If still too wide, further simplify
+            $completion_width = mb_strlen(strip_ansi_codes($completion_line));
+            if ($completion_width > $terminal_width) {
+                $completion_line = sprintf(
+                    "   ⬇️  %s %s | %sCompleted%s",
+                    $percentage_str,
+                    $size_display,
+                    $bold . $green,
+                    $reset
+                );
+            }
+        }
+        
+        fwrite(STDOUT, $completion_line . "\n");
+        fflush(STDOUT);
         
         // Mark as completed
         $state['completed'] = true;
@@ -255,7 +417,7 @@ function show_spinner(string $label): void
 {
     static $frame = 0;
     
-    // ANSI color codes - using yellow/orange color like progressbar percentage
+    // ANSI color codes - using yellow/orange color like download_progressbar percentage
     $reset = "\033[0m";
     $yellow = "\033[33m";
     
