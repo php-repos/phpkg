@@ -2,7 +2,7 @@
 
 namespace Phpkg\Solution\Parser;
 
-class SymbolRegistery
+class SymbolRegistry
 {
     public function __construct(
         public readonly array $classes,

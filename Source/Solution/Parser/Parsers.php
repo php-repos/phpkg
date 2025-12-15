@@ -3,7 +3,7 @@
 namespace Phpkg\Solution\Parser\Parsers;
 
 use Phpkg\Solution\Parser\NodeParser;
-use Phpkg\Solution\Parser\SymbolRegistery;
+use Phpkg\Solution\Parser\SymbolRegistry;
 use Phpkg\Infra\Strings;
 use PhpParser\Lexer\Emulative;
 use PhpParser\NodeTraverser;
@@ -12,7 +12,7 @@ use function PhpRepos\Datatype\Arr\has;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
 
-function get_registry(string $code): SymbolRegistery
+function get_registry(string $code): SymbolRegistry
 {
     log('Getting registry from code.', ['sample' => Strings\first_characters($code, 20)]);
     $parser = parse($code);
@@ -34,7 +34,7 @@ function get_registry(string $code): SymbolRegistery
 
     $namespaces = array_map(fn ($node) => $node['actual_name'], $classes);
 
-    return new SymbolRegistery(
+    return new SymbolRegistry(
         $classes,
         $functions,
         $constants,
