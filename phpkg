@@ -108,8 +108,16 @@ Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_
     );
 });
 
-Observer\subscribe(fn (SendingGitHttpRequest $plan) => show_spinner($plan->title . ' ' . $plan->details['method'] . ': ' . $plan->details['url']));
-Observer\subscribe(fn (HttpResponseReceived $event) => hide_spinner());
+Observer\subscribe(function (SendingGitHttpRequest $plan) use ($verbosity_level) {
+    if ($verbosity_level === 0) {
+        show_spinner($plan->details['method'] . ': ' . $plan->details['url']);
+    }
+});
+Observer\subscribe(function (HttpResponseReceived $event) use ($verbosity_level) {
+    if ($verbosity_level === 0) {
+        hide_spinner();
+    }
+});
 
 $inputs = Input::make(array_slice($argv, $offset));
 $commands_directory = Path::from(__DIR__)->sub('Commands');

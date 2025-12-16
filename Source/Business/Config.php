@@ -2,6 +2,10 @@
 
 namespace Phpkg\Business\Config;
 
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\InvalidTokenException;
+use PhpRepos\Git\Exception\RateLimitedException;
+use Phpkg\Infra\Exception\RemoteFileNotFoundException;
 use Phpkg\Solution\Commits;
 use Phpkg\Solution\Composers;
 use Phpkg\Solution\Paths;
@@ -15,42 +19,76 @@ use PhpRepos\Observer\Signals\Event;
 
 function load(string $url, string $version, string $hash): Outcome
 {
-    propose(Plan::create('I try to load a config from a git host using the given commit data.', [
-        'url' => $url,
-        'version' => $version,
-        'hash' => $hash,
-    ]));
-
-    $outcome = Credential\read();
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not find any credentials!', [
+    try {
+        propose(Plan::create('I try to load a config from a git host using the given commit data.', [
             'url' => $url,
-            'version' => $version ?: 'latest',
+            'version' => $version,
             'hash' => $hash,
         ]));
-        return new Outcome(false, '🔑 No credentials found.');
-    }
-    $credentials = $outcome->data['credentials'];
-    $commit = Commits\prepare($url, $version, $hash, $credentials);
 
-    if (Commits\remote_phpkg_exists($commit)) {
-        $config = Commits\get_remote_phpkg($commit);
-    } else if (Commits\remote_composer_exists($commit)) {
-        $config = Composers\config(Commits\get_remote_composer($commit), $credentials);
-    } else {
-        broadcast(Event::create('It seems the given commit is neither a phpkg nor a composer project!', [
+        $outcome = Credential\read();
+        if (!$outcome->success) {
+            broadcast(Event::create('I could not find any credentials!', [
+                'url' => $url,
+                'version' => $version ?: 'latest',
+                'hash' => $hash,
+            ]));
+            return new Outcome(false, '🔑 No credentials found.');
+        }
+        $credentials = $outcome->data['credentials'];
+        $commit = Commits\prepare($url, $version, $hash, $credentials);
+
+        if (Commits\remote_phpkg_exists($commit)) {
+            $config = Commits\get_remote_phpkg($commit);
+        } else if (Commits\remote_composer_exists($commit)) {
+            $config = Composers\config(Commits\get_remote_composer($commit), $credentials);
+        } else {
+            broadcast(Event::create('It seems the given commit is neither a phpkg nor a composer project!', [
+                'commit' => $commit,
+            ]));
+            return new Outcome(false, '❌ Invalid package.');
+        }
+        
+        $config = PHPKGs\config($config);
+
+        broadcast(Event::create('I loaded the config for the given commit.', [
             'commit' => $commit,
+            'config' => $config,
         ]));
-        return new Outcome(false, '❌ Invalid package.');
+        return new Outcome(true, '✅ Config loaded successfully.', ['config' => $config]);
+    } catch (ApiRequestException $e) {
+        broadcast(Event::create('An error occurred while trying to load the config from the git host!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '⚠️ API request error: ' . $e->getMessage());
+    } catch (RemoteFileNotFoundException $e) {
+        broadcast(Event::create('The required file was not found in the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🔍 Remote file not found: ' . $e->getMessage());
+    } catch (InvalidTokenException $e) {
+        broadcast(Event::create('The provided token is invalid for accessing the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🔐 Invalid token: ' . $e->getMessage());
+    } catch (RateLimitedException $e) {
+        broadcast(Event::create('Rate limit exceeded while accessing the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🐢 Rate limit exceeded: ' . $e->getMessage());
     }
-    
-    $config = PHPKGs\config($config);
-
-    broadcast(Event::create('I loaded the config for the given commit.', [
-        'commit' => $commit,
-        'config' => $config,
-    ]));
-    return new Outcome(true, '✅ Config loaded successfully.', ['config' => $config]);
 }
 
 function read(string $root): Outcome

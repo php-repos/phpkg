@@ -2,6 +2,10 @@
 
 namespace Phpkg\Business\Package;
 
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\InvalidTokenException;
+use PhpRepos\Git\Exception\NotFoundException;
+use PhpRepos\Git\Exception\RateLimitedException;
 use Phpkg\Solution\Caches;
 use Phpkg\Solution\Commits;
 use Phpkg\Solution\Data\Package;
@@ -50,7 +54,6 @@ function register_alias(string $project, string $alias, string $package_url): Ou
                 'package_url' => $package_url,
             ]));
             return new Outcome(false, '❌ This does not seem to be a phpkg project.');
-
         }
 
         $config = $outcome->data['config'];
@@ -92,111 +95,140 @@ function register_alias(string $project, string $alias, string $package_url): Ou
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
     }
-
 }
 
 function load(string $url, string $version): Outcome
 {
-    propose(Plan::create('I try to load a package\'s dependencies from git host for the given URL and version.', [
-        'url' => $url,
-        'version' => $version,
-    ]));
-
-    $outcome = Credential\read();
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not find any credentials!', [
+    try {
+        propose(Plan::create('I try to load a package\'s dependencies from git host for the given URL and version.', [
             'url' => $url,
             'version' => $version ?: 'latest',
         ]));
 
-        return new Outcome(false, '🔑 Could not read credentials.');
-    }
-
-    $credentials = $outcome->data['credentials'];
-
-    if ($version !== 'development') {
-        $version = Versions\match_highest_version($url, $version, $credentials);
-    } else {
-        $version = Versions\prepare($url, $version, $credentials);
-    }
-
-    if (Caches\remote_data_exists($version)) {
-        $cached_data = Caches\get_remote_data($version);
-
-        broadcast(Event::create('I found a cached response.', [
-            'url' => $url,
-            'version' => $version,
-            'commit' => $cached_data['commit'],
-            'config' => $cached_data['config'],
-            'packages' => $cached_data['packages'] ?? null,
-        ]));
-        return new Outcome(true, '💾 Package loaded from cache.', [
-            'commit' => $cached_data['commit'],
-            'config' => $cached_data['config'],
-            'packages' => $cached_data['packages'] ?? null,
-        ]);
-    }
-
-    if (Versions\is_development($version)) {
-        $commit = Commits\find_latest_commit($version);
-    } else {
-        $commit = Commits\find_version_commit($version);
-    }
-
-    $outcome = Config\load($url, $version->tag, $commit->hash);
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not get config for the package!', [
-            'url' => $url,
-            'commit' => $commit,
-        ]));
-        return new Outcome(false, '📦 Could not get config for the package.');
-    }
-
-    $config = $outcome->data['config'];
-
-    Caches\set_remote_data($version, $commit, $config);
-
-    $packages = [];
-
-    foreach ($config['packages'] as $package_url => $package_version) {
-        $outcome = load($package_url, $package_version->tag);
+        $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not load a dependency package!', [
+            broadcast(Event::create('I could not find any credentials!', [
+                'url' => $url,
+                'version' => $version ?: 'latest',
+            ]));
+
+            return new Outcome(false, '🔑 Could not read credentials.');
+        }
+
+        $credentials = $outcome->data['credentials'];
+
+        if ($version !== 'development') {
+            $version = Versions\match_highest_version($url, $version, $credentials);
+        } else {
+            $version = Versions\prepare($url, $version, $credentials);
+        }
+
+        if (Caches\remote_data_exists($version)) {
+            $cached_data = Caches\get_remote_data($version);
+
+            broadcast(Event::create('I found a cached response.', [
+                'url' => $url,
+                'version' => $version,
+                'commit' => $cached_data['commit'],
+                'config' => $cached_data['config'],
+                'packages' => $cached_data['packages'] ?? null,
+            ]));
+            return new Outcome(true, '💾 Package loaded from cache.', [
+                'commit' => $cached_data['commit'],
+                'config' => $cached_data['config'],
+                'packages' => $cached_data['packages'] ?? null,
+            ]);
+        }
+
+        if (Versions\is_development($version)) {
+            $commit = Commits\find_latest_commit($version);
+        } else {
+            $commit = Commits\find_version_commit($version);
+        }
+
+        $outcome = Config\load($url, $version->tag, $commit->hash);
+        if (!$outcome->success) {
+            broadcast(Event::create('I could not get config for the package!', [
                 'url' => $url,
                 'commit' => $commit,
-                'package' => $package_version,
             ]));
-            return new Outcome(false, "📦 Could not load a dependency package: {$package_version->identifier()}");
+            return new Outcome(false, '📦 Could not get config for the package.');
         }
 
-        $packages[] = [
-            'commit' => $outcome->data['commit'],
-            'config' => $outcome->data['config'],
-        ];
+        $config = $outcome->data['config'];
 
-        if ($outcome->data['packages'] === null) continue;
+        Caches\set_remote_data($version, $commit, $config);
 
-        foreach ($outcome->data['packages'] as $dependency) {
+        $packages = [];
+
+        foreach ($config['packages'] as $package_url => $package_version) {
+            $outcome = load($package_url, $package_version->tag);
+            if (!$outcome->success) {
+                broadcast(Event::create('I could not load a dependency package!', [
+                    'url' => $url,
+                    'commit' => $commit,
+                    'package' => $package_version,
+                ]));
+                return new Outcome(false, "📦 Could not load a dependency package: {$package_version->identifier()}");
+            }
+
             $packages[] = [
-                'commit' => $dependency['commit'],
-                'config' => $dependency['config'],
+                'commit' => $outcome->data['commit'],
+                'config' => $outcome->data['config'],
             ];
+
+            if ($outcome->data['packages'] === null) continue;
+
+            foreach ($outcome->data['packages'] as $dependency) {
+                $packages[] = [
+                    'commit' => $dependency['commit'],
+                    'config' => $dependency['config'],
+                ];
+            }
         }
+
+        Caches\update_remote_data($version, $packages);
+
+        broadcast(Event::create('I loaded package\'s dependencies for the given package.', [
+            'url' => $url,
+            'commit' => $commit,
+            'config' => $config,
+            'packages' => $packages,
+        ]));
+        return new Outcome(true, '✅ Package loaded.', [
+            'commit' => $commit,
+            'config' => $config,
+            'packages' => $packages,
+        ]);
+    } catch (ApiRequestException $e) {
+        broadcast(Event::create('An error occurred while trying to load the package from the git host!', [
+            'url' => $url,
+            'version' => $version,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '⚠️ API request error: ' . $e->getMessage());
+    } catch (NotFoundException $e) {
+        broadcast(Event::create('The required file was not found in the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🔍 Remote file not found: ' . $e->getMessage());
+    } catch (InvalidTokenException $e) {
+        broadcast(Event::create('The provided token is invalid for accessing the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🔐 Invalid token: ' . $e->getMessage());
+    } catch (RateLimitedException $e) {
+        broadcast(Event::create('Rate limit exceeded when accessing the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '⏱️ Rate limit exceeded: ' . $e->getMessage());
     }
-
-    Caches\update_remote_data($version, $packages); 
-
-    broadcast(Event::create('I loaded package\'s dependencies for the given package.', [
-        'url' => $url,
-        'commit' => $commit,
-        'config' => $config,
-        'packages' => $packages,
-    ]));
-    return new Outcome(true, '✅ Package loaded.', [
-        'commit' => $commit,
-        'config' => $config,
-        'packages' => $packages,
-    ]);
 }
 
 function add(string $project, string $identifier, ?string $version, ?bool $ignore_version_compatibility = false): Outcome
@@ -387,7 +419,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         return new Outcome(true, '✅ Package added successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'root' => $root ?? $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
@@ -450,7 +482,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         $url = $identifier;
         foreach ($config['aliases'] as $alias => $package_url) {
             if ($alias !== $identifier) continue;
-            
+
             $url = $package_url;
             break;
         }
@@ -519,7 +551,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             ]));
             return new Outcome(false, '📦 Could not get package and its dependencies.');
         }
-        
+
         $new_package = new Package($outcome->data['commit'], $outcome->data['config']);
         $additional_packages = [$new_package];
         foreach ($outcome->data['packages'] as $dependency) {
@@ -540,7 +572,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         $new_packages = Dependencies\resolve($new_packages, $new_config, $ignore_version_compatibility);
         $new_config = Dependencies\update_main_packages($new_packages, $new_config);
-        
+
         $outcome = Config\save($root, $new_config);
         if (!$outcome->success) {
             broadcast(Event::create('I could not save the config file after resolving dependencies!', [
@@ -655,7 +687,7 @@ function remove(string $project, string $identifier): Outcome
         $url = $identifier;
         foreach ($config['aliases'] as $alias => $package_url) {
             if ($alias !== $identifier) continue;
-            
+
             $url = $package_url;
             break;
         }
