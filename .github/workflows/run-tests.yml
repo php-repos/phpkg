@@ -86,14 +86,14 @@ jobs:
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
-        run: phpkg build production
+        run: phpkg build
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-          phpkg build production
+          phpkg build
 
       - name: Set Credentials (Unix)
         if: runner.os != 'Windows'
@@ -119,6 +119,6 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cd builds/production
+          cd build
           php phpkg flush
           php phpkg run test-runner
