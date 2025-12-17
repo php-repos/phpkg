@@ -62,7 +62,7 @@ class PHPKGCSP extends CSP
     {
         return [
             $this->force_absence_when_main_packages_are_empty(),
-            $this->force_package_for_main_packages(),
+            $this->force_package_for_main_packages_and_their_requirements(),
             $this->main_packages_and_their_dependencies_cannot_be_absent(),
             $this->transitive_packages_cannot_be_absence(),
             $this->assignment_should_satisfy_version_constraints(),
@@ -132,15 +132,27 @@ class PHPKGCSP extends CSP
         };
     }
 
-    private function force_package_for_main_packages(): callable
+    private function force_package_for_main_packages_and_their_requirements(): callable
     {
         return function ($assignment, Repository $repository, string|Package $package) {
             debug('Checking if repository is main package', [
                 'repository' => $repository->identifier(),
                 'package' => $package === 'absence' || $package === 'project' ? $package : $package->identifier(),
             ]);
-            if (!Repositories\is_main_package($this->project_config, $repository)) return true;
-            return $package !== 'absence' && $package !== 'project';
+
+            if (Repositories\is_main_package($this->project_config, $repository)) {
+                return $package !== 'absence' && $package !== 'project';
+            }
+
+            foreach ($this->project_config['packages'] as $package_url => $version) {
+                if (isset($assignment[$version->repository->identifier()])) {
+                    $main_package = $assignment[$version->repository->identifier()];
+                    if (Repositories\is_main_package($main_package->config, $repository) && $package === 'absence') {
+                        return false;
+                    }
+                }
+            }
+            return true;
         };
     }
 
