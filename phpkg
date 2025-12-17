@@ -2,24 +2,125 @@
 <?php
 
 use PhpRepos\Cli\Output;
-use PhpRepos\Console\Config;
+use PhpRepos\Console\Input;
 use PhpRepos\FileManager\Path;
-use PhpRepos\FileManager\Resolver;
-use function Phpkg\Exception\Handler\register_exception_handler;
-
-if (! empty(getopt('v::', ['version::']))) {
-    Output\success('phpkg version 2.2.2');
-    exit(0);
-}
-
-register_exception_handler();
-
-$custom_console_config = new Config(
-    commands_directory: Path::from_string(__DIR__ )->append('Source\Commands'),
-    commands_file_suffix: '.php',
-    additional_supported_options: '[-v | --version] ',
-);
+use PhpRepos\Git\Signals\GitHostDownloadProgress;
+use PhpRepos\Git\Signals\SendingGitHttpRequest;
+use PhpRepos\Git\Signals\HttpResponseReceived;
+use PhpRepos\Logger\Log\Level;
+use PhpRepos\Logger\Log\Message;
+use PhpRepos\Logger\Logs;
+use PhpRepos\Observer\Observer;
+use PhpRepos\Observer\Signals\Internals\HandlerExecution;
+use PhpRepos\Observer\Signals\Internals\HandlerFound;
+use PhpRepos\Observer\Signals\Internals\NoHandlerFound;
+use PhpRepos\Observer\Signals\Signal;
+use function Phpkg\Cli\Runner\execute;
+use function Phpkg\Infra\CLI\download_progressbar;
+use function Phpkg\Infra\CLI\show_spinner;
+use function Phpkg\Infra\CLI\hide_spinner;
+use function PhpRepos\Console\Runner\from_path;
+use function PhpRepos\Logger\Media\file_lock;
 
 putenv('PHPKG_ROOT=' . __DIR__);
 
-require Resolver\realpath(__DIR__ . '/Packages/php-repos/console/console');
+global $argv;
+
+$short_options = 'vhd';
+$long_options = ['help', 'debug'];
+
+$options = getopt($short_options, $long_options, $offset);
+
+$verbosity_level = 0;
+if (isset($options['v'])) {
+    $verbosity_level = is_array($options['v']) ? count($options['v']) : 1;
+}
+
+$wants_help  = isset($options['h']) || isset($options['help']);
+$debug_mode = isset($options['d']) || isset($options['debug']);
+
+$cli_logger = function (Message $message) {
+    $context = json_encode($message->context);
+    $format = <<<EOD
+\e[34m[{$message->time->format('Y-m-d\TH:i:s.uP')}] \e[33m{$message->level->name}:\e[39m {$message->text} \e[34m{$context}
+EOD;
+
+    Output\line($format);
+};
+
+Logs\default_media(function (Message $message) use ($verbosity_level, $debug_mode, $cli_logger) {
+    if ($debug_mode || $message->level !== Level::DEBUG) {
+        file_lock(Path::from(__DIR__)->sub('Logs/phpkg.log'))($message);
+    }
+
+    if ($verbosity_level === 0 || $verbosity_level === 1) {
+        return;
+    }
+    if ($verbosity_level === 2) {
+        if ($message->level === Level::DEBUG) return;
+        $cli_logger($message);
+        return;
+    }
+
+    $cli_logger($message);
+});
+
+Observer\subscribe(function (Signal $signal) use ($verbosity_level, $cli_logger) {
+    Logs\log(Message::info('A signal has been sent.', $signal->jsonSerialize()), file_lock(Path::from(__DIR__)->sub('Logs/console-signals.log')));
+
+    if ($verbosity_level === 0 || in_array(get_class($signal), [HandlerFound::class, NoHandlerFound::class, HandlerExecution::class])) {
+        return;
+    }
+
+    $cli_logger(Message::info("Signal $signal->title", $signal->details));
+});
+
+Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_level) {
+    if ($verbosity_level > 0) return;
+    $details = $progress->details;
+    
+    // Generate unique ID for this download (includes full hash)
+    $id = sprintf(
+        '%s/%s/%s@%s',
+        $details['domain'],
+        $details['owner'],
+        $details['repo'],
+        $details['hash']
+    );
+    
+    // Generate GitHub commit URL for clickable link
+    $url = null;
+    if ($details['domain'] === 'github.com') {
+        $url = sprintf(
+            'https://github.com/%s/%s/commit/%s',
+            $details['owner'],
+            $details['repo'],
+            $details['hash']
+        );
+    }
+    
+    download_progressbar(
+        $id,
+        $url,
+        $details['downloaded'],
+        $details['download_size'],
+        $details['time']
+    );
+});
+
+Observer\subscribe(function (SendingGitHttpRequest $plan) use ($verbosity_level) {
+    if ($verbosity_level === 0) {
+        show_spinner($plan->details['method'] . ': ' . $plan->details['url']);
+    }
+});
+Observer\subscribe(function (HttpResponseReceived $event) use ($verbosity_level) {
+    if ($verbosity_level === 0) {
+        hide_spinner();
+    }
+});
+
+$inputs = Input::make(array_slice($argv, $offset));
+$commands_directory = Path::from(__DIR__)->sub('Commands');
+$command_handlers = from_path($commands_directory);
+
+exit(execute($command_handlers, $inputs, $wants_help, $commands_directory, '[-v | -vv | -vvv][-d | --debug]'));

@@ -1,5 +1,11 @@
 {
     "packages": {
+        "https:\/\/github.com\/php-repos\/control-flow.git": {
+            "owner": "php-repos",
+            "repo": "control-flow",
+            "version": "v3.0.0",
+            "hash": "c33c6246752416aaa013c4187708a7a4afbbc925"
+        },
         "https:\/\/github.com\/php-repos\/cli.git": {
             "owner": "php-repos",
             "repo": "cli",
@@ -9,32 +15,56 @@
         "https:\/\/github.com\/php-repos\/datatype.git": {
             "owner": "php-repos",
             "repo": "datatype",
-            "version": "v3.0.0",
-            "hash": "7ec9a0712e3995f9b152d8378e664579e926cf8a"
+            "version": "v4.1.0",
+            "hash": "1ae490317fe131893d5175d3243ccbd5eba2f4c4"
         },
-        "https:\/\/github.com\/php-repos\/control-flow.git": {
+        "https:\/\/github.com\/php-repos\/logger.git": {
             "owner": "php-repos",
-            "repo": "control-flow",
-            "version": "v3.0.0",
-            "hash": "c33c6246752416aaa013c4187708a7a4afbbc925"
+            "repo": "logger",
+            "version": "v1.0.0",
+            "hash": "6f590b4d3d8a54d9fc1e57eb38d25da5b51959f5"
+        },
+        "https:\/\/github.com\/ramsey\/uuid.git": {
+            "owner": "ramsey",
+            "repo": "uuid",
+            "version": "4.7.6",
+            "hash": "91039bc1faa45ba123c4328958e620d382ec7088"
+        },
+        "https:\/\/github.com\/brick\/math.git": {
+            "owner": "brick",
+            "repo": "math",
+            "version": "0.14.0",
+            "hash": "113a8ee2656b882d4c3164fa31aa6e12cbb7aaa2"
+        },
+        "https:\/\/github.com\/ramsey\/collection.git": {
+            "owner": "ramsey",
+            "repo": "collection",
+            "version": "2.1.1",
+            "hash": "344572933ad0181accbf4ba763e85a0306a8c5e2"
+        },
+        "https:\/\/github.com\/php-repos\/observer.git": {
+            "owner": "php-repos",
+            "repo": "observer",
+            "version": "v1.0.0",
+            "hash": "f38e79b372ec80beb12d24f7d77e5e8083e5952c"
         },
         "https:\/\/github.com\/php-repos\/file-manager.git": {
             "owner": "php-repos",
             "repo": "file-manager",
-            "version": "v4.0.0",
-            "hash": "3923da2d07c20b981d141da834235a32ffae79a2"
+            "version": "v6.0.0",
+            "hash": "25242088549c5c8eaeeead8b5d3937f9fb8dd708"
         },
         "https:\/\/github.com\/php-repos\/console.git": {
             "owner": "php-repos",
             "repo": "console",
-            "version": "v3.0.0",
-            "hash": "78e04ada504122d1942a033b3ef20a3cf67cd682"
+            "version": "v6.0.0",
+            "hash": "a86bcbcc60172b9724a367cc17c5a8460adf06af"
         },
         "https:\/\/github.com\/nikic\/PHP-Parser.git": {
             "owner": "nikic",
             "repo": "PHP-Parser",
-            "version": "v5.4.0",
-            "hash": "447a020a1f875a434d62f2a401f53b82a396e494"
+            "version": "v5.7.0",
+            "hash": "dca41cd15c2ac9d055ad70dbfd011130757d1f82"
         }
     }
 }

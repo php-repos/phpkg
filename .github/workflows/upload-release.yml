@@ -11,22 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install PHPKG
         run: |
-          bash -c "$(curl -fsSL https://raw.github.com/php-repos/phpkg-installation/master/install.sh)"
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/php-repos/phpkg-installation/master/install.sh)"
           echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
       - name: Build project
         run: |
           phpkg install
           phpkg build
           cd builds/development
-          ./phpkg build production --project=../../
+          ./phpkg build --project=../../
       - name: Remove unnecessary files
         run: |
-          cd builds/production
+          cd build
           rm -fR .github
-          rm -fR DummyProject
           rm -fR Tests
           rm -f credentials.json
           rm -f .gitattributes
@@ -40,25 +39,15 @@ jobs:
           rm -f phpkg.config.json
       - name: Create the zip
         run: |
-          cd builds
-          zip -r phpkg.zip production
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          zip -r phpkg.zip build
+          ls -lh phpkg.zip
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: phpkg.zip
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: builds/phpkg.zip
-          asset_name: phpkg.zip
-          asset_content_type: application/zip

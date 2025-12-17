@@ -6,7 +6,7 @@ The following versions of the phpkg are currently supported with security update
 
 | Version | Supported          |
 |---------|--------------------|
-| 2.2.1   | :white_check_mark: |
+| 3.0.0   | :white_check_mark: |
 
 ## Reporting a Vulnerability
 
