@@ -12,7 +12,7 @@
         "phpkg"
     ],
     "executables": {
-        "": "phpkg"
+        "phpkg": "phpkg"
     },
     "import-file": "phpkg.imports.php",
     "packages-directory": "Packages",
