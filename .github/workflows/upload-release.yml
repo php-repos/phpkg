@@ -9,21 +9,19 @@ jobs:
   build:
     name: Upload Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Install PHPKG
         run: |
-          bash -c "$(curl -fsSL https://raw.github.com/php-repos/phpkg-installation/master/install.sh)"
+          bash -c "$(curl -fsSL https://raw.githubusercontent.com/php-repos/phpkg-installation/master/install.sh)"
           echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
       - name: Build project
         run: |
           phpkg install
           phpkg build
-          cd build
-          ./phpkg build --project=../
+          cd builds/development
+          ./phpkg build --project=../../
       - name: Remove unnecessary files
         run: |
           cd build
@@ -42,12 +40,13 @@ jobs:
       - name: Create the zip
         run: |
           zip -r phpkg.zip build
-      - name: Create Release
+          ls -lh phpkg.zip
+      - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: phpkg.zip
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
+          files: phpkg.zip
           draft: false
           prerelease: false
         env:
