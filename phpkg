@@ -26,21 +26,18 @@ putenv('PHPKG_ROOT=' . __DIR__);
 
 global $argv;
 
-$verbose = getopt('v::', [], $index_after_verbosity);
-$wants_verbose = isset($verbose['v']) && $index_after_verbosity <= 3;
+$short_options = 'vhd';
+$long_options = ['help', 'debug'];
 
-$help_options = getopt('h', ['help'], $index_after_help);
-$wants_help = (isset($help_options['h']) || isset($help_options['help'])) && $index_after_help <= 3;
+$options = getopt($short_options, $long_options, $offset);
 
-if ($wants_help && $wants_verbose) {
-    $offset = 3;
-} else if ($wants_help || $wants_verbose) {
-    $offset = 2;
-} else {
-    $offset = 1;
+$verbosity_level = 0;
+if (isset($options['v'])) {
+    $verbosity_level = is_array($options['v']) ? count($options['v']) : 1;
 }
 
-$verbosity_level = $wants_verbose ? strlen($verbose['v']) + 1 : 0;
+$wants_help  = isset($options['h']) || isset($options['help']);
+$debug_mode = isset($options['d']) || isset($options['debug']);
 
 $cli_logger = function (Message $message) {
     $context = json_encode($message->context);
@@ -51,14 +48,17 @@ EOD;
     Output\line($format);
 };
 
-Logs\default_media(function (Message $message) use ($verbosity_level, $cli_logger) {
-    file_lock(Path::from(__DIR__)->sub('Logs/phpkg.log'))($message);
-
-    if ($verbosity_level <= 1) {
-        return;
+Logs\default_media(function (Message $message) use ($verbosity_level, $debug_mode, $cli_logger) {
+    if ($debug_mode || $message->level !== Level::DEBUG) {
+        file_lock(Path::from(__DIR__)->sub('Logs/phpkg.log'))($message);
     }
 
-    if ($verbosity_level === 2 && in_array($message->level, [Level::DEBUG, Level::NOTICE])) {
+    if ($verbosity_level === 0 || $verbosity_level === 1) {
+        return;
+    }
+    if ($verbosity_level === 2) {
+        if ($message->level === Level::DEBUG) return;
+        $cli_logger($message);
         return;
     }
 
@@ -123,4 +123,4 @@ $inputs = Input::make(array_slice($argv, $offset));
 $commands_directory = Path::from(__DIR__)->sub('Commands');
 $command_handlers = from_path($commands_directory);
 
-exit(execute($command_handlers, $inputs, $wants_help, $commands_directory, '[-v | -vv | -vvv]'));
+exit(execute($command_handlers, $inputs, $wants_help, $commands_directory, '[-v | -vv | -vvv][-d | --debug]'));

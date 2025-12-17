@@ -122,7 +122,7 @@ class PHPKGCSP extends CSP
 
     private function force_absence_when_main_packages_are_empty(): callable
     {
-      return function ($assignment, Repository $repository, string|Package $package) {
+        return function ($assignment, Repository $repository, string|Package $package) {
             debug('Checking if main packages are empty', [
                 'repository' => $repository->identifier(),
                 'package' => $package === 'absence' || $package === 'project' ? $package : $package->identifier(),

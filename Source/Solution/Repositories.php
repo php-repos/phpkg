@@ -18,13 +18,11 @@ function is_valid_package_identifier(string $url): bool
 
 function is_ssh(string $url): bool
 {
-    debug('Checking if URL is an SSH URL', ['url' => $url]);
     return str_starts_with($url, 'git@');
 }
 
 function extract_domain(string $url): string
 {
-    debug('Extracting domain from URL', ['url' => $url]);
     if (is_ssh($url)) {
         $url = str_replace('git@', '', $url);
         return before_first_occurrence($url, ':');
@@ -37,7 +35,6 @@ function extract_domain(string $url): string
 
 function extract_owner(string $url): string
 {
-    debug('Extracting owner from URL', ['url' => $url]);
     if (is_ssh($url)) {
         $owner_and_repo = str_replace('git@' . extract_domain($url) . ':', '', $url);
     } else {
@@ -53,7 +50,6 @@ function extract_owner(string $url): string
 
 function extract_repo(string $url): string
 {
-    debug('Extracting repository name from URL', ['url' => $url]);
     if (is_ssh($url)) {
         $owner_and_repo = str_replace('git@' . extract_domain($url) . ':', '', $url);
     } else {

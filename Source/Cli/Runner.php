@@ -9,7 +9,7 @@ use function PhpRepos\Console\Runner\run;
 
 function execute(CommandHandlers $command_handlers, Input $inputs, bool $wants_help, string $commands_directory, string $additional_handled_flags): int
 {
-    $entrypoint = 'console';
+    $entrypoint = 'phpkg';
 
     $help_text = <<<EOD
 Usage: $entrypoint [-h | --help]$additional_handled_flags
