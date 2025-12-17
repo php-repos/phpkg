@@ -20,8 +20,8 @@ jobs:
         run: |
           phpkg install
           phpkg build
-          cd builds/development
-          ./phpkg build --project=../../
+          cd build
+          ./phpkg build --project=../
       - name: Remove unnecessary files
         run: |
           cd build
