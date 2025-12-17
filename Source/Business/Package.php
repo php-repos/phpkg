@@ -439,6 +439,14 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '❌ Failed to add package. ' . $e->getMessage());
+    } catch (NotFoundException $e) {
+        broadcast(Event::create('The package repository was not found!', [
+            'root' => $root,
+            'identifier' => $identifier,
+            'version' => $version ?: 'latest',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '🔍 Package repository not found. ' . $e->getMessage());
     }
 }
 
@@ -646,6 +654,14 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '❌ Failed to update the package. ' . $e->getMessage());
+    } catch (NotFoundException $e) {
+        broadcast(Event::create('The package repository was not found!', [
+            'root' => $root,
+            'identifier' => $identifier,
+            'version' => $version ?: 'latest',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '🔍 Package repository not found. ' . $e->getMessage());
     }
 }
 
