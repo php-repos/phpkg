@@ -21,7 +21,6 @@ jobs:
           phpkg install
           phpkg build
           cd build
-          ./phpkg build --project=../
       - name: Remove unnecessary files
         run: |
           cd build
