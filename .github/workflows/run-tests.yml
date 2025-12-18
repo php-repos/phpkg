@@ -103,7 +103,7 @@ jobs:
           phpkg build production
           rm phpkg.config-lock.json
           mv phpkg.config-lock.json.v3 phpkg.config-lock.json
-          rm -fR Packages
+          Remove-Item -Path "Packages" -Recurse -Force
           cd builds/production
           php ./phpkg install --project=../../
           php ./phpkg build --project=../../
