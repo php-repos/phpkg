@@ -58,7 +58,7 @@ function add(string $provider, string $token): Outcome
     $file_content = Paths\file_itself_exists($path) ? Paths\to_array($path) : [];
     foreach ($file_content as $registered_provider => $setting) {
         if ($registered_provider === $provider) {
-            if (isset($setting['token'])) {
+            if (isset($setting['token']) && strlen($setting['token'] > 0)) {
                 broadcast(Event::create('It seems there is already a token for the given provider!', [
                    'provider' => $provider,
                    'path' => $path,
