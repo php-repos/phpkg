@@ -90,7 +90,7 @@ jobs:
           phpkg build production
           rm phpkg.config-lock.json
           mv phpkg.config-lock.json.v3 phpkg.config-lock.json
-          cd builds/productions
+          cd builds/production
           ./phpkg install --project=../../
           ./phpkg build --project=../../
 
