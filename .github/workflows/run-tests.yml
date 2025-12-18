@@ -124,7 +124,7 @@ jobs:
         run: |
           cd build
           ./phpkg flush
-          ./phpkg run test-runner
+          ./phpkg run test-runner --version=v4.0.0 run
 
       - name: Execute tests (Windows)
         if: runner.os == 'Windows'
