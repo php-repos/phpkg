@@ -19,7 +19,12 @@ jobs:
       - name: Build project
         run: |
           phpkg install
-          phpkg build
+          phpkg build production
+          rm phpkg.config-lock.json
+          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          cd builds/production
+          ./phpkg install --project=../../
+          ./phpkg build --project=../../
       - name: Remove unnecessary files
         run: |
           cd build

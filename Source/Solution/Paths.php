@@ -32,7 +32,7 @@ function under_current_working_directory(string ...$relatives): string
 function phpkg_root(): string
 {
     debug('Retrieving PHPKG root from environment variables');
-    return Envs\get('PHPKG_ROOT');
+    return Envs\phpkg_root();
 }
 
 function credentials(): string

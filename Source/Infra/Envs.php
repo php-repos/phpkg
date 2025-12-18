@@ -3,6 +3,7 @@
 namespace Phpkg\Infra\Envs;
 
 use function Phpkg\Infra\Files\read_json_as_array;
+use function Phpkg\Infra\Files\realpath;
 
 /**
  * Retrieves an environment variable value with an optional default.
@@ -46,6 +47,11 @@ function temp_dir(): string
     return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'phpkg' . DIRECTORY_SEPARATOR . phpkg_version();
 }
 
+function phpkg_root(): string
+{
+    return realpath(__DIR__ . '../../../');
+}
+
 /**
  * Reads the phpkg config.json file and returns its contents.
  *
@@ -53,8 +59,7 @@ function temp_dir(): string
  */
 function phpkg_config(): array
 {
-    $phpkg_root = get('PHPKG_ROOT');
-    $config_path = $phpkg_root . DIRECTORY_SEPARATOR . 'config.json';
+    $config_path = phpkg_root() . DIRECTORY_SEPARATOR . 'config.json';
     return read_json_as_array($config_path);
 }
 

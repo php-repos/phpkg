@@ -10,7 +10,7 @@ use function PhpRepos\TestRunner\Runner\test;
 test(
     title: 'it should show success message when adding new provider',
     case: function () {
-        $provider = 'unique-test-provider-' . time() . '.com';
+        $provider = 'it-should-save-' . time() . '.com';
         $token = 'test_token_12345';
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
@@ -26,8 +26,19 @@ test(
 
 test(
     title: 'it should prevent duplicate credentials for the same provider',
-    case: function () {
-        $provider = 'any-url.com';
+  case: function () {
+        $provider = 'it-should-prevent-' . time() . '.com';
+        $token = 'test_token_12345';
+        
+        $output = CliRunner\phpkg('credential', [$provider, $token]);
+        
+        $expected = Output\capture(function () use ($provider) {
+            Output\line("Adding credential for provider $provider...");
+            Output\success('💾 Credentials file saved.');
+        });
+        
+        Output\assert_output($expected, $output);
+
         $token = 'ghp_different_token_67890';
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
@@ -44,7 +55,7 @@ test(
 test(
     title: 'it should replace existing token when --force flag is used',
     case: function () {
-        $provider = 'other-url.com';
+        $provider = 'it-should-force-' . time() . '.com';
         $old_token = 'ghp_orignal_token';
 
         $output = CliRunner\phpkg('credential', [$provider, $old_token]);

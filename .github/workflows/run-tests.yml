@@ -86,32 +86,43 @@ jobs:
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
-        run: phpkg build
+        run: |
+          phpkg build production
+          rm phpkg.config-lock.json
+          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          cd builds/productions
+          ./phpkg install --project=../../
+          ./phpkg build --project=../../
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-          phpkg build
+          phpkg build production
+          rm phpkg.config-lock.json
+          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          cd builds/production
+          php ./phpkg install --project=../../
+          php ./phpkg build --project=../../
 
       - name: Set Credentials (Unix)
         if: runner.os != 'Windows'
         run: |
-          cd builds/production
-          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          cd build
+          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }} --force
 
       - name: Set Credentials (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cd builds/production
-          php phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          cd build
+          php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }} --force
 
       - name: Execute tests (Unix)
         if: runner.os != 'Windows'
         run: |
-          cd builds/production
+          cd build
           ./phpkg flush
           ./phpkg run test-runner
 
@@ -120,5 +131,5 @@ jobs:
         shell: pwsh
         run: |
           cd build
-          php phpkg flush
-          php phpkg run test-runner
+          php ./phpkg flush
+          php ./phpkg run test-runner

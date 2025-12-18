@@ -11,9 +11,7 @@
     "entry-points": [
         "phpkg"
     ],
-    "executables": {
-        "phpkg": "phpkg"
-    },
+    "executables": [],
     "import-file": "phpkg.imports.php",
     "packages-directory": "Packages",
     "packages": {

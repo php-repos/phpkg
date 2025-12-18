@@ -939,6 +939,7 @@ function build(string $project): Outcome
         $entry_points = [];
 
         foreach ($config['entry-points'] as $entry_point) {
+            $source_entry_point = Paths\under($root, $entry_point);
             $entry_point_path = Paths\under($builds, $entry_point);
             if (!Paths\file_itself_exists($entry_point_path)) {
                 continue;
@@ -952,7 +953,7 @@ function build(string $project): Outcome
 
             $content = $position === 0 ? $content : substr_replace($content, $line, $position, 0);
             
-            Paths\write($entry_point_path, $content);
+            Paths\write($entry_point_path, $content, Paths\permission($source_entry_point));
             $entry_points[] = $entry_point_path;
         }
 
@@ -981,9 +982,9 @@ function build(string $project): Outcome
 
                 $content = $position === 0 ? $content : substr_replace($content, $line, $position, 0);
 
-                Paths\write($source, $content);
-                Files\chmod($source, 0774);
+                Paths\write($source, $content, Paths\permission($source));
                 Paths\symlink($source, $executable);
+                Files\chmod($executable, 0774);
                 $executables[] = $executable;
             }
         }
