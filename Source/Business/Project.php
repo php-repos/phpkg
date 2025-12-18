@@ -13,6 +13,7 @@ use Phpkg\Solution\Paths;
 use Phpkg\Solution\PHPKGs;
 use Phpkg\Solution\Repositories;
 use Phpkg\Solution\Versions;
+use Phpkg\Solution\Exceptions\DependencyResolutionException;
 use Phpkg\Solution\Exceptions\NotWritableException;
 use PhpRepos\Observer\Signals\Event;
 use Phpkg\Business\Config;
