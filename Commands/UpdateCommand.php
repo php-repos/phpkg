@@ -36,8 +36,9 @@ return function (
 
     if (!$outcome->success) {
         error($outcome->message);
-        return;
+        return 1;
     }
 
     success($outcome->message);
+    return 0;
 };

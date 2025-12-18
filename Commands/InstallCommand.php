@@ -26,8 +26,9 @@ return function (
 
     if (!$outcome->success) {
         error('Failed installing the project. ' . $outcome->message);
-        return;
+        return 1;
     }
 
     success($outcome->message);
+    return 0;
 };
