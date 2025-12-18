@@ -5,6 +5,7 @@ namespace Phpkg\Commands\Credential;
 use Phpkg\Business\Credential;
 use PhpRepos\Console\Attributes\Argument;
 use PhpRepos\Console\Attributes\Description;
+use PhpRepos\Console\Attributes\LongOption;
 use function PhpRepos\Cli\Output\error;
 use function PhpRepos\Cli\Output\line;
 use function PhpRepos\Cli\Output\success;
@@ -20,10 +21,13 @@ return function (
     #[Argument]
     #[Description('The security token that will be used to authenticate your access to the provider\'s services.')]
     string $token,
+    #[LongOption('force')]
+    #[Description('Use this option to forcefully replace an existing token for the given provider.')]
+    ?bool $force = false,
 ) {
     line("Adding credential for provider $provider...");
 
-    $outcome = Credential\add($provider, $token);
+    $outcome = Credential\add($provider, $token, $force);
 
     if (!$outcome->success) {
         error($outcome->message);

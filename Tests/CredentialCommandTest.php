@@ -27,7 +27,7 @@ test(
 test(
     title: 'it should prevent duplicate credentials for the same provider',
     case: function () {
-        $provider = 'github.com';
+        $provider = 'any-url.com';
         $token = 'ghp_different_token_67890';
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
@@ -35,6 +35,34 @@ test(
         $expected = Output\capture(function () use ($provider) {
             Output\line("Adding credential for provider $provider...");
             Output\error('⚠️ There is a token for the given provider.');
+        });
+        
+        Output\assert_output($expected, $output);
+    }
+);
+
+test(
+    title: 'it should replace existing token when --force flag is used',
+    case: function () {
+        $provider = 'other-url.com';
+        $old_token = 'ghp_orignal_token';
+
+        $output = CliRunner\phpkg('credential', [$provider, $old_token]);
+    
+        $expected = Output\capture(function () use ($provider) {
+            Output\line("Adding credential for provider $provider...");
+            Output\success('💾 Credentials file saved.');
+        });
+
+        Output\assert_output($expected, $output);
+
+        $token = 'ghp_new_token_with_force_12345';
+
+        $output = CliRunner\phpkg('credential', [$provider, $token, '--force']);
+
+        $expected = Output\capture(function () use ($provider) {
+            Output\line("Adding credential for provider $provider...");
+            Output\success('💾 Credentials file saved.');
         });
         
         Output\assert_output($expected, $output);

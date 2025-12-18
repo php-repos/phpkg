@@ -34,7 +34,7 @@ function read(): Outcome
     return new Outcome(true, '🔑 Credentials loaded.', ['credentials' => $credentials]);
 }
 
-function add(string $provider, string $token): Outcome
+function add(string $provider, string $token, bool $force = false): Outcome
 {
     propose(Plan::create('I try to add the given token for the given provider to credentials.', [
         'provider' => $provider,
@@ -56,14 +56,17 @@ function add(string $provider, string $token): Outcome
 
     $path = Paths\credentials();
     $file_content = Paths\file_itself_exists($path) ? Paths\to_array($path) : [];
-    foreach ($file_content as $registered_provider => $setting) {
-        if ($registered_provider === $provider) {
-            if (isset($setting['token']) && strlen($setting['token'] > 0)) {
-                broadcast(Event::create('It seems there is already a token for the given provider!', [
-                   'provider' => $provider,
-                   'path' => $path,
-                ]));
-                return new Outcome(false, '⚠️ There is a token for the given provider.');
+    
+    if (!$force) {
+        foreach ($file_content as $registered_provider => $setting) {
+            if ($registered_provider === $provider) {
+                if (isset($setting['token']) && strlen($setting['token'] > 0)) {
+                    broadcast(Event::create('It seems there is already a token for the given provider!', [
+                       'provider' => $provider,
+                       'path' => $path,
+                    ]));
+                    return new Outcome(false, '⚠️ There is a token for the given provider.');
+                }
             }
         }
     }
