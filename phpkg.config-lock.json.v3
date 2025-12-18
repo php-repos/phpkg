@@ -1,83 +1,83 @@
 {
     "version": 2,
-    "checksum": "b8baa9b4da5106edc68c8118dd609ee7a58fe2b510948d345d36a090757e2046",
+    "checksum": "1b5649957cc0ab79130a518008a66bc854ad33a7182ebed9f91239332824f072",
     "packages": {
         "https:\/\/github.com\/php-repos\/control-flow.git": {
             "owner": "php-repos",
             "repo": "control-flow",
             "version": "v3.0.0",
             "hash": "c33c6246752416aaa013c4187708a7a4afbbc925",
-            "checksum": "f0b4dc40da6b7e2229e5d00ff65ac7de18d528f5ceb9d9e10203cb8685403623"
+            "checksum": "e0100a80c005ae799d60bbfe4fea9378865c60f6b2d8cfd881591dd95305599e"
         },
         "https:\/\/github.com\/php-repos\/cli.git": {
             "owner": "php-repos",
             "repo": "cli",
             "version": "v3.0.1",
             "hash": "6073fb50f047f10129fc0926293d44f0c31b1d56",
-            "checksum": "73c17158ab48727c65965312257bf3ff65002249dadea791f392bb102ba23c4c"
+            "checksum": "432de5e2b24b458fdff46093a905cb8db226cb3f145feec380cc3831367d9867"
         },
         "https:\/\/github.com\/php-repos\/datatype.git": {
             "owner": "php-repos",
             "repo": "datatype",
             "version": "v4.1.0",
             "hash": "1ae490317fe131893d5175d3243ccbd5eba2f4c4",
-            "checksum": "44387dcf0675aa6e761fc7a69629a9ded82e0d29873cc8cfa193748d6afd200b"
+            "checksum": "ebefda3c6bef3542280f0ee0d040859f4f0e7a6db5f627458e6db3f8f84397ea"
         },
         "https:\/\/github.com\/php-repos\/logger.git": {
             "owner": "php-repos",
             "repo": "logger",
             "version": "v1.0.0",
             "hash": "6f590b4d3d8a54d9fc1e57eb38d25da5b51959f5",
-            "checksum": "40182cb09fbfde609fb654e77ea67ffbcea86fb36bed0cfc6e1317886ee7481a"
+            "checksum": "7f1b5d0ac356b6636bda400c7c3064c57e2f9df81441edc1d99617fae4b53168"
         },
         "https:\/\/github.com\/php-repos\/observer.git": {
             "owner": "php-repos",
             "repo": "observer",
             "version": "v1.0.0",
             "hash": "f38e79b372ec80beb12d24f7d77e5e8083e5952c",
-            "checksum": "2b9ade4b33bf9690a3ddaa32e7f4ec189bb3d0a5e7a05f8cbef1630cbdd42f19"
+            "checksum": "c0e87f53593539310b8df2a9fca9c54f808bfb0e60eafeb362d148194ebf6f25"
         },
         "https:\/\/github.com\/php-repos\/file-manager.git": {
             "owner": "php-repos",
             "repo": "file-manager",
             "version": "v6.0.0",
             "hash": "25242088549c5c8eaeeead8b5d3937f9fb8dd708",
-            "checksum": "ac00896a90209a5c2b413a4d83336223ae312f46ce823c307ba0b07599399207"
+            "checksum": "72a8dd24c1090e922a67edd4c61af59c2c576b0657fb83a124b8989bb68a4db3"
         },
         "https:\/\/github.com\/php-repos\/console.git": {
             "owner": "php-repos",
             "repo": "console",
             "version": "v6.0.0",
             "hash": "a86bcbcc60172b9724a367cc17c5a8460adf06af",
-            "checksum": "55a170dd6bac74995e40ab46eb9f3889686670ff1f09d8f8fad6ac917073b616"
+            "checksum": "1307836d383033aa8a197f52597f671ffdf36eb22a088ff49e077c148e275075"
         },
         "https:\/\/github.com\/nikic\/PHP-Parser.git": {
             "owner": "nikic",
             "repo": "PHP-Parser",
             "version": "v5.7.0",
             "hash": "dca41cd15c2ac9d055ad70dbfd011130757d1f82",
-            "checksum": "2949039a15f64114f3a404a410a47af0102dd66a9f3257cf92537a38f483ecc8"
+            "checksum": "8b3352444d0dce31dda365350882a2a039d4a450416e233bb3868e3b5dad767c"
         },
         "https:\/\/github.com\/ramsey\/uuid.git": {
             "owner": "ramsey",
             "repo": "uuid",
             "version": "4.7.6",
             "hash": "91039bc1faa45ba123c4328958e620d382ec7088",
-            "checksum": "757602ee8da088439a64f570b9fc463864a8909a7a49906b80ee093208df5351"
+            "checksum": "f5b6e094b20f4430574353eb638f2d67a1e18e2cdf7b4a8442bb328349e7d3d3"
         },
         "https:\/\/github.com\/brick\/math.git": {
             "owner": "brick",
             "repo": "math",
             "version": "0.14.1",
             "hash": "f05858549e5f9d7bb45875a75583240a38a281d0",
-            "checksum": "4cd12c3eed5d4f4c3bf778e914e3e81d0ed3d5e05f8e834947d95ace5d453d5b"
+            "checksum": "5abcecad16062ce292286f36c8213735c3b569da678d67dab73b7d4c079d3bf3"
         },
         "https:\/\/github.com\/ramsey\/collection.git": {
             "owner": "ramsey",
             "repo": "collection",
             "version": "2.1.1",
             "hash": "344572933ad0181accbf4ba763e85a0306a8c5e2",
-            "checksum": "d7f309e50458b9b130fb66473ccfefa38f96e04d3e74d94e83b929f9bcd763ca"
+            "checksum": "5ba76b99322b41fd870d06fe9a5a9a10a08892a084d81a96b6f1696b8aa95417"
         }
     }
 }

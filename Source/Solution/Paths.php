@@ -387,7 +387,7 @@ function checksum(string $path): string
 
     // Sort by basename only, using binary comparison (locale-independent and consistent across OS)
     usort($items, function ($a, $b) {
-        return strcmp(basename($a), basename($b));
+        return strcasecmp(basename($a), basename($b));
     });
 
     $directory_hash = '';
