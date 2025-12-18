@@ -378,18 +378,23 @@ function delete_directory(string $path): bool
 function checksum(string $path): string
 {
     log('Calculating checksum for path', ['path' => $path]);
-    
+
     if (!Files\is_directory($path)) {
         return Files\hash($path);
     }
 
+    $items = Files\ls_all($path);
+
+    // Sort by basename only, using binary comparison (locale-independent and consistent across OS)
+    usort($items, function ($a, $b) {
+        return strcmp(basename($a), basename($b));
+    });
+
     $directory_hash = '';
-    $files_and_directories = Files\ls_all($path);
-    \sort($files_and_directories);
-    foreach ($files_and_directories as $item) {
+    foreach ($items as $item) {
         $directory_hash .= checksum($item);
     }
-    
+
     return Strings\hash($directory_hash);
 }
 
