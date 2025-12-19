@@ -17,7 +17,6 @@ use PhpRepos\Git\Signals\SendingGitHttpRequest;
 use PhpRepos\Git\Signals\HttpResponseReceived;
 use PhpRepos\Git\Signals\GitHostDownloadProgress;
 use PhpRepos\Observer\Observer;
-use function PhpRepos\Observer\Observer\broadcast;
 use function PhpRepos\Datatype\Arr\any;
 use function PhpRepos\Datatype\Arr\first;
 use function PhpRepos\Datatype\Arr\map;
