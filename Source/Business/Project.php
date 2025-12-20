@@ -83,114 +83,119 @@ function init(string $project, ?string $packages_directory): Outcome
     }
 }
 
-function sync(string $root, string $vendor, array $packages): Outcome
+function sync(string $root, string $vendor, array $current_packages, array $new_packages, bool $force_reinstall): Outcome
 {
     try {
         $root = Paths\detect_project($root);
 
-        propose(Plan::create('I try to sync the given packages in the project root.', [
+        propose(Plan::create('I try to sync the given solution in the project root.', [
             'root' => $root,
-            'packages' => $packages,
+            'vendor' => $vendor,
+            'current_packages' => $current_packages,
+            'new_packages' => $new_packages,
+            'force_reinstall' => $force_reinstall,
         ]));
 
-        $outcome = Meta\read($root, $vendor);
-        if ($outcome->success) {
-            $current_packages = $outcome->data['packages'];
-        } else {
-            $current_packages = [];
+        $packages = [];
+
+        $groups = Dependencies\group_by_operation($current_packages, $new_packages);
+
+        $needs_install = $force_reinstall
+            ? [...$groups['additions'], ...$groups['updates'], ...$groups['intacts']] 
+            : [...$groups['additions'], ...$groups['updates']];
+
+        if (!$force_reinstall) {
+            foreach ($groups['intacts'] as $package) {
+                $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
+                if (!Paths\exists($package_root)) {
+                    $needs_install[] = $package;
+                }
+            }
         }
 
-        foreach ($packages as $package) {
-            $package->root(Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo));
-            if (Dependencies\contains_package($current_packages, $package)) {
-                $package->checksum(Paths\checksum($package->root));
-                continue;
-            }
-
-            $temp_path = Paths\temp_installer_directory($package);
-            if (Paths\exists($temp_path)) {
-                if (Paths\phpkg_config_exists($temp_path)) {
-                    if (!isset($package->checksum)) {
-                        $package->checksum(Paths\checksum($temp_path));
-                        continue;
-                    }
-                    if (Paths\verify_checksum($temp_path, $package->checksum)) {
-                        continue;
-                    }
-                }
-                Paths\delete_recursively($temp_path);
-            }
-
-            if (!Dependencies\download_to($package, $temp_path)) {
-                broadcast(Event::create('I could not download a package!', [
+        foreach ($needs_install as $package) {
+            $zip_file = Paths\zip_file_path($package);
+            if (!Paths\file_itself_exists($zip_file) && !Commits\download_zip($package->commit, $zip_file)) {
+                broadcast(Event::create('I could not download a package zip file!', [
                     'root' => $root,
                     'package' => $package,
                 ]));
-                return new Outcome(false, '⬇️ Could not download ' . $package->identifier());
-            }
-            if (!Paths\phpkg_config_exists($temp_path)) {
-                Config\save($temp_path, $package->config);
+                return new Outcome(false, '⬇️ Could not download zip for ' . $package->identifier());
             }
 
             if (!isset($package->checksum)) {
-                $package->checksum(Paths\checksum($temp_path));
+                $package->checksum = Paths\checksum($zip_file);
+                $packages[$package->commit->version->repository->identifier()] = $package;
                 continue;
             }
 
-            if (!Paths\verify_checksum($temp_path, $package->checksum)) {
-                broadcast(Event::create('Checksum verification failed for a downloaded package!', [
+            if (!Paths\verify_checksum($zip_file, $package->checksum)) {
+                broadcast(Event::create('Checksum verification failed for a package zip file!', [
                     'root' => $root,
                     'package' => $package,
-                    'temp_path' => $temp_path,
+                    'zip_file' => $zip_file,
                     'checksum' => $package->checksum,
                 ]));
                 return new Outcome(false, '🔐 Checksum verification failed for ' . $package->identifier() . '.');
             }
+            $packages[$package->commit->version->repository->identifier()] = $package;
         }
 
-        foreach ($packages as $package) {
-            if (Dependencies\contains_repository($current_packages, $package->commit->version->repository)) {
-                if (Paths\exists($package->root) && !Paths\delete_recursively($package->root)) {
-                    broadcast(Event::create('I could not delete the previous version of an updated package!', [
-                        'root' => $root,
-                        'package' => $package,
-                    ]));
-                    return new Outcome(false, '🗑️ Could not delete previous version of ' . $package->identifier() . '.');
-                }
-            }
+        $needs_cleanup = $force_reinstall ? [...$groups['updates'], ...$groups['intacts']] : $groups['updates'];
 
-            $temp_path = Paths\temp_installer_directory($package);
-            if (!Paths\preserve_copy_directory_content($temp_path, $package->root)
-                || !Paths\verify_checksum($package->root, $package->checksum)
-            ) {
-                broadcast(Event::create('I could not move a package to its root!', [
-                    'root' => $root,
-                    'package' => $package,
-                    'temp_path' => $temp_path,
-                ]));
-                return new Outcome(false, '📦 Could not move ' . $package->identifier() . ' to its root.');
-            }
-        }
+        foreach ($needs_cleanup as $package) {
+            $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
 
-        foreach ($current_packages as $package) {
-            if (Dependencies\has_repository($packages, $package->commit->version->repository)) {
-                continue;
-            }
-            if (!Paths\delete_recursively($package->root)) {
-                broadcast(Event::create('I could not delete the package root of a removed package!', [
+            if (Paths\exists($package_root) && !Paths\delete_recursively($package_root)) {
+                broadcast(Event::create('I could not delete the previous version of a package!', [
                     'root' => $root,
                     'package' => $package,
                 ]));
-                return new Outcome(false, '🗑️ Could not delete package ' . $package->identifier() . '.');
+                return new Outcome(false, '🗑️ Could not delete previous version of ' . $package->identifier() . '.');
             }
-            Paths\delete_owner_when_empty($package->root);
         }
+
+        foreach ($needs_install as $package) {
+            $zip_file = Paths\zip_file_path($package);
+            $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
+
+            if (!Paths\unzip_to($zip_file, $package_root)) {
+                broadcast(Event::create('I could not unzip a package to its root!', [
+                    'root' => $root,
+                    'package' => $package,
+                    'zip_file' => $zip_file,
+                ]));
+                return new Outcome(false, '📦 Could not unzip ' . $package->identifier() . ' to its root path.');
+            }
+
+            if (!Config\save($package_root, $package->config)->success) {
+                broadcast(Event::create('I could not save the package config in its root path!', [
+                    'root' => $root,
+                    'package' => $package,
+                    'package_root' => $package_root,
+                ]));
+                return new Outcome(false, '💾 Could not save package config for ' . $package->identifier() . ' in its root path.');
+            }
+        }
+
+        foreach ($groups['deletions'] as $package) {
+            $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
+
+            if (Paths\exists($package_root) && !Paths\delete_recursively($package_root)) {
+                broadcast(Event::create('I could not delete a removed package!', [
+                    'root' => $root,
+                    'package' => $package,
+                ]));
+                return new Outcome(false, '🗑️ Could not delete removed package ' . $package->identifier() . '.');
+            }
+        }
+
+        $packages = $force_reinstall ? $packages : [...$packages, ...$groups['intacts']];
 
         $outcome = Meta\save($root, $packages);
         if (!$outcome->success) {
             broadcast(Event::create('I could not save the meta file after syncing!', [
                 'root' => $root,
-                'vendor' => $vendor,
                 'packages' => $packages,
             ]));
             return new Outcome(false, '💾 Could not save the meta file after syncing.');
@@ -198,7 +203,6 @@ function sync(string $root, string $vendor, array $packages): Outcome
 
         broadcast(Event::create('I synced the project packages successfully.', [
             'root' => $root,
-            'vendor' => $vendor,
             'packages' => $packages,
         ]));
 
@@ -264,7 +268,6 @@ function install(string $project, bool $force): Outcome
                     ]));
                     return new Outcome(false, '📁 The packages directory is not empty.');
                 }
-                Paths\delete_recursively($vendor);
             }
         }
 
@@ -338,9 +341,9 @@ function install(string $project, bool $force): Outcome
             'root' => $root,
         ]));
 
-        $packages = Dependencies\resolve($packages, $config, false);
+        $new_packages = Dependencies\resolve($packages, $config, false);
 
-        $outcome = sync($root, $vendor, $packages);
+        $outcome = sync($root, $vendor, $packages, $new_packages, $force);
 
         if (!$outcome->success) {
             broadcast(Event::create('I could not sync the packages during installation!', [
@@ -348,6 +351,7 @@ function install(string $project, bool $force): Outcome
                 'config' => $config,
                 'vendor' => $vendor,
                 'packages' => $packages,
+                'new_packages' => $new_packages,
             ]));
             return new Outcome(false, '🔄 Could not sync the packages during installation. ' . $outcome->message);
         }
@@ -431,19 +435,39 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
             return new Outcome(false, '📦 Could not load a package config: ' . $outcome->message);
         }
 
-        $root = Paths\temp_runner_directory($outcome->data['commit']);
-        if (!Paths\exists($root)) {
-            $package = Dependencies\setup($outcome->data['commit'], $outcome->data['config'], $root);
-            if (!Dependencies\download_to($package, $root)) {
-                broadcast(Event::create('I could not download the package for running!', [
+        $root = Paths\runner_directory($outcome->data['commit']);
+        if (!Paths\exists($root) || !Paths\is_empty_directory($root)) {
+            $zip_file = Paths\zip_path_for_run($outcome->data['commit']);
+
+            if (!Commits\download_zip($outcome->data['commit'], $zip_file)) {
+                broadcast(Event::create('I could not download the package zip for running!', [
                     'url_or_path' => $url_or_path,
                     'version' => $version,
-                    'package' => $package,
+                    'zip_file' => $zip_file,
                 ]));
-                return new Outcome(false, '⬇️ Could not download package for running.');
+                return new Outcome(false, '⬇️ Could not download package zip for running.');
             }
-            if (!Paths\phpkg_config_exists($root)) {
-                Config\save($root, $package->config);
+
+            if (!Paths\unzip_to($zip_file, $root)) {
+                broadcast(Event::create('I could not unzip the package for running!', [
+                    'url_or_path' => $url_or_path,
+                    'version' => $version,
+                    'zip_file' => $zip_file,
+                    'root' => $root,
+                ]));
+                return new Outcome(false, '📦 Could not unzip package for running.');
+            }
+
+            Paths\delete_file($zip_file);
+
+            if (!Config\save($root, $outcome->data['config'])) {
+                broadcast(Event::create('I could not save the package config for running!', [
+                    'url_or_path' => $url_or_path,
+                    'version' => $version,
+                    'root' => $root,
+                    'config' => $outcome->data['config'],
+                ]));
+                return new Outcome(false, '💾 Could not save package config for running.');
             }
         }
     } else {

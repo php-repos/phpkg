@@ -1,5 +1,5 @@
 {
-  "version": "3.0.2",
+  "version": "v3.0.2",
   "modules": [
     "mbstring",
     "curl",

@@ -7,7 +7,9 @@ use Phpkg\Solution\Data\Version;
 use Phpkg\Solution\Exceptions\ComposerConfigFileNotFound;
 use Phpkg\Solution\Exceptions\RemoteConfigNotFound;
 use Phpkg\Solution\Versions;
+use Phpkg\Solution\Paths;
 use Phpkg\Infra\Exception\RemoteFileNotFoundException;
+use Phpkg\Infra\Files;
 use Phpkg\Infra\GitHosts;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
@@ -157,3 +159,34 @@ function get_remote_composer(Commit $commit): array
         throw new ComposerConfigFileNotFound("Composer Config file not found for $owner/$repo version $version commit hash $hash.");
     }
 }
+
+function download_zip(Commit $commit, string $destination): bool
+{
+    log('Downloading commit zip to destination', [
+        'commit' => $commit->identifier(),
+        'destination' => $destination,
+    ]);
+
+    Paths\ensure_directory_exists(Files\parent($destination));
+
+    $download_status = GitHosts\download(
+        $commit->version->repository->domain,
+        $commit->version->repository->owner,
+        $commit->version->repository->repo,
+        $commit->hash,
+        $commit->version->repository->token,
+        $destination,
+    );
+
+    if (!$download_status) {
+        log('Failed to download package zip', [
+            'commit' => $commit->identifier(),
+            'destination' => $destination,
+        ]);
+        return false;
+    }
+
+    return true;
+}
+
+

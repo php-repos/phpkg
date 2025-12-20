@@ -331,3 +331,8 @@ function sort_keys_recursively(iterable $value): mixed
 
     return $sorted;
 }
+
+function filter(iterable $array, callable $callback): array
+{
+    return Arr\filter($array, $callback);
+}

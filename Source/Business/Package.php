@@ -380,7 +380,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
             return new Outcome(false, '💾 Could not save the config file after resolving dependencies.');
         }
 
-        $outcome = Project\sync($root, $vendor, $new_packages);
+        $outcome = Project\sync($root, $vendor, $packages, $new_packages, false);
 
         if (!$outcome->success) {
             $sync_message = $outcome->message;
@@ -593,7 +593,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             return new Outcome(false, '💾 Could not save the config file after resolving dependencies.');
         }
 
-        $outcome = Project\sync($root, $vendor, $new_packages);
+        $outcome = Project\sync($root, $vendor, $packages, $new_packages, false);
 
         if (!$outcome->success) {
             $sync_message = $outcome->message;
@@ -754,8 +754,6 @@ function remove(string $project, string $identifier): Outcome
             return new Outcome(false, '🔍 The package not found in your project.');
         }
 
-        $commit = Dependencies\find($repository, $packages)->commit;
-
         $new_config = $config;
 
         unset($new_config['packages'][$old_url]);
@@ -781,7 +779,7 @@ function remove(string $project, string $identifier): Outcome
             return new Outcome(false, '💾 Could not save the config file after resolving dependencies.');
         }
 
-        $outcome = Project\sync($root, $vendor, $new_packages);
+        $outcome = Project\sync($root, $vendor, $packages, $new_packages, false);
 
         if (!$outcome->success) {
             $sync_message = $outcome->message;

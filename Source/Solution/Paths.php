@@ -67,9 +67,9 @@ function temp_directory(string ...$relatives): string
     return under(Envs\temp_dir(), ...$relatives);
 }
 
-function temp_installer_directory(Package $package): string
+function zip_file_path(Package $package): string
 {
-    log('Retrieving temporary installer directory for package', [
+    log('Retrieving zip file path for package', [
         'package' => $package->identifier(),
     ]);
     return temp_directory(
@@ -79,21 +79,55 @@ function temp_installer_directory(Package $package): string
         $package->commit->version->repository->repo,
         $package->commit->version->tag,
         $package->commit->hash,
+        $package->commit->version->repository->repo . '.zip',
     );
 }
 
-function temp_runner_directory(Commit $commit): string
+function unzip_to(string $zip_path, $destination): bool
 {
-    log('Retrieving temporary runner directory for commit', [
+    log('Retrieving unzip destination path', [
+        'zip_path' => $zip_path,
+        'destination' => $destination,
+    ]);
+    
+    $zip_root = under($destination, Files\zip_root($zip_path));
+
+    if (!Files\unpack($zip_path, $destination)) return false;
+
+    return preserve_copy_directory_content($zip_root, $destination)
+        && delete_recursively($zip_root);
+}
+
+function runner_directory(Commit $commit): string
+{
+    log('Retrieving runner directory for commit', [
         'commit' => $commit->identifier(),
     ]);
-    return temp_directory(
-        'runner',
+    return under(
+        temp_directory(),
+        'runners',
         $commit->version->repository->domain,
         $commit->version->repository->owner,
         $commit->version->repository->repo,
         $commit->version->tag,
         $commit->hash,
+    );
+}
+
+function zip_path_for_run(Commit $commit): string
+{
+    log('Retrieving zip path for run', [
+        'commit' => $commit->identifier(),
+    ]);
+    return under(
+        temp_directory(),
+        'runners',
+        $commit->version->repository->domain,
+        $commit->version->repository->owner,
+        $commit->version->repository->repo,
+        $commit->version->tag,
+        $commit->hash,
+        $commit->version->repository->repo . '.zip',
     );
 }
 

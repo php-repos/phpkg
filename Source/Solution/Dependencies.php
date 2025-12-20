@@ -8,25 +8,33 @@ use Phpkg\Solution\Data\Repository;
 use Phpkg\Solution\Data\Version;
 use Phpkg\Solution\Exceptions\DependencyResolutionException;
 use Phpkg\Solution\Exceptions\VersionIncompatibilityException;
-use Phpkg\Solution\Paths;
 use Phpkg\Solution\PHPKGCSP;
 use Phpkg\Solution\PHPKGSAT;
+use Phpkg\Solution\Commits;
 use Phpkg\Solution\Repositories;
 use Phpkg\Infra\Arrays;
-use Phpkg\Infra\Files;
-use Phpkg\Infra\GitHosts;
 use PhpRepos\SimpleCSP\CSPs;
 use PhpRepos\SimpleCSP\SATs;
 use function Phpkg\Infra\Logs\log;
 use function Phpkg\Infra\Logs\debug;
 
-function find(Repository $repository, array $packages): ?Package
+function are_equal(Package $a, Package $b): bool
 {
-    log('Finding package in dependencies', [
-        'repository' => $repository->identifier(),
+    debug('Checking if two packages are equal', [
+        'package_a' => $a->identifier(),
+        'package_b' => $b->identifier(),
     ]);
 
-    return Arrays\first($packages, fn (Package $package) => Repositories\are_equal($repository, $package->commit->version->repository));
+    return Commits\are_equal($a->commit, $b->commit);
+}
+
+function find_package(array $packages, Package $package): ?Package
+{
+    log('Finding package in dependencies', [
+        'package' => $package->identifier(),
+    ]);
+
+    return Arrays\first($packages, fn (Package $p) => are_equal($package, $p));
 }
 
 function setup(Commit $commit, array $config, string $root): Package
@@ -89,26 +97,28 @@ function resolve(array $packages, array $project_config, bool $ignore_version_co
         throw new VersionIncompatibilityException('There is version incompatibility between packages. You might force using --force option.');
     }
 
-    $new_packages = [];
-
-    if (count($solutions) > 0) {
-        $sat = new PHPKGSAT($solutions, $project_config, $ignore_version_compatibility);
-        debug('SAT clauses have been constructed', ['variables' => $sat->variables, 'clauses' => $sat->clauses]);
-
-        $optimal_solution = SATs\max($sat);
-        debug('Optimal SAT Solution', ['optimal_solution' => $optimal_solution]);
-
-        if ($optimal_solution !== null) {
-            foreach ($optimal_solution as $assignment) {
-                if ($assignment['value'] === true) {
-                    $new_packages[] = $assignment['variable'];
-                }
-            }
-        }
+    if (count($solutions) === 0) {
+        if (count($project_config['packages']) === 0) return [];
+        throw new DependencyResolutionException('Could not resolve all dependencies. Please use verbose mode to find the issue and open a GitHub issue if needed.');
     }
 
-    if (count($project_config['packages']) > count($new_packages)) {
+    $sat = new PHPKGSAT($solutions, $project_config, $ignore_version_compatibility);
+    debug('SAT clauses have been constructed', ['variables' => $sat->variables, 'clauses' => $sat->clauses]);
+
+    $optimal_solution = SATs\max($sat);
+    debug('Optimal SAT Solution', ['optimal_solution' => $optimal_solution]);
+    if ($optimal_solution === null) {
+        $optimal_solution = [];
+    }
+    if (count($project_config['packages']) > count(Arrays\filter($optimal_solution, fn ($assignment) => $assignment['value'] === true))) {
         throw new DependencyResolutionException('Could not resolve all dependencies. Please use verbose mode to find the issue and open a GitHub issue if needed.');
+    }
+
+    $new_packages = [];
+
+    foreach ($optimal_solution as $assignment) {
+        if ($assignment['value'] === false) continue;
+        $new_packages[] = $assignment['variable'];
     }
 
     return $new_packages;
@@ -127,51 +137,6 @@ function has_repository(array $packages, Repository $repository): bool
         $packages,
         fn (Package $package) => Repositories\are_equal($repository, $package->commit->version->repository)
     );
-}
-
-function download_to(Package $package, string $destination): bool
-{
-    log('Downloading package to destination', [
-        'package' => $package->identifier(),
-        'destination' => $destination,
-    ]);
-
-    Paths\ensure_directory_exists($destination);
-
-    $archive = Paths\under($destination, $package->commit->hash . '.zip');
-    $download_status = GitHosts\download(
-        $package->commit->version->repository->domain,
-        $package->commit->version->repository->owner,
-        $package->commit->version->repository->repo,
-        $package->commit->hash,
-        $package->commit->version->repository->token,
-        $archive,
-    );
-
-    if (!$download_status) {
-        log('Failed to download package archive', [
-            'package' => $package->identifier(),
-            'archive' => $archive,
-        ]);
-        return false;
-    }
-
-    log('Unpacking package archive', [
-        'archive' => $archive,
-    ]);
-
-    // Unzip the file in the same directory
-    if (!Files\unpack($archive, $destination)) {
-        return false;
-    }
-
-    $zip_root = Paths\under($destination, Files\zip_root($archive));
-
-    Paths\delete_file($archive);
-
-    $success = Paths\preserve_copy_directory_content($zip_root, $destination);
-
-    return $success && Paths\delete_directory($zip_root);
 }
 
 function required_main_package(array $config, Package $package): ?Version
@@ -207,7 +172,7 @@ function contains_package(array $packages, Package $package): bool
         'package' => $package->identifier(),
     ]);
     
-    return Arrays\has($packages, fn (Package $p) => $p->identifier() === $package->identifier());
+    return find($packages, $package) !== null;
 }
 
 function contains_repository(array $packages, Repository $repository): bool
@@ -254,4 +219,37 @@ function update_main_packages(array $packages, array $config): array
     }
 
     return $config;
+}
+
+function group_by_operation(array $old_packages, array $new_packages): array
+{
+    log('Grouping packages by operation', [
+        'old_packages' => Arrays\map($old_packages, fn($package) => $package->identifier()),
+        'new_packages' => Arrays\map($new_packages, fn($package) => $package->identifier()),
+    ]);
+
+    $additions = Arrays\filter($new_packages, fn (Package $new_package)
+        => !Arrays\has($old_packages, fn (Package $old_package)
+            => Repositories\are_equal($new_package->commit->version->repository, $old_package->commit->version->repository)));
+
+    $deletions = Arrays\filter($old_packages, fn (Package $old_package)
+        => !Arrays\has($new_packages, fn (Package $new_package)
+        => Repositories\are_equal($new_package->commit->version->repository, $old_package->commit->version->repository)));
+
+    $updates = Arrays\filter($new_packages, fn (Package $new_package)
+        => Arrays\has($old_packages, fn (Package $old_package)
+            => Repositories\are_equal($new_package->commit->version->repository, $old_package->commit->version->repository)
+            && !Commits\are_equal($new_package->commit, $old_package->commit)));
+
+    $intacts = Arrays\filter($new_packages, fn (Package $new_package)
+        => Arrays\has($old_packages, fn (Package $old_package)
+            => Repositories\are_equal($new_package->commit->version->repository, $old_package->commit->version->repository)
+            && Commits\are_equal($new_package->commit, $old_package->commit)));
+
+    return [
+        'additions' => $additions,
+        'deletions' => $deletions,
+        'updates' => $updates,
+        'intacts' => $intacts,
+    ];
 }
