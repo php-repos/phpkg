@@ -19,9 +19,10 @@ jobs:
       - name: Build project
         run: |
           phpkg install
-          phpkg build production
+          phpkg build
           rm -fR Packages
-          cd build
+          mv build latest
+          cd latest
           ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
           ./phpkg install --project=../
           ./phpkg build --project=../
