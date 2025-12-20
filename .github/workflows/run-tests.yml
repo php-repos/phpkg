@@ -46,6 +46,10 @@ jobs:
           bash -c "$(curl -fsSL https://raw.githubusercontent.com/php-repos/phpkg-installation/master/install.sh)"
           echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
 
+      - name: Test installation (Unix)
+        if: runner.os != 'Windows'
+        run: phpkg version
+
       - name: Install phpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -60,7 +64,7 @@ jobs:
           echo "$phpkgPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           # Verify phpkg is available
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-          phpkg --version
+          phpkg version
 
       - name: Set Credentials for main PHPKG (Unix)
         if: runner.os != 'Windows'
@@ -84,31 +88,29 @@ jobs:
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
           phpkg install
 
-      - name: Build (Unix)
+      - name: Build current phpkg (Unix)
         if: runner.os != 'Windows'
         run: |
-          phpkg build production
-          rm phpkg.config-lock.json
-          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          phpkg build
           rm -fR Packages
-          cd builds/production
+          mv build current
+          cd current
           ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
-          ./phpkg install --project=../../
-          ./phpkg build --project=../../
+          ./phpkg install --project=../
+          ./phpkg build --project=../
 
-      - name: Build (Windows)
+      - name: Build current phpkg (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-          phpkg build production
-          rm phpkg.config-lock.json
-          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          phpkg build
           Remove-Item -Path "Packages" -Recurse -Force
-          cd builds/production
+          Move-Item -Path "build" -Destination "current"
+          cd current
           php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
-          php ./phpkg install --project=../../
-          php ./phpkg build --project=../../
+          php ./phpkg install --project=../
+          php ./phpkg build --project=../
 
       - name: Set Credentials (Unix)
         if: runner.os != 'Windows'
