@@ -3,6 +3,8 @@
 namespace Phpkg\Business\Project;
 
 use Exception;
+use Phpkg\Solution\Exceptions\CanNotDetectComposerPackageVersionException;
+use Phpkg\Solution\Exceptions\VersionIncompatibilityException;
 use PhpRepos\Datatype\Str;
 use PhpRepos\FileManager\Directories;
 use PhpRepos\FileManager\Files;
@@ -15,6 +17,8 @@ use Phpkg\Solution\Repositories;
 use Phpkg\Solution\Versions;
 use Phpkg\Solution\Exceptions\DependencyResolutionException;
 use Phpkg\Solution\Exceptions\NotWritableException;
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\NotFoundException;
 use PhpRepos\Observer\Signals\Event;
 use Phpkg\Business\Config;
 use Phpkg\Business\Credential;
@@ -76,10 +80,10 @@ function init(string $project, ?string $packages_directory): Outcome
         return new Outcome(true, '✅ Project initialized successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
-        return new Outcome(false, "🔒 Path $root is not writable.");
+        return new Outcome(false, "🔒 Path for $project is not writable.");
     }
 }
 
@@ -168,7 +172,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
                 return new Outcome(false, '📦 Could not unzip ' . $package->identifier() . ' to its root path.');
             }
 
-            if (!Config\save($package_root, $package->config)->success) {
+            if (!Paths\phpkg_config_exists($package_root) && !Config\save($package_root, $package->config)->success) {
                 broadcast(Event::create('I could not save the package config in its root path!', [
                     'root' => $root,
                     'package' => $package,
@@ -188,6 +192,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
                 ]));
                 return new Outcome(false, '🗑️ Could not delete removed package ' . $package->identifier() . '.');
             }
+            Paths\delete_owner_when_empty($package_root);
         }
 
         $packages = $force_reinstall ? $packages : [...$packages, ...$groups['intacts']];
@@ -368,177 +373,211 @@ function install(string $project, bool $force): Outcome
         return new Outcome(true, '✅ Project installed successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
-        return new Outcome(false, "🔒 Path '$root' is not writable.");
+        return new Outcome(false, "🔒 Path for '$project' is not writable.");
     } catch(DependencyResolutionException $e) {
         broadcast(Event::create('I could not resolve dependencies during installation!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔗 Could not resolve dependencies during installation. ' . $e->getMessage());
-    } catch (ArchiveDownloadException $e) {
-        broadcast(Event::create('I could not download an archive during installation!', [
-            'root' => $root,
+    } catch (VersionIncompatibilityException $e) {
+        broadcast(Event::create('There was a version incompatibility during installation!', [
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
-        return new Outcome(false, '⬇️ Could not download an archive during installation. ' . $e->getMessage());
+        return new Outcome(false, '⚠️ Version incompatibility during installation. ' . $e->getMessage());
     }
 }
 
 function run(string $url_or_path, ?string $version, ?string $entry_point): Outcome
 {
-    propose(Plan::create('I try to run a project from the given URL or path.', [
-        'url_or_path' => $url_or_path,
-        'version' => $version ?: 'latest',
-        'entry_point' => $entry_point ?: '',
-    ]));
-
-    $outcome = Credential\read();
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not find any credentials!', [
+    try {
+        propose(Plan::create('I try to run a project from the given URL or path.', [
             'url_or_path' => $url_or_path,
             'version' => $version ?: 'latest',
             'entry_point' => $entry_point ?: '',
         ]));
-        return new Outcome(false, 'No credentials found.');
-    }
 
-    $credentials = $outcome->data['credentials'];
-
-    if (!Paths\has_path_identifier($url_or_path)) {
-        if (! Repositories\is_valid_package_identifier($url_or_path)) {
-            if (Repositories\can_guess_a_repo($url_or_path)) {
-                $url_or_path = Repositories\guess_the_repo($url_or_path);
-            } else {
-                broadcast(Event::create('The given URL or path is not a valid package identifier!', [
-                    'url_or_path' => $url_or_path,
-                    'version' => $version ?: 'latest',
-                    'entry_point' => $entry_point ?: '',
-                ]));
-                return new Outcome(false, '❌ Invalid package identifier.');
-            }
-        }
-        $repository = Repositories\prepare($url_or_path, $credentials);
-
-        if (!$version) {
-            $version = Versions\find_latest_version($repository)->tag;
-        }
-
-        $outcome = Package\load($url_or_path, $version);
+        $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not load a package config!', [
+            broadcast(Event::create('I could not find any credentials!', [
                 'url_or_path' => $url_or_path,
-                'version' => $version,
+                'version' => $version ?: 'latest',
+                'entry_point' => $entry_point ?: '',
             ]));
-            return new Outcome(false, '📦 Could not load a package config: ' . $outcome->message);
+            return new Outcome(false, 'No credentials found.');
         }
 
-        $root = Paths\runner_directory($outcome->data['commit']);
-        if (!Paths\exists($root) || !Paths\is_empty_directory($root)) {
-            $zip_file = Paths\zip_path_for_run($outcome->data['commit']);
+        $credentials = $outcome->data['credentials'];
 
-            if (!Commits\download_zip($outcome->data['commit'], $zip_file)) {
-                broadcast(Event::create('I could not download the package zip for running!', [
-                    'url_or_path' => $url_or_path,
-                    'version' => $version,
-                    'zip_file' => $zip_file,
-                ]));
-                return new Outcome(false, '⬇️ Could not download package zip for running.');
+        if (!Paths\has_path_identifier($url_or_path)) {
+            if (! Repositories\is_valid_package_identifier($url_or_path)) {
+                if (Repositories\can_guess_a_repo($url_or_path)) {
+                    $url_or_path = Repositories\guess_the_repo($url_or_path);
+                } else {
+                    broadcast(Event::create('The given URL or path is not a valid package identifier!', [
+                        'url_or_path' => $url_or_path,
+                        'version' => $version ?: 'latest',
+                        'entry_point' => $entry_point ?: '',
+                    ]));
+                    return new Outcome(false, '❌ Invalid package identifier.');
+                }
+            }
+            $repository = Repositories\prepare($url_or_path, $credentials);
+
+            if (!$version) {
+                $version = Versions\find_latest_version($repository)->tag;
             }
 
-            if (!Paths\unzip_to($zip_file, $root)) {
-                broadcast(Event::create('I could not unzip the package for running!', [
+            $outcome = Package\load($url_or_path, $version);
+            if (!$outcome->success) {
+                broadcast(Event::create('I could not load a package config!', [
                     'url_or_path' => $url_or_path,
                     'version' => $version,
-                    'zip_file' => $zip_file,
-                    'root' => $root,
                 ]));
-                return new Outcome(false, '📦 Could not unzip package for running.');
+                return new Outcome(false, '📦 Could not load a package config: ' . $outcome->message);
             }
 
-            Paths\delete_file($zip_file);
+            $root = Paths\runner_directory($outcome->data['commit']);
+            if (!Paths\exists($root) || !Paths\is_empty_directory($root)) {
+                $zip_file = Paths\zip_path_for_run($outcome->data['commit']);
 
-            if (!Config\save($root, $outcome->data['config'])) {
-                broadcast(Event::create('I could not save the package config for running!', [
-                    'url_or_path' => $url_or_path,
-                    'version' => $version,
-                    'root' => $root,
-                    'config' => $outcome->data['config'],
-                ]));
-                return new Outcome(false, '💾 Could not save package config for running.');
+                if (!Commits\download_zip($outcome->data['commit'], $zip_file)) {
+                    broadcast(Event::create('I could not download the package zip for running!', [
+                        'url_or_path' => $url_or_path,
+                        'version' => $version,
+                        'zip_file' => $zip_file,
+                    ]));
+                    return new Outcome(false, '⬇️ Could not download package zip for running.');
+                }
+
+                if (!Paths\unzip_to($zip_file, $root)) {
+                    broadcast(Event::create('I could not unzip the package for running!', [
+                        'url_or_path' => $url_or_path,
+                        'version' => $version,
+                        'zip_file' => $zip_file,
+                        'root' => $root,
+                    ]));
+                    return new Outcome(false, '📦 Could not unzip package for running.');
+                }
+
+                Paths\delete_file($zip_file);
+
+                if (!Config\save($root, $outcome->data['config'])) {
+                    broadcast(Event::create('I could not save the package config for running!', [
+                        'url_or_path' => $url_or_path,
+                        'version' => $version,
+                        'root' => $root,
+                        'config' => $outcome->data['config'],
+                    ]));
+                    return new Outcome(false, '💾 Could not save package config for running.');
+                }
             }
+        } else {
+            $root = Paths\detect_project($url_or_path);
         }
-    } else {
-        $root = Paths\detect_project($url_or_path);
-    }
 
-    if (!Paths\find($root)) {
-        broadcast(Event::create('I could not find the project root directory!', [
-            'root' => $root,
-        ]));
-        return new Outcome(false, '🔍 Project root directory does not exist.');
-    }
+        if (!Paths\find($root)) {
+            broadcast(Event::create('I could not find the project root directory!', [
+                'root' => $root,
+            ]));
+            return new Outcome(false, '🔍 Project root directory does not exist.');
+        }
 
-    $outcome = Config\read($root);
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not read the project config!', [
-            'root' => $root,
-        ]));
-        return new Outcome(false, '📄 Could not read the project config.');
-    }
+        $outcome = Config\read($root);
+        if (!$outcome->success) {
+            broadcast(Event::create('I could not read the project config!', [
+                'root' => $root,
+            ]));
+            return new Outcome(false, '📄 Could not read the project config.');
+        }
 
-    $config = $outcome->data['config'];
+        $config = $outcome->data['config'];
 
-    $outcome = install($root, true);
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not install the project packages!', [
-            'root' => $root,
-            'config' => $config,
-        ]));
-        return new Outcome(false, '📦 Could not install the project packages.');
-    }
+        $outcome = install($root, true);
+        if (!$outcome->success) {
+            broadcast(Event::create('I could not install the project packages!', [
+                'root' => $root,
+                'config' => $config,
+            ]));
+            return new Outcome(false, '📦 Could not install the project packages.');
+        }
 
-    $outcome = build($root);
-    if (!$outcome->success) {
-        broadcast(Event::create('I could not build the project!', [
-            'root' => $root,
-            'config' => $config,
-        ]));
-        return new Outcome(false, '🔨 Could not build the project.');
-    }
+        $outcome = build($root);
+        if (!$outcome->success) {
+            broadcast(Event::create('I could not build the project!', [
+                'root' => $root,
+                'config' => $config,
+            ]));
+            return new Outcome(false, '🔨 Could not build the project.');
+        }
 
-    $entry_points = $outcome->data['entry_points'] ?? [];
+        $entry_points = $outcome->data['entry_points'] ?? [];
 
-    if (empty($entry_points)) {
-        broadcast(Event::create('I could not find any entry points in the project!', [
+        if (empty($entry_points)) {
+            broadcast(Event::create('I could not find any entry points in the project!', [
+                'root' => $root,
+                'config' => $config,
+                'entry_points' => $entry_points,
+            ]));
+            return new Outcome(false, '🎯 No entry points found in the project.');
+        }
+
+        $entry_point = $entry_point ? ($outcome->data['build_path'] ?? '') . DIRECTORY_SEPARATOR . $entry_point : $entry_points[0];
+
+        if ($entry_point && !\Phpkg\Infra\Files\file_exists($entry_point)) {
+            broadcast(Event::create('I could not find the entry point file!', [
+                'root' => $root,
+                'config' => $config,
+                'entry_points' => $entry_points,
+                'entry_point' => $entry_point,
+            ]));
+            return new Outcome(false, '🔍 Entry point file does not exist.');
+        }
+
+        broadcast(Event::create('I ran the project successfully.', [
             'root' => $root,
             'config' => $config,
             'entry_points' => $entry_points,
+            'entry_point_path' => $entry_point,
         ]));
-        return new Outcome(false, '🎯 No entry points found in the project.');
-    }
-
-    $entry_point = $entry_point ? ($outcome->data['build_path'] ?? '') . DIRECTORY_SEPARATOR . $entry_point : $entry_points[0];
-
-    if ($entry_point && !\Phpkg\Infra\Files\file_exists($entry_point)) {
-        broadcast(Event::create('I could not find the entry point file!', [
-            'root' => $root,
-            'config' => $config,
-            'entry_points' => $entry_points,
-            'entry_point' => $entry_point,
+        return new Outcome(true, '🚀 Project ran successfully.', ['entry_point' => $entry_point]);
+    } catch (NotFoundException $e) {
+        broadcast(Event::create('The project could not be found!', [
+            'url_or_path' => $url_or_path,
+            'version' => $version ?: 'latest',
+            'entry_point' => $entry_point ?: '',
+            'error' => $e->getMessage(),
         ]));
-        return new Outcome(false, '🔍 Entry point file does not exist.');
+        return new Outcome(false, '🔍 Project not found.');
+    } catch (ApiRequestException $e) {
+        broadcast(Event::create('There was an API request error during running!', [
+            'url_or_path' => $url_or_path,
+            'version' => $version ?: 'latest',
+            'entry_point' => $entry_point ?: '',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '❗ API request error: ' . $e->getMessage());
+    } catch (NotWritableException $e) {
+        broadcast(Event::create('The path is not writable!', [
+            'url_or_path' => $url_or_path,
+            'version' => $version ?: 'latest',
+            'entry_point' => $entry_point ?: '',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, "🔒 Path is not writable.");
+    } catch (ArchiveDownloadException $e) {
+        broadcast(Event::create('I could not download an archive during running!', [
+            'url_or_path' => $url_or_path,
+            'version' => $version ?: 'latest',
+            'entry_point' => $entry_point ?: '',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '⬇️ Could not download an archive during running. ' . $e->getMessage());
     }
-
-    broadcast(Event::create('I ran the project successfully.', [
-        'root' => $root,
-        'config' => $config,
-        'entry_points' => $entry_points,
-        'entry_point_path' => $entry_point,
-    ]));
-    return new Outcome(true, '🚀 Project ran successfully.', ['entry_point' => $entry_point]);
 }
 
 function migrate(string $project, bool $ignore_version_compatibility = false): Outcome
@@ -615,7 +654,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
 
         Paths\delete_recursively(Paths\composer_vendor_path($root));
 
-        $outcome = sync($root, $vendor, $packages);
+        $outcome = sync($root, $vendor, [], $resolved_packages, true);
         if (!$outcome->success) {
             broadcast(Event::create('I could not sync the packages after migration!', [
                 'root' => $root,
@@ -635,10 +674,40 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
         return new Outcome(true, '🔄 Project migrated successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
-        return new Outcome(false, "🔒 Path $root is not writable.");
+        return new Outcome(false, "🔒 Path for $project is not writable.");
+    } catch (ApiRequestException $e) {
+        broadcast(Event::create('An API request error occurred during migration!', [
+            'project' => $project,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '❗ API request error: ' . $e->getMessage());
+    } catch (NotFoundException $e) {
+        broadcast(Event::create('A repository was not found during migration!', [
+            'project' => $project,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '🔍 Repository not found: ' . $e->getMessage());
+    } catch (CanNotDetectComposerPackageVersionException $e) {
+        broadcast(Event::create('I could not detect a composer package version during migration!', [
+            'project' => $project,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '❗ Could not detect a composer package version: ' . $e->getMessage());
+    } catch (DependencyResolutionException $e) {
+        broadcast(Event::create('I could not resolve dependencies during migration!', [
+            'project' => $project,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '🔗 Could not resolve dependencies during migration. ' . $e->getMessage());
+    } catch (VersionIncompatibilityException $e) {
+        broadcast(Event::create('There was a version incompatibility during migration!', [
+            'project' => $project,
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '⚠️ Version incompatibility during migration. ' . $e->getMessage());
     }
 }
 
@@ -880,7 +949,7 @@ function build(string $project): Outcome
             if (Files\exists($build_namespace_path)) {
                 $require_path = PHPKGs\portable_require_path(parent($import_file), $build_namespace_path);
                 $content .= <<<EOD
-            '{$map_namespace}' => {$require_path},
+            '$map_namespace' => $require_path,
 
     EOD;
             }
@@ -904,7 +973,7 @@ function build(string $project): Outcome
             $build_namespace_path = Paths\under($builds, relative_path($root, $map_path));
             $require_path = PHPKGs\portable_require_path(parent($import_file), $build_namespace_path);
             $content .= <<<EOD
-            '{$map_namespace}' => {$require_path},
+            '$map_namespace' => $require_path,
 
     EOD;
         }
@@ -1031,13 +1100,13 @@ function build(string $project): Outcome
         ]);
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
-        return new Outcome(false, "🔒 Path $root is not writable.");
+        return new Outcome(false, "🔒 Path for $project is not writable.");
     } catch (Exception $e) {
         broadcast(Event::create('An error occurred during the build process!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "⚡ An error occurred during the build process: " . $e->getMessage());

@@ -7,9 +7,9 @@ use Phpkg\Solution\Data\Package;
 use Phpkg\Infra\Envs;
 use Phpkg\Infra\Files;
 use Phpkg\Infra\Strings;
+use Phpkg\Solution\Exceptions\NotWritableException;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
-use Phpkg\Solution\Exceptions\NotWritableException;
 
 function under(string $absolute, string ...$relatives): string
 {
@@ -41,6 +41,9 @@ function credentials(): string
     return under(phpkg_root(), 'credentials.json');
 }
 
+/**
+ * @throws NotWritableException
+ */
 function detect_project(string $project): string
 {
     log('Detecting project path', ['project' => $project]);
@@ -179,6 +182,9 @@ function find(string $path): bool
     return Files\directory_exists($path);
 }
 
+/**
+ * @throws NotWritableException
+ */
 function make_recursively(string $path): bool
 {
     log('Creating directory recursively', ['path' => $path]);
@@ -331,15 +337,6 @@ function delete_file(string $path): bool
     return unlink($path);
 }
 
-function preserve_copy_recursive(string $source, string $destination): bool
-{
-    log('Preserving recursive copy of directory', [
-        'source' => $source,
-        'destination' => $destination,
-    ]);
-    return Files\preserve_copy_recursively($source, $destination);
-}
-
 function preserve_copy_directory_content(string $source, string $destination): bool
 {
     log('Preserving copy of directory contents', [
@@ -406,7 +403,7 @@ function delete_directory(string $path): bool
  * For files, returns the SHA256 hash of the file content.
  * For directories, recursively hashes all files using Directories\ls.
  *
- * @param Path $path The path to checksum (file or directory)
+ * @param string $path The path to checksum (file or directory)
  * @return string The SHA256 checksum
  */
 function checksum(string $path): string

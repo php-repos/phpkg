@@ -21,7 +21,7 @@ abstract class SAT
      * Each element represents a variable that can be assigned true or false.
      * Variables are typically objects or values that need to be assigned.
      *
-     * @var array<mixed>
+     * @var array
      */
     public array $variables;
 

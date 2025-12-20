@@ -2,6 +2,7 @@
 
 namespace Phpkg\Solution\Commits;
 
+use Phpkg\Infra\Exception\ArchiveDownloadException;
 use Phpkg\Solution\Data\Commit;
 use Phpkg\Solution\Data\Version;
 use Phpkg\Solution\Exceptions\ComposerConfigFileNotFound;
@@ -11,6 +12,8 @@ use Phpkg\Solution\Paths;
 use Phpkg\Infra\Exception\RemoteFileNotFoundException;
 use Phpkg\Infra\Files;
 use Phpkg\Infra\GitHosts;
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\NotFoundException;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
 
@@ -35,6 +38,10 @@ function prepare(string $url, string $version, string $hash, array $credentials)
     return new Commit($version, $hash);
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ */
 function find_version_commit(Version $version): Commit
 {
     log('Finding commit for version', [
@@ -56,6 +63,10 @@ function find_version_commit(Version $version): Commit
     return new Commit($version, $hash);
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ */
 function find_latest_commit(Version $version): Commit
 {
     log('Finding latest commit for version', [
@@ -70,6 +81,9 @@ function find_latest_commit(Version $version): Commit
     return new Commit($version, $hash);
 }
 
+/**
+ * @throws ApiRequestException
+ */
 function remote_phpkg_exists(Commit $commit): bool
 {
     log('Checking if remote phpkg config exists for commit', [
@@ -86,6 +100,9 @@ function remote_phpkg_exists(Commit $commit): bool
     );
 }
 
+/**
+ * @throws ApiRequestException
+ */
 function remote_composer_exists(Commit $commit): bool
 {
     log('Checking if remote composer config exists for commit', [
@@ -103,9 +120,11 @@ function remote_composer_exists(Commit $commit): bool
 }
 
 /**
-* @throws RemoteConfigNotFound
-* @throws GithubApiRequestException
-*/
+ * @param Commit $commit
+ * @return array
+ * @throws ApiRequestException
+ * @throws RemoteConfigNotFound
+ */
 function get_remote_phpkg(Commit $commit): array
 {
     log('Getting remote phpkg config for commit', [
@@ -132,8 +151,10 @@ function get_remote_phpkg(Commit $commit): array
 }
 
 /**
+ * @param Commit $commit
+ * @return array
+ * @throws ApiRequestException
  * @throws ComposerConfigFileNotFound
- * @throws GithubApiRequestException
  */
 function get_remote_composer(Commit $commit): array
 {
@@ -160,6 +181,9 @@ function get_remote_composer(Commit $commit): array
     }
 }
 
+/**
+ * @throws ArchiveDownloadException
+ */
 function download_zip(Commit $commit, string $destination): bool
 {
     log('Downloading commit zip to destination', [

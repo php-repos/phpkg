@@ -50,7 +50,7 @@ function solve(SAT $sat): array
                 $clause_satisfied = false;
                 foreach ($clause as $literal) {
                     $var_index = abs($literal); // 1-based variable index
-                    $value = $literal > 0 ? true : false;
+                    $value = $literal > 0;
                     if (isset($assignment[$var_index]) && $assignment[$var_index] === $value) {
                         $clause_satisfied = true;
                         break;

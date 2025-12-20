@@ -21,10 +21,10 @@ use Phpkg\Business\Credential;
 use Phpkg\Business\Meta;
 use Phpkg\Business\Outcome;
 use Phpkg\Business\Project;
-use function PhpRepos\Observer\Observer\propose;
-use function PhpRepos\Observer\Observer\broadcast;
 use PhpRepos\Observer\Signals\Plan;
 use PhpRepos\Observer\Signals\Event;
+use function PhpRepos\Observer\Observer\propose;
+use function PhpRepos\Observer\Observer\broadcast;
 
 function register_alias(string $project, string $alias, string $package_url): Outcome
 {
@@ -90,7 +90,7 @@ function register_alias(string $project, string $alias, string $package_url): Ou
         return new Outcome(true, '✅ Alias registered successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
@@ -307,7 +307,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         $repository = Repositories\prepare($url, $credentials);
 
-        foreach ($config['packages'] as $package_url => $package_version) {
+        foreach ($config['packages'] as $package_version) {
             if (Repositories\are_equal($repository, $package_version->repository)) {
                 broadcast(Event::create('The package is already added to this project!', [
                     'root' => $root,
@@ -441,12 +441,20 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         return new Outcome(false, '❌ Failed to add package. ' . $e->getMessage());
     } catch (NotFoundException $e) {
         broadcast(Event::create('The package repository was not found!', [
-            'root' => $root,
+            'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔍 Package repository not found. ' . $e->getMessage());
+    } catch (ApiRequestException $e) {
+        broadcast(Event::create('An error occurred while trying to access the package repository!', [
+            'project' => $project,
+            'identifier' => $identifier,
+            'version' => $version ?: 'latest',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '⚠️ API request error: ' . $e->getMessage());
     }
 }
 
@@ -650,13 +658,13 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         return new Outcome(true, '🔄 Package updated successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
     } catch (DependencyResolutionException $e) {
         broadcast(Event::create('Dependency resolution failed!', [
-            'root' => $root,
+            'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
             'error' => $e->getMessage(),
@@ -664,7 +672,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         return new Outcome(false, '❌ Failed to update the package. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
         broadcast(Event::create('Version incompatibility issue found!', [
-            'root' => $root,
+            'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
             'error' => $e->getMessage(),
@@ -672,12 +680,20 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         return new Outcome(false, '❌ Failed to update the package. ' . $e->getMessage());
     } catch (NotFoundException $e) {
         broadcast(Event::create('The package repository was not found!', [
-            'root' => $root,
+            'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔍 Package repository not found. ' . $e->getMessage());
+    } catch (ApiRequestException $e) {
+        broadcast(Event::create('An error occurred while trying to access the package repository!', [
+            'project' => $project,
+            'identifier' => $identifier,
+            'version' => $version ?: 'latest',
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, '⚠️ API request error: ' . $e->getMessage());
     }
 }
 
@@ -837,20 +853,20 @@ function remove(string $project, string $identifier): Outcome
         return new Outcome(true, '🗑️ Package removed successfully.');
     } catch (NotWritableException $e) {
         broadcast(Event::create('The path is not writable!', [
-            'root' => $root,
+            'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
     } catch (DependencyResolutionException $e) {
         broadcast(Event::create('Dependency resolution failed!', [
-            'root' => $root,
+            'project' => $project,
             'identifier' => $identifier,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '❌ Failed to remove the package. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
         broadcast(Event::create('Version incompatibility issue found!', [
-            'root' => $root,
+            'project' => $project,
             'identifier' => $identifier,
             'error' => $e->getMessage(),
         ]));

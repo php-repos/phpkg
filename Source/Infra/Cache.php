@@ -2,6 +2,8 @@
 
 namespace Phpkg\Infra;
 
+use RuntimeException;
+
 /**
  * A simple in-memory cache implementation using the Singleton pattern.
  *
@@ -73,7 +75,7 @@ class Cache
     public function set(string $key, mixed $value): static
     {
         if (isset($this->items[$key])) {
-            throw new \RuntimeException("Key '{$key}' already exists in the cache.");
+            throw new RuntimeException("Key `$key` already exists in the cache.");
         }
         
         $this->items[$key] = $value;

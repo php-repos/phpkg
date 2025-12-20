@@ -424,11 +424,6 @@ function ls_all(string $path): array
     return Directories\ls_all($path);
 }
 
-function ls(string $path): array
-{
-    return Directories\ls($path);
-}
-
 /**
  * Gets the root directory name from a ZIP archive.
  *

@@ -31,7 +31,7 @@ class NodeParser extends NodeVisitorAbstract
         // Handle use const statements
         if ($node instanceof Node\Stmt\Use_ && $node->type === Node\Stmt\Use_::TYPE_CONSTANT) {
             foreach ($node->uses as $use) {
-                if ($use instanceof Node\Stmt\UseUse) {
+                if ($use instanceof Node\UseItem) {
                     $full_name = $use->name->toString();
                     $alias = $use->alias ? $use->alias->toString() : $use->name->getLast();
                     $namespace_part = strrpos($full_name, '\\') !== false ? substr($full_name, 0, strrpos($full_name, '\\')) : '';
@@ -62,7 +62,7 @@ class NodeParser extends NodeVisitorAbstract
         // Handle use function statements
         elseif ($node instanceof Node\Stmt\Use_ && $node->type === Node\Stmt\Use_::TYPE_FUNCTION) {
             foreach ($node->uses as $use) {
-                if ($use instanceof Node\Stmt\UseUse) {
+                if ($use instanceof Node\UseItem) {
                     $full_name = $use->name->toString();
                     $alias = $use->alias ? $use->alias->toString() : $use->name->getLast();
                     $namespace_part = strrpos($full_name, '\\') !== false ? substr($full_name, 0, strrpos($full_name, '\\')) : '';
@@ -93,7 +93,7 @@ class NodeParser extends NodeVisitorAbstract
         // Handle use class statements and namespace imports
         elseif ($node instanceof Node\Stmt\Use_ && $node->type === Node\Stmt\Use_::TYPE_NORMAL) {
             foreach ($node->uses as $use) {
-                if ($use instanceof Node\Stmt\UseUse) {
+                if ($use instanceof Node\UseItem) {
                     $full_name = $use->name->toString();
                     $alias = $use->alias ? $use->alias->toString() : $use->name->getLast();
                     $namespace_part = strrpos($full_name, '\\') !== false ? substr($full_name, 0, strrpos($full_name, '\\')) : '';

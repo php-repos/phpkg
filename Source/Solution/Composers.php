@@ -9,6 +9,8 @@ use Phpkg\Solution\Dependencies;
 use Phpkg\Solution\Repositories;
 use Phpkg\Solution\Paths;
 use Phpkg\Infra\Strings;
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\NotFoundException;
 use function PhpRepos\Datatype\Str\last_character;
 use function PhpRepos\Datatype\Str\remove_last_character;
 use function PhpRepos\Git\Hosts\tags;
@@ -126,6 +128,11 @@ function config_from_local(array $composer_config, array $composer_lock): array
     return $config;
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ * @throws CanNotDetectComposerPackageVersionException
+ */
 function config(array $composer_config, array $credentials): array
 {
     log('Creating config from composer.json', [
@@ -191,6 +198,14 @@ function config(array $composer_config, array $credentials): array
     return $config;
 }
 
+/**
+ * @param Repository $repository
+ * @param string $version_pattern
+ * @return string
+ * @throws ApiRequestException
+ * @throws CanNotDetectComposerPackageVersionException
+ * @throws NotFoundException
+ */
 function detect_version(Repository $repository, string $version_pattern): string
 {
     debug('Detecting version for repository', [
@@ -218,6 +233,11 @@ function detect_version(Repository $repository, string $version_pattern): string
     return $version;
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ * @throws CanNotDetectComposerPackageVersionException
+ */
 function get_version(Repository $repository, string $version_pattern): string
 {
     debug('Getting version for repository', [

@@ -2,6 +2,7 @@
 
 namespace Phpkg\Infra\Envs;
 
+use JsonException;
 use function Phpkg\Infra\Files\read_json_as_array;
 use function Phpkg\Infra\Files\realpath;
 
@@ -36,6 +37,7 @@ function get(string $key, mixed $default = null): mixed
  *
  * @return string The Path string representing the phpkg temporary directory
  *
+ * @throws JsonException
  * @example
  * ```php
  * $temp_path = temp_dir();
@@ -56,6 +58,7 @@ function phpkg_root(): string
  * Reads the phpkg config.json file and returns its contents.
  *
  * @return array The config array with version and modules
+ * @throws JsonException
  */
 function phpkg_config(): array
 {
@@ -67,6 +70,7 @@ function phpkg_config(): array
  * Gets the phpkg version from config.json.
  *
  * @return string The version string
+ * @throws JsonException
  */
 function phpkg_version(): string
 {

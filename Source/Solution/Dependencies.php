@@ -18,25 +18,6 @@ use PhpRepos\SimpleCSP\SATs;
 use function Phpkg\Infra\Logs\log;
 use function Phpkg\Infra\Logs\debug;
 
-function are_equal(Package $a, Package $b): bool
-{
-    debug('Checking if two packages are equal', [
-        'package_a' => $a->identifier(),
-        'package_b' => $b->identifier(),
-    ]);
-
-    return Commits\are_equal($a->commit, $b->commit);
-}
-
-function find_package(array $packages, Package $package): ?Package
-{
-    log('Finding package in dependencies', [
-        'package' => $package->identifier(),
-    ]);
-
-    return Arrays\first($packages, fn (Package $p) => are_equal($package, $p));
-}
-
 function setup(Commit $commit, array $config, string $root): Package
 {
     log('Setting up package from commit', [
@@ -78,6 +59,11 @@ function loaded_package(Commit $commit, array $config): Package
 
 /**
  * @param Package[] $packages
+ * @param array $project_config
+ * @param bool $ignore_version_compatibility
+ * @return array
+ * @throws DependencyResolutionException
+ * @throws VersionIncompatibilityException
  */
 function resolve(array $packages, array $project_config, bool $ignore_version_compatibility): array
 {
@@ -124,21 +110,6 @@ function resolve(array $packages, array $project_config, bool $ignore_version_co
     return $new_packages;
 }
 
-/**
- * @param Package[] $packages
- */
-function has_repository(array $packages, Repository $repository): bool
-{
-    log('Checking if packages contain repository', [
-        'repository' => $repository->identifier(),
-    ]);
-
-    return Arrays\has(
-        $packages,
-        fn (Package $package) => Repositories\are_equal($repository, $package->commit->version->repository)
-    );
-}
-
 function required_main_package(array $config, Package $package): ?Version
 {
     debug('Checking for required main package in config', [
@@ -146,7 +117,7 @@ function required_main_package(array $config, Package $package): ?Version
         'package' => $package->identifier(),
     ]);
 
-    foreach ($config['packages'] as $package_url => $version) {
+    foreach ($config['packages'] as $version) {
         if (Repositories\are_equal($version->repository, $package->commit->version->repository)) {
             return $version;
         }
@@ -163,26 +134,6 @@ function is_main_package(array $config, Package $package): bool
     ]);
 
     return required_main_package($config, $package) !== null;
-}
-
-function contains_package(array $packages, Package $package): bool
-{
-    log('Checking if packages contain specific package', [
-        'packages' => Arrays\map($packages, fn(Package $p) => $p->identifier()),
-        'package' => $package->identifier(),
-    ]);
-    
-    return find($packages, $package) !== null;
-}
-
-function contains_repository(array $packages, Repository $repository): bool
-{
-    log('Checking if packages contain specific repository', [
-        'packages' => Arrays\map($packages, fn(Package $p) => $p->identifier()),
-        'repository' => $repository->identifier(),
-    ]);
-
-    return Arrays\has($packages, fn (Package $p) => Repositories\are_equal($p->commit->version->repository, $repository));
 }
 
 function claims_same_namespaces(array $config, Package $package): bool
@@ -211,7 +162,7 @@ function update_main_packages(array $packages, array $config): array
     ]);
 
     foreach ($config['packages'] as $package_url => $version) {
-        foreach ($packages as $index => $package) {
+        foreach ($packages as $package) {
             if (Repositories\are_equal($version->repository, $package->commit->version->repository)) {
                 $config['packages'][$package_url] = $package->commit->version;
             }
