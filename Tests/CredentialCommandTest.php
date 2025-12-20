@@ -10,7 +10,7 @@ use function PhpRepos\TestRunner\Runner\test;
 test(
     title: 'it should show success message when adding new provider',
     case: function () {
-        $provider = 'unique-test-provider-' . time() . '.com';
+        $provider = 'it-should-save-' . time() . '.com';
         $token = 'test_token_12345';
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
@@ -26,8 +26,19 @@ test(
 
 test(
     title: 'it should prevent duplicate credentials for the same provider',
-    case: function () {
-        $provider = 'github.com';
+  case: function () {
+        $provider = 'it-should-prevent-' . time() . '.com';
+        $token = 'test_token_12345';
+        
+        $output = CliRunner\phpkg('credential', [$provider, $token]);
+        
+        $expected = Output\capture(function () use ($provider) {
+            Output\line("Adding credential for provider $provider...");
+            Output\success('💾 Credentials file saved.');
+        });
+        
+        Output\assert_output($expected, $output);
+
         $token = 'ghp_different_token_67890';
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
@@ -35,6 +46,34 @@ test(
         $expected = Output\capture(function () use ($provider) {
             Output\line("Adding credential for provider $provider...");
             Output\error('⚠️ There is a token for the given provider.');
+        });
+        
+        Output\assert_output($expected, $output);
+    }
+);
+
+test(
+    title: 'it should replace existing token when --force flag is used',
+    case: function () {
+        $provider = 'it-should-force-' . time() . '.com';
+        $old_token = 'ghp_orignal_token';
+
+        $output = CliRunner\phpkg('credential', [$provider, $old_token]);
+    
+        $expected = Output\capture(function () use ($provider) {
+            Output\line("Adding credential for provider $provider...");
+            Output\success('💾 Credentials file saved.');
+        });
+
+        Output\assert_output($expected, $output);
+
+        $token = 'ghp_new_token_with_force_12345';
+
+        $output = CliRunner\phpkg('credential', [$provider, $token, '--force']);
+
+        $expected = Output\capture(function () use ($provider) {
+            Output\line("Adding credential for provider $provider...");
+            Output\success('💾 Credentials file saved.');
         });
         
         Output\assert_output($expected, $output);

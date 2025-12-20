@@ -5,6 +5,8 @@ namespace Phpkg\Solution\Repositories;
 use Phpkg\Solution\Data\Repository;
 use Phpkg\Infra\GitHosts;
 use Phpkg\Infra\Strings;
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\NotFoundException;
 use function Phpkg\Infra\Arrays\first;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
@@ -93,6 +95,10 @@ function from(string $url): Repository
     return new Repository($url, $domain, $owner, $repo, null);
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ */
 function has_any_tag(Repository $repository): bool
 {
     log('Checking if repository has any tags', [
@@ -114,7 +120,7 @@ function can_guess_a_repo(string $identifier): bool
     
     if ($slash_count === 0) return true;
     if ($slash_count > 1) return false;
-    if (strpos($identifier, '/') === 0) return false;
+    if (str_starts_with($identifier, '/')) return false;
     if (strpos($identifier, '/') === strlen($identifier) - 1) return false;
     
     return true;
@@ -140,7 +146,7 @@ function is_main_package(array $config, Repository $repository): bool
         'config' => $config,
     ]);
 
-    foreach ($config['packages'] as $package_url => $version) {
+    foreach ($config['packages'] as $version) {
        if (are_equal($repository, $version->repository)) {
            return true;
        }

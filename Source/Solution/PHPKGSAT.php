@@ -3,11 +3,9 @@
 namespace Phpkg\Solution;
 
 use PhpRepos\SimpleCSP\SAT;
-use Phpkg\Solution\Commits;
 use Phpkg\Solution\Data\Version;
 use Phpkg\Solution\Exceptions\DependencyResolutionException;
 use Phpkg\Solution\Exceptions\VersionIncompatibilityException;
-use Phpkg\Solution\Repositories;
 use Phpkg\Infra\Arrays;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\GitHosts\major_part;
@@ -16,13 +14,15 @@ class PHPKGSAT extends SAT
 {
     public array $variables;
     public array $clauses;
-    
+
     /**
-     * @param array<Solution> $csp_solutions
-     * @param array<mixed, mixed> $project_config
+     * @param array $csp_solutions
+     * @param array $project_config
      * @param bool $ignore_version_compatibility
+     * @throws DependencyResolutionException
+     * @throws VersionIncompatibilityException
      */
-    public function __construct(private array $csp_solutions, private array $project_config, bool $ignore_version_compatibility)
+    public function __construct(array $csp_solutions, private readonly array $project_config, bool $ignore_version_compatibility)
     {
         $this->variables = [];
         $this->clauses = [];
@@ -45,11 +45,11 @@ class PHPKGSAT extends SAT
                 'version_groups' => $version_groups,
             ]);
 
-            $stable_versions = Arrays\group_by($version_groups['stable'] ?? [], fn (array $assignment) => major_part($assignment['value']->commit->version->tag));
+            $stable_versions = Arrays\group_by($version_groups['stable'], fn (array $assignment) => major_part($assignment['value']->commit->version->tag));
 
             if (count($stable_versions) > 1) {
                 if (!$ignore_version_compatibility)
-                    throw new VersionIncompatibilityException("Cannot resolve dependencies for repository {$repo} due to incompatible major versions: " . implode(', ', array_keys($stable_versions)) . ".");
+                    throw new VersionIncompatibilityException("Cannot resolve dependencies for repository $repo due to incompatible major versions: " . implode(', ', array_keys($stable_versions)) . ".");
 
                 $stable_versions = Arrays\sort_by_keys_desc($stable_versions, fn ($a, $b) => intval($a) <=> intval($b));
                 foreach ($stable_versions as $i => $group) {
@@ -59,7 +59,7 @@ class PHPKGSAT extends SAT
                     }
                     foreach ($group as $group_assignment) {
                         foreach ($csp_solutions as $solution_index => $solution) {
-                            foreach ($solution as $assignment_index => $assignment) {
+                            foreach ($solution as $assignment) {
                                 if (Commits\are_equal($assignment['value']->commit, $group_assignment['value']->commit)) {
                                     unset($csp_solutions[$solution_index]);
                                 }
@@ -70,7 +70,7 @@ class PHPKGSAT extends SAT
             }
 
             if (isset($version_groups['development']) && count($version_groups['stable']) > 0) {
-                throw new DependencyResolutionException("Repository {$repo} has both development and stable versions in the dependency solutions, which is not allowed.");
+                throw new DependencyResolutionException("Repository $repo has both development and stable versions in the dependency solutions, which is not allowed.");
             }
 
             $variables = isset($version_groups['development'][0]) ? [$version_groups['development'][0]['value']] : [];
@@ -100,13 +100,7 @@ class PHPKGSAT extends SAT
             }
 
             if (isset($version_groups['development']) && count($version_groups['stable']) > 0) {
-                throw new DependencyResolutionException("Repository {$repo} has both development and stable versions in the dependency solutions, which is not allowed.");
-            }
-
-            $variables = isset($version_groups['development'][0]) ? [$version_groups['development'][0]['value']] : [];
-
-            foreach ($version_groups['stable'] as $assignment) {
-                $variables[] = $assignment['value'];
+                throw new DependencyResolutionException("Repository $repo has both development and stable versions in the dependency solutions, which is not allowed.");
             }
         }
 

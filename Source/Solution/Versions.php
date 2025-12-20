@@ -2,10 +2,13 @@
 
 namespace Phpkg\Solution\Versions;
 
+use InvalidArgumentException;
 use Phpkg\Solution\Data\Repository;
 use Phpkg\Solution\Data\Version;
 use Phpkg\Solution\Repositories;
 use Phpkg\Infra\GitHosts;
+use PhpRepos\Git\Exception\ApiRequestException;
+use PhpRepos\Git\Exception\NotFoundException;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
 
@@ -46,6 +49,10 @@ function is_development(Version $version): bool
     return $version->tag === 'development';
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ */
 function match_highest_version(string $url, string $version, array $credentials): Version
 {
     log('Matching highest version', [
@@ -57,12 +64,16 @@ function match_highest_version(string $url, string $version, array $credentials)
     $version = GitHosts\match_highest_version($repository->domain, $repository->owner, $repository->repo, $version, $repository->token);
 
     if ($version === null) {
-        throw new \InvalidArgumentException(sprintf('No matching version found for %s in repository %s.', $version, $repository->url));
+        throw new InvalidArgumentException(sprintf('No matching version found for %s in repository %s.', $version, $repository->url));
     }
 
     return new Version($repository, $version);
 }
 
+/**
+ * @throws NotFoundException
+ * @throws ApiRequestException
+ */
 function find_latest_version(Repository $repository): Version
 {
     log('Finding latest version for repository', [

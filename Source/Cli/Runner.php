@@ -5,8 +5,12 @@ namespace Phpkg\Cli\Runner;
 use PhpRepos\Console\CommandHandlers;
 use PhpRepos\Console\Input;
 use PhpRepos\FileManager\Path;
+use ReflectionException;
 use function PhpRepos\Console\Runner\run;
 
+/**
+ * @throws ReflectionException
+ */
 function execute(CommandHandlers $command_handlers, Input $inputs, bool $wants_help, string $commands_directory, string $additional_handled_flags): int
 {
     $entrypoint = 'phpkg';

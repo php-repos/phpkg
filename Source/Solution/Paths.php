@@ -7,9 +7,9 @@ use Phpkg\Solution\Data\Package;
 use Phpkg\Infra\Envs;
 use Phpkg\Infra\Files;
 use Phpkg\Infra\Strings;
+use Phpkg\Solution\Exceptions\NotWritableException;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
-use Phpkg\Solution\Exceptions\NotWritableException;
 
 function under(string $absolute, string ...$relatives): string
 {
@@ -32,7 +32,7 @@ function under_current_working_directory(string ...$relatives): string
 function phpkg_root(): string
 {
     debug('Retrieving PHPKG root from environment variables');
-    return Envs\get('PHPKG_ROOT');
+    return Envs\phpkg_root();
 }
 
 function credentials(): string
@@ -41,6 +41,9 @@ function credentials(): string
     return under(phpkg_root(), 'credentials.json');
 }
 
+/**
+ * @throws NotWritableException
+ */
 function detect_project(string $project): string
 {
     log('Detecting project path', ['project' => $project]);
@@ -67,9 +70,9 @@ function temp_directory(string ...$relatives): string
     return under(Envs\temp_dir(), ...$relatives);
 }
 
-function temp_installer_directory(Package $package): string
+function zip_file_path(Package $package): string
 {
-    log('Retrieving temporary installer directory for package', [
+    log('Retrieving zip file path for package', [
         'package' => $package->identifier(),
     ]);
     return temp_directory(
@@ -79,21 +82,55 @@ function temp_installer_directory(Package $package): string
         $package->commit->version->repository->repo,
         $package->commit->version->tag,
         $package->commit->hash,
+        $package->commit->version->repository->repo . '.zip',
     );
 }
 
-function temp_runner_directory(Commit $commit): string
+function unzip_to(string $zip_path, $destination): bool
 {
-    log('Retrieving temporary runner directory for commit', [
+    log('Retrieving unzip destination path', [
+        'zip_path' => $zip_path,
+        'destination' => $destination,
+    ]);
+    
+    $zip_root = under($destination, Files\zip_root($zip_path));
+
+    if (!Files\unpack($zip_path, $destination)) return false;
+
+    return preserve_copy_directory_content($zip_root, $destination)
+        && delete_recursively($zip_root);
+}
+
+function runner_directory(Commit $commit): string
+{
+    log('Retrieving runner directory for commit', [
         'commit' => $commit->identifier(),
     ]);
-    return temp_directory(
-        'runner',
+    return under(
+        temp_directory(),
+        'runners',
         $commit->version->repository->domain,
         $commit->version->repository->owner,
         $commit->version->repository->repo,
         $commit->version->tag,
         $commit->hash,
+    );
+}
+
+function zip_path_for_run(Commit $commit): string
+{
+    log('Retrieving zip path for run', [
+        'commit' => $commit->identifier(),
+    ]);
+    return under(
+        temp_directory(),
+        'runners',
+        $commit->version->repository->domain,
+        $commit->version->repository->owner,
+        $commit->version->repository->repo,
+        $commit->version->tag,
+        $commit->hash,
+        $commit->version->repository->repo . '.zip',
     );
 }
 
@@ -145,6 +182,9 @@ function find(string $path): bool
     return Files\directory_exists($path);
 }
 
+/**
+ * @throws NotWritableException
+ */
 function make_recursively(string $path): bool
 {
     log('Creating directory recursively', ['path' => $path]);
@@ -297,15 +337,6 @@ function delete_file(string $path): bool
     return unlink($path);
 }
 
-function preserve_copy_recursive(string $source, string $destination): bool
-{
-    log('Preserving recursive copy of directory', [
-        'source' => $source,
-        'destination' => $destination,
-    ]);
-    return Files\preserve_copy_recursively($source, $destination);
-}
-
 function preserve_copy_directory_content(string $source, string $destination): bool
 {
     log('Preserving copy of directory contents', [
@@ -372,24 +403,29 @@ function delete_directory(string $path): bool
  * For files, returns the SHA256 hash of the file content.
  * For directories, recursively hashes all files using Directories\ls.
  *
- * @param Path $path The path to checksum (file or directory)
+ * @param string $path The path to checksum (file or directory)
  * @return string The SHA256 checksum
  */
 function checksum(string $path): string
 {
     log('Calculating checksum for path', ['path' => $path]);
-    
+
     if (!Files\is_directory($path)) {
         return Files\hash($path);
     }
 
+    $items = Files\ls_all($path);
+
+    // Sort by basename only, using binary comparison (locale-independent and consistent across OS)
+    usort($items, function ($a, $b) {
+        return strcasecmp(basename($a), basename($b));
+    });
+
     $directory_hash = '';
-    $files_and_directories = Files\ls_all($path);
-    \sort($files_and_directories);
-    foreach ($files_and_directories as $item) {
+    foreach ($items as $item) {
         $directory_hash .= checksum($item);
     }
-    
+
     return Strings\hash($directory_hash);
 }
 

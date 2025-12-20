@@ -2,20 +2,23 @@
 
 namespace Phpkg\Business\Config;
 
+use Phpkg\Solution\Exceptions\CanNotDetectComposerPackageVersionException;
+use Phpkg\Solution\Exceptions\ComposerConfigFileNotFound;
+use Phpkg\Solution\Exceptions\RemoteConfigNotFound;
 use PhpRepos\Git\Exception\ApiRequestException;
 use PhpRepos\Git\Exception\InvalidTokenException;
+use PhpRepos\Git\Exception\NotFoundException;
 use PhpRepos\Git\Exception\RateLimitedException;
-use Phpkg\Infra\Exception\RemoteFileNotFoundException;
 use Phpkg\Solution\Commits;
 use Phpkg\Solution\Composers;
 use Phpkg\Solution\Paths;
 use Phpkg\Solution\PHPKGs;
 use Phpkg\Business\Credential;
 use Phpkg\Business\Outcome;
-use function PhpRepos\Observer\Observer\propose;
-use function PhpRepos\Observer\Observer\broadcast;
 use PhpRepos\Observer\Signals\Plan;
 use PhpRepos\Observer\Signals\Event;
+use function PhpRepos\Observer\Observer\propose;
+use function PhpRepos\Observer\Observer\broadcast;
 
 function load(string $url, string $version, string $hash): Outcome
 {
@@ -64,14 +67,6 @@ function load(string $url, string $version, string $hash): Outcome
             'exception' => $e,
         ]));
         return new Outcome(false, '⚠️ API request error: ' . $e->getMessage());
-    } catch (RemoteFileNotFoundException $e) {
-        broadcast(Event::create('The required file was not found in the remote repository!', [
-            'url' => $url,
-            'version' => $version,
-            'hash' => $hash,
-            'exception' => $e,
-        ]));
-        return new Outcome(false, '🔍 Remote file not found: ' . $e->getMessage());
     } catch (InvalidTokenException $e) {
         broadcast(Event::create('The provided token is invalid for accessing the remote repository!', [
             'url' => $url,
@@ -88,6 +83,38 @@ function load(string $url, string $version, string $hash): Outcome
             'exception' => $e,
         ]));
         return new Outcome(false, '🐢 Rate limit exceeded: ' . $e->getMessage());
+    } catch (RemoteConfigNotFound $e) {
+        broadcast(Event::create('The remote config could not be found!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🔍 Remote config not found.');
+    } catch (NotFoundException $e) {
+        broadcast(Event::create('The specified commit was not found in the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '❓ Commit not found: ' . $e->getMessage());
+    } catch (CanNotDetectComposerPackageVersionException $e) {
+        broadcast(Event::create('Could not detect the composer package version!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '❗ Cannot detect composer package version: ' . $e->getMessage());
+    } catch (ComposerConfigFileNotFound $e) {
+        broadcast(Event::create('The composer config file could not be found in the remote repository!', [
+            'url' => $url,
+            'version' => $version,
+            'hash' => $hash,
+            'exception' => $e,
+        ]));
+        return new Outcome(false, '🔍 Composer config file not found.');
     }
 }
 

@@ -22,8 +22,6 @@ use function Phpkg\Infra\CLI\hide_spinner;
 use function PhpRepos\Console\Runner\from_path;
 use function PhpRepos\Logger\Media\file_lock;
 
-putenv('PHPKG_ROOT=' . __DIR__);
-
 global $argv;
 
 $short_options = 'vhd';

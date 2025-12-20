@@ -21,4 +21,5 @@ return function () {
     write($logo);
     success('phpkg version ' . phpkg_version());
     line('Copyright (c) 2022-' . date('Y') . ' PHPKG');
+    return 0;
 };

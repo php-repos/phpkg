@@ -3,6 +3,8 @@
 namespace Phpkg\Infra\Arrays;
 
 use PhpRepos\Datatype\Arr;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Converts a JSON string to an associative array.
@@ -307,6 +309,7 @@ function sort_keys(iterable $array): array
 
 function sort_by_keys(iterable $array, callable $callback): array
 {
+    $array = (array)$array;
     uksort($array, $callback);
     return $array;
 }
@@ -319,10 +322,10 @@ function sort_by_keys_desc(iterable $array, callable $callback): array
 function canonical_json_encode(iterable $array): string
 {
     $sorted = sort_keys_recursively($array);
-    return json_encode($sorted, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
+    return json_encode($sorted, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
-function sort_keys_recursively(iterable $value): mixed
+function sort_keys_recursively(iterable $value): array
 {
     $sorted = [];
     foreach (sort_keys($value) as $key => $item) {
@@ -330,4 +333,9 @@ function sort_keys_recursively(iterable $value): mixed
     }
 
     return $sorted;
+}
+
+function filter(iterable $array, callable $callback): array
+{
+    return Arr\filter($array, $callback);
 }

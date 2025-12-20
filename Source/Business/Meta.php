@@ -7,10 +7,10 @@ use Phpkg\Solution\Paths;
 use Phpkg\Solution\PHPKGs;
 use Phpkg\Business\Config;
 use Phpkg\Business\Outcome;
-use function PhpRepos\Observer\Observer\propose;
-use function PhpRepos\Observer\Observer\broadcast;
 use PhpRepos\Observer\Signals\Plan;
 use PhpRepos\Observer\Signals\Event;
+use function PhpRepos\Observer\Observer\propose;
+use function PhpRepos\Observer\Observer\broadcast;
 
 function read(string $root, string $vendor): Outcome
 {

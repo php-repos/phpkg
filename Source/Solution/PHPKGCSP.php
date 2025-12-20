@@ -5,9 +5,6 @@ namespace Phpkg\Solution;
 use PhpRepos\SimpleCSP\CSP;
 use Phpkg\Solution\Data\Package;
 use Phpkg\Solution\Data\Repository;
-use Phpkg\Solution\Commits;
-use Phpkg\Solution\Repositories;
-use Phpkg\Solution\Versions;
 use Phpkg\Infra\GitHosts;
 use Phpkg\Infra\Arrays;
 use function Phpkg\Infra\Logs\debug;
@@ -24,8 +21,8 @@ class PHPKGCSP extends CSP
      */
     public function __construct(
         array $packages,
-        private array $project_config,
-        private bool $ignore_version_compatibility
+        private readonly array $project_config,
+        private readonly bool $ignore_version_compatibility
     ) {
         $variables = [];
         $domains = [];
@@ -75,19 +72,17 @@ class PHPKGCSP extends CSP
      */
     public function heuristics(): array
     {
-        $main_package_first = function ($assignment) {
-            foreach ($this->project_config['packages'] as $package_url => $version_tag) {
-                $main_repository = Repositories\from($package_url);
-                if (!isset($assignment[$main_repository->identifier()])) {
-                    return $main_repository->identifier();
-                }
-            }
-
-            return null;
-        };
-
         return [
-            $main_package_first,
+            function ($assignment) {
+                foreach ($this->project_config['packages'] as $package_url => $version_tag) {
+                    $main_repository = Repositories\from($package_url);
+                    if (!isset($assignment[$main_repository->identifier()])) {
+                        return $main_repository->identifier();
+                    }
+                }
+
+                return null;
+            },
         ];
     }
 
@@ -108,14 +103,12 @@ class PHPKGCSP extends CSP
                 $stable_versions = Arrays\sort($version_groups['stable'] ?? [], fn (Package $a, Package $b)
                     => GitHosts\compare_versions($a->commit->version->tag, $b->commit->version->tag));
 
-                $ordered = [
+                return [
                     ...$version_groups['project'] ?? [],
                     ...$version_groups['absence'] ?? [],
                     ...$version_groups['development'] ?? [],
                     ...$stable_versions,
                 ];
-
-                return $ordered;
             },
         ];
     }
@@ -144,7 +137,7 @@ class PHPKGCSP extends CSP
                 return $package !== 'absence' && $package !== 'project';
             }
 
-            foreach ($this->project_config['packages'] as $package_url => $version) {
+            foreach ($this->project_config['packages'] as $version) {
                 if (isset($assignment[$version->repository->identifier()])) {
                     $main_package = $assignment[$version->repository->identifier()];
                     if (Repositories\is_main_package($main_package->config, $repository) && $package === 'absence') {
@@ -165,11 +158,11 @@ class PHPKGCSP extends CSP
                 'assignment' => Arrays\map($assignment, fn ($item) => $item === 'absence' || $item === 'project' ? $item : $item->identifier()),
             ]);
 
-            foreach ($this->project_config['packages'] as $package_url => $version) {
+            foreach ($this->project_config['packages'] as $version) {
                 if (!isset($assignment[$version->repository->identifier()])) return false;
                 if ($assignment[$version->repository->identifier()] === 'project') return false; // Duplicate check, but safe
                 if ($assignment[$version->repository->identifier()] === 'absence') return false;
-                foreach ($assignment[$version->repository->identifier()]->config['packages'] as $dep_package_url => $dep_version) {
+                foreach ($assignment[$version->repository->identifier()]->config['packages'] as $dep_version) {
                     if (!isset($assignment[$dep_version->repository->identifier()])) continue; // Probably it is a circular dependency to the current project
                     if ($assignment[$dep_version->repository->identifier()] === 'absence') return false;
                 }
@@ -193,7 +186,7 @@ class PHPKGCSP extends CSP
                     || $assigned_package === 'project'
                     || Dependencies\is_main_package($this->project_config, $assigned_package)) continue;
 
-                foreach ($assigned_package->config['packages'] as $package_url => $version) {
+                foreach ($assigned_package->config['packages'] as $version) {
                     if (!isset($assignment[$version->repository->identifier()])) continue; // Probably it is a circular dependency to the current project
                     if ($assignment[$version->repository->identifier()] === 'absence') return false;
                 }
@@ -220,7 +213,7 @@ class PHPKGCSP extends CSP
 
                     if (Versions\is_development($required_version)) return false;
                     if (GitHosts\compare_versions($required_version->tag, $dependency->commit->version->tag) > 0) return false;
-                    // Any version bigger or eual to main requirement is fine.
+                    // Any version bigger or equal to main requirement is fine.
                     continue;
                 }
 
@@ -282,29 +275,28 @@ class PHPKGCSP extends CSP
                     if (!$this->ignore_version_compatibility && GitHosts\major_part($required_version->tag) !== GitHosts\major_part($dependency->commit->version->tag)) return false;
                 }
 
-                $has_depandant = false;
+                $has_dependant = false;
                 foreach ($assignment as $dependant) {
                     if ($dependant === 'absence' || $dependant === 'project') continue;
                     if (Repositories\are_equal($dependant->commit->version->repository, $dependency->commit->version->repository)) continue;
                     if (!Dependencies\is_main_package($dependant->config, $dependency)) continue;
-                    $has_depandant = true;
+                    $has_dependant = true;
                     $required_version = Dependencies\required_main_package($dependant->config, $dependency);
 
                     if (Versions\is_development($required_version)) continue;
                     if (Versions\is_development($dependency->commit->version)) continue;
-                    if (GitHosts\compare_versions($required_version->tag, $dependency->commit->version->tag) > 0) return false;
-                    if (!$this->ignore_version_compatibility && GitHosts\major_part($required_version->tag) !== GitHosts\major_part($dependency->commit->version->tag)) return false;
+                    if (GitHosts\compare_versions($required_version->tag, $dependency->commit->version->tag) > 0)
+                        return false;
+                    if (!$this->ignore_version_compatibility
+                        && GitHosts\major_part($required_version->tag) !== GitHosts\major_part($dependency->commit->version->tag))
+                        return false;
                 }
 
-                if ($is_main_requirement) {
-                    $this->fixed_assignments[$repo_id] = $dependency;
-                }
-
-                if (!$is_main_requirement && !$has_depandant) return false;
+                if ($is_main_requirement) $this->fixed_assignments[$repo_id] = $dependency;
+                if (!$is_main_requirement && !$has_dependant) return false;
             }
 
             return true;
         };
     }
 }
-

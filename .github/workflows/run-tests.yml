@@ -86,7 +86,15 @@ jobs:
 
       - name: Build (Unix)
         if: runner.os != 'Windows'
-        run: phpkg build production
+        run: |
+          phpkg build production
+          rm phpkg.config-lock.json
+          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          rm -fR Packages
+          cd builds/production
+          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          ./phpkg install --project=../../
+          ./phpkg build --project=../../
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
@@ -94,31 +102,38 @@ jobs:
         run: |
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
           phpkg build production
+          rm phpkg.config-lock.json
+          mv phpkg.config-lock.json.v3 phpkg.config-lock.json
+          Remove-Item -Path "Packages" -Recurse -Force
+          cd builds/production
+          php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          php ./phpkg install --project=../../
+          php ./phpkg build --project=../../
 
       - name: Set Credentials (Unix)
         if: runner.os != 'Windows'
         run: |
-          cd builds/production
-          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          cd build
+          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }} --force
 
       - name: Set Credentials (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cd builds/production
-          php phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
+          cd build
+          php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }} --force
 
       - name: Execute tests (Unix)
         if: runner.os != 'Windows'
         run: |
-          cd builds/production
+          cd build
           ./phpkg flush
-          ./phpkg run test-runner
+          ./phpkg run test-runner --version=v4.0.0 run
 
       - name: Execute tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          cd builds/production
-          php phpkg flush
-          php phpkg run test-runner
+          cd build
+          php ./phpkg flush
+          php ./phpkg run test-runner

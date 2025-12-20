@@ -98,8 +98,8 @@ function verify_lock(string $hash, array $packages): bool
 
 /**
  * Prepends a root path to an exclude pattern.
- * If the exclude is a glob pattern, uses Files\append (no resolution).
- * If the exclude is an exact path, uses Paths\under (with resolution).
+ * If exclude is a glob pattern, uses Files\append (no resolution).
+ * If exclude is an exact path, uses Paths\under (with resolution).
  *
  * @param string $root The root path to prepend
  * @param string $exclude The exclude pattern or path
