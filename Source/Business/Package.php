@@ -548,6 +548,22 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             $version = Versions\find_latest_version($repository)->tag;
         }
 
+        foreach ($packages as $package) {
+            if (Repositories\are_equal($repository, $package->commit->version->repository)) {
+                if ($package->commit->version->tag === $version) {
+                    broadcast(Event::create('The package is already at the desired version!', [
+                        'root' => $root,
+                        'identifier' => $identifier,
+                        'version' => $version ?: 'latest',
+                        'url' => $url,
+                        'config' => $config,
+                    ]));
+                    return new Outcome(false, '⚠️ The package is already at the desired version.');
+                }
+                break;
+            }
+        }
+
         $outcome = load($url, $version);
         if (!$outcome->success) {
             broadcast(Event::create('I could not get package and its dependencies!', [
