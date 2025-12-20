@@ -45,7 +45,9 @@ jobs:
         run: | 
           bash -c "$(curl -fsSL https://raw.githubusercontent.com/php-repos/phpkg-installation/master/install.sh)"
           echo "PATH=\$PATH:$HOME/.phpkg" >> $GITHUB_PATH
-          phpkg version
+
+      - name: Test installation (Unix)
+        run: phpkg version
 
       - name: Install phpkg (Windows)
         if: runner.os == 'Windows'
@@ -61,7 +63,9 @@ jobs:
           echo "$phpkgPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           # Verify phpkg is available
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-          phpkg version
+
+      - name: Test installation (Windows)
+        run: phpkg version
 
       - name: Set Credentials for main PHPKG (Unix)
         if: runner.os != 'Windows'
