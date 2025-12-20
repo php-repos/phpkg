@@ -92,6 +92,7 @@ jobs:
           mv phpkg.config-lock.json.v3 phpkg.config-lock.json
           rm -fR Packages
           cd builds/production
+          ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
           ./phpkg install --project=../../
           ./phpkg build --project=../../
 
@@ -105,6 +106,7 @@ jobs:
           mv phpkg.config-lock.json.v3 phpkg.config-lock.json
           Remove-Item -Path "Packages" -Recurse -Force
           cd builds/production
+          php ./phpkg credential github.com ${{ secrets.PHPKG_GITHUB_TOKEN }}
           php ./phpkg install --project=../../
           php ./phpkg build --project=../../
 
