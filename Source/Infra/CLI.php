@@ -179,19 +179,40 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
     // Clear the entire line width to handle wrapped text
     fwrite(STDOUT, "\r\033[K");
     
-    // Create simple progress bar
+    // Create progress bar with percentage inside
     $bar_length = 34;
-    $filled = $size_known 
-        ? (int) ($percentage / 100 * $bar_length) 
+
+    // Calculate how many characters should be filled
+    $filled_count = $size_known
+        ? (int) ($percentage / 100 * $bar_length)
         : intval(fmod($elapsed, 4.0) * ($bar_length / 4));
-    $empty = $bar_length - $filled;
-    $filled_bar = $bright_green . str_repeat('█', $filled) . $reset;
-    $empty_bar = $gray . str_repeat('░', $empty) . $reset;
-    $bar = '[' . $filled_bar . $empty_bar . ']';
-    
-    // Format percentage
-    $percentage_str = $bold . $yellow . sprintf("%3d%%", (int)$percentage) . $reset;
-    
+
+    // Build percentage text to display in the center
+    $percentage_text = sprintf(" %3d%% ", (int)$percentage);
+    $percentage_length = 5; // " XX% " is always 5 characters
+
+    // Calculate center position
+    $center = (int)($bar_length / 2);
+    $text_start = $center - (int)($percentage_length / 2);
+    $text_end = $text_start + $percentage_length;
+
+    // Build bar character by character
+    $bar_content = '';
+    for ($i = 0; $i < $bar_length; $i++) {
+        if ($i >= $text_start && $i < $text_end) {
+            // Insert percentage text character (without color)
+            $char_index = $i - $text_start;
+            $bar_content .= $bold . $yellow . $percentage_text[$char_index] . $reset;
+        } elseif ($i < $filled_count) {
+            // Filled portion
+            $bar_content .= $bright_green . '█' . $reset;
+        } else {
+            // Empty portion
+            $bar_content .= $gray . '░' . $reset;
+        }
+    }
+    $bar = '[' . $bar_content . ']';
+
     // Format bytes downloaded/total with centered alignment
     // Each part needs to accommodate up to "9999.9 KB" (9 chars) for consistent alignment
     $downloaded_raw = bytes($downloaded);
@@ -213,11 +234,10 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
         $eta_str = $blue . $eta_formatted . $reset;
         $finish_str = $magenta . $finish_time_formatted . $reset;
         $time_str = $dim . $elapsed_formatted . $reset;
-        
+
         $progress_line = sprintf(
-            "   ⬇️  %s %s %s | Speed: %s (avg: %s) | ETA: %s (finish: %s) | Time: %s",
+            "   ⬇️  %s %s | Speed: %s (avg: %s) | ETA: %s (finish: %s) | Time: %s",
             $bar,
-            $percentage_str,
             $size_display,
             $speed_formatted,
             $avg_speed_formatted,
@@ -243,12 +263,11 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
     
     // If too wide, create a simplified version
     if ($display_width > $terminal_width) {
-        // Simplified format: just bar, percentage, size, and time
+        // Simplified format: just bar, size, and time (percentage already in bar)
         if ($size_known) {
             $progress_line = sprintf(
-                "   ⬇️  %s %s %s | Time: %s",
+                "   ⬇️  %s %s | Time: %s",
                 $bar,
-                $percentage_str,
                 $size_display,
                 $time_str
             );
@@ -266,44 +285,46 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
         if ($display_width > $terminal_width) {
             // Calculate how much space we have for the bar
             $prefix = "   ⬇️  [";
-            $suffix = $size_known 
-                ? "] " . $percentage_str . " " . $size_display . " | Time: " . $time_str
-                : "] " . $size_display . " | Time: " . $time_str;
+            $suffix = "] " . $size_display . " | Time: " . $time_str;
             $suffix_width = mb_strlen(strip_ansi_codes($suffix));
             $available_width = $terminal_width - mb_strlen(strip_ansi_codes($prefix)) - $suffix_width;
-            
-            if ($available_width > 5) {
-                // Adjust bar length to fit
-                $bar_length = max(5, $available_width - 2); // -2 for brackets
-                $filled = $size_known 
-                    ? (int) ($percentage / 100 * $bar_length) 
+
+            if ($available_width > 10) {
+                // Adjust bar length to fit (minimum 10 to fit percentage text)
+                $bar_length = max(10, $available_width);
+                $filled_count = $size_known
+                    ? (int) ($percentage / 100 * $bar_length)
                     : intval(fmod($elapsed, 4.0) * ($bar_length / 4));
-                $empty = $bar_length - $filled;
-                $filled_bar = $bright_green . str_repeat('█', $filled) . $reset;
-                $empty_bar = $gray . str_repeat('░', $empty) . $reset;
-                $bar = '[' . $filled_bar . $empty_bar . ']';
-                
-                if ($size_known) {
-                    $progress_line = sprintf(
-                        "   ⬇️  %s %s %s | Time: %s",
-                        $bar,
-                        $percentage_str,
-                        $size_display,
-                        $time_str
-                    );
-                } else {
-                    $progress_line = sprintf(
-                        "   ⬇️  %s %s | Time: %s",
-                        $bar,
-                        $size_display,
-                        $time_str
-                    );
+
+                // Build bar with percentage inside
+                $percentage_text = sprintf(" %3d%% ", (int)$percentage);
+                $percentage_length = 5;
+                $center = (int)($bar_length / 2);
+                $text_start = $center - (int)($percentage_length / 2);
+                $text_end = $text_start + $percentage_length;
+
+                $bar_content = '';
+                for ($i = 0; $i < $bar_length; $i++) {
+                    if ($i >= $text_start && $i < $text_end) {
+                        $char_index = $i - $text_start;
+                        $bar_content .= $bold . $yellow . $percentage_text[$char_index] . $reset;
+                    } elseif ($i < $filled_count) {
+                        $bar_content .= $bright_green . '█' . $reset;
+                    } else {
+                        $bar_content .= $gray . '░' . $reset;
+                    }
                 }
+                $bar = '[' . $bar_content . ']';
+
+                $progress_line = sprintf(
+                    "   ⬇️  %s %s | Time: %s",
+                    $bar,
+                    $size_display,
+                    $time_str
+                );
             } else {
-                // Very narrow terminal - minimal display
-                $progress_line = $size_known
-                    ? sprintf("   ⬇️  %s %s", $percentage_str, $size_display)
-                    : sprintf("   ⬇️  %s", $size_display);
+                // Very narrow terminal - minimal display with percentage
+                $progress_line = sprintf("   ⬇️  %d%% %s", (int)$percentage, $size_display);
             }
         }
     }
@@ -340,22 +361,22 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
         $final_elapsed = max($max_elapsed, $elapsed, 0);
         $final_avg_speed = $final_elapsed > 0 ? $downloaded / $final_elapsed : 0;
         
-        // Build completion bar - adjust length to fit terminal
-        $completion_bar_length = min(34, max(10, $terminal_width - 60));
+        // Build completion bar - use same length as progress bar for consistency
+        // No percentage text needed - a full green bar is self-explanatory
+        $completion_bar_length = 34;
         $bar = '[' . $bright_green . str_repeat('█', $completion_bar_length) . $reset . ']';
+
         $downloaded_raw = bytes($downloaded);
         $total_raw = bytes($download_size);
         // Center each part within 9 characters for consistent alignment
         $downloaded_padded = str_pad($downloaded_raw, 9, ' ', STR_PAD_BOTH);
         $total_padded = str_pad($total_raw, 9, ' ', STR_PAD_BOTH);
         $size_display = $downloaded_padded . '/' . $total_padded;
-        $percentage_str = $bold . $yellow . "100%" . $reset;
         
-        // Build completion message
+        // Build completion message (percentage is now inside the bar)
         $completion_line = sprintf(
-            "   ⬇️  %s %s %s | %sCompleted%s in %s%s%s | Avg Speed: %s%s%s",
+            "   ⬇️  %s %s | %sCompleted%s in %s%s%s | Avg Speed: %s%s%s",
             $bar,
-            $percentage_str,
             $size_display,
             $bold . $green,
             $reset,
@@ -366,15 +387,14 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
             bytes($final_avg_speed) . '/s',
             $reset
         );
-        
+
         // Check if completion line fits, simplify if needed
         $completion_width = mb_strlen(strip_ansi_codes($completion_line));
         if ($completion_width > $terminal_width) {
-            // Simplified completion message
+            // Simplified completion message - keep the time, drop avg speed
             $completion_line = sprintf(
-                "   ⬇️  %s %s %s | %sCompleted%s in %s%s%s",
+                "   ⬇️  %s %s | %sCompleted%s in %s%s%s",
                 $bar,
-                $percentage_str,
                 $size_display,
                 $bold . $green,
                 $reset,
@@ -382,15 +402,16 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
                 duration((int)$final_elapsed),
                 $reset
             );
-            
-            // If still too wide, further simplify
+
+            // If still too wide, show time without "Completed in" text
             $completion_width = mb_strlen(strip_ansi_codes($completion_line));
             if ($completion_width > $terminal_width) {
                 $completion_line = sprintf(
-                    "   ⬇️  %s %s | %sCompleted%s",
-                    $percentage_str,
+                    "   ⬇️  %s %s | %s%s%s",
+                    $bar,
                     $size_display,
-                    $bold . $green,
+                    $dim,
+                    duration((int)$final_elapsed),
                     $reset
                 );
             }
@@ -407,50 +428,139 @@ function download_progressbar(string $id, ?string $url, int|float $downloaded, i
 }
 
 /**
- * Show a spinner with a label on the last line of the terminal.
+ * Show a spinner with a label on the current line.
  * Cycles through spinner characters on each call to create animation effect.
- * 
+ * Uses simple carriage return for cross-platform compatibility (works on PowerShell, Linux, Mac).
+ *
  * @param string $label Label text to display on the right side of the spinner
  * @return void
  */
 function show_spinner(string $label): void
 {
     static $frame = 0;
-    
+
     // ANSI color codes - using yellow/orange color like download_progressbar percentage
     $reset = "\033[0m";
     $yellow = "\033[33m";
-    
+
     // Spinner character sequence
     $spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-    
+
     // Get the current spinner character
     $spinner_char = $spinner_chars[$frame % count($spinner_chars)];
-    
-    // Save cursor position, move to last line, show spinner, restore cursor
-    echo "\033[s"; // Save cursor position
-    echo "\033[999;1H"; // Move to last line (row 999, column 1)
-    echo "\033[K"; // Clear the line
-    echo $yellow . $spinner_char . $reset . " " . $label;
-    echo "\033[u"; // Restore cursor position
+
+    // Use simple carriage return to overwrite the same line
+    // \r moves to beginning of line, \033[K clears from cursor to end of line
+    // This works reliably across all terminals including PowerShell
+    echo "\r" . $yellow . $spinner_char . $reset . " " . $label . "\033[K";
     flush();
-    
+
     // Increment frame for next call
     $frame++;
 }
 
 /**
- * Hide the spinner from the last line of the terminal.
- * 
+ * Hide the spinner by clearing the current line.
+ *
  * @return void
  */
 function hide_spinner(): void
 {
-    // Save cursor position, move to last line, clear it, restore cursor
-    echo "\033[s"; // Save cursor position
-    echo "\033[999;1H"; // Move to last line
-    echo "\033[K"; // Clear the line
-    echo "\033[u"; // Restore cursor position
+    // Clear the current line using carriage return
+    echo "\r\033[K";
     flush();
+}
+
+/**
+ * Display data in a formatted table with headers and rows.
+ *
+ * @param array<string> $headers Array of header column names
+ * @param array<array<string>> $rows Array of rows, where each row is an array of cell values
+ * @return void
+ */
+function table(array $headers, array $rows): void
+{
+    // ANSI color codes
+    $reset = "\033[0m";
+    $bold = "\033[1m";
+    $cyan = "\033[36m";
+    $gray = "\033[90m";
+
+    // Calculate column widths based on content
+    $column_widths = [];
+    foreach ($headers as $index => $header) {
+        $column_widths[$index] = mb_strlen(strip_ansi_codes($header));
+    }
+
+    foreach ($rows as $row) {
+        foreach ($row as $index => $cell) {
+            $cell_width = mb_strlen(strip_ansi_codes($cell));
+            if (!isset($column_widths[$index]) || $cell_width > $column_widths[$index]) {
+                $column_widths[$index] = $cell_width;
+            }
+        }
+    }
+
+    // Box-drawing characters
+    $top_left = '┌';
+    $top_right = '┐';
+    $bottom_left = '└';
+    $bottom_right = '┘';
+    $horizontal = '─';
+    $vertical = '│';
+    $top_separator = '┬';
+    $middle_separator = '┼';
+    $bottom_separator = '┴';
+    $left_separator = '├';
+    $right_separator = '┤';
+
+    // Build top border
+    $top_border = $gray . $top_left;
+    foreach ($column_widths as $index => $width) {
+        $top_border .= str_repeat($horizontal, $width + 2);
+        $top_border .= ($index < count($column_widths) - 1) ? $top_separator : $top_right;
+    }
+    $top_border .= $reset;
+    echo $top_border . "\n";
+
+    // Build header row
+    $header_row = $gray . $vertical . $reset;
+    foreach ($headers as $index => $header) {
+        $width = $column_widths[$index];
+        $padding = $width - mb_strlen(strip_ansi_codes($header));
+        $header_row .= ' ' . $bold . $cyan . $header . $reset . str_repeat(' ', $padding) . ' ';
+        $header_row .= $gray . $vertical . $reset;
+    }
+    echo $header_row . "\n";
+
+    // Build middle separator
+    $middle_border = $gray . $left_separator;
+    foreach ($column_widths as $index => $width) {
+        $middle_border .= str_repeat($horizontal, $width + 2);
+        $middle_border .= ($index < count($column_widths) - 1) ? $middle_separator : $right_separator;
+    }
+    $middle_border .= $reset;
+    echo $middle_border . "\n";
+
+    // Build data rows
+    foreach ($rows as $row) {
+        $data_row = $gray . $vertical . $reset;
+        foreach ($row as $index => $cell) {
+            $width = $column_widths[$index];
+            $padding = $width - mb_strlen(strip_ansi_codes($cell));
+            $data_row .= ' ' . $cell . str_repeat(' ', $padding) . ' ';
+            $data_row .= $gray . $vertical . $reset;
+        }
+        echo $data_row . "\n";
+    }
+
+    // Build bottom border
+    $bottom_border = $gray . $bottom_left;
+    foreach ($column_widths as $index => $width) {
+        $bottom_border .= str_repeat($horizontal, $width + 2);
+        $bottom_border .= ($index < count($column_widths) - 1) ? $bottom_separator : $bottom_right;
+    }
+    $bottom_border .= $reset;
+    echo $bottom_border . "\n";
 }
 

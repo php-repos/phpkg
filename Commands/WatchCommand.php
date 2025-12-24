@@ -68,10 +68,10 @@ return function (
         $inotifywait = $find_command('inotifywait');
         if ($inotifywait) {
             $method = 'inotifywait';
-            // Exclude build output directory using regex pattern (inotifywait --exclude uses POSIX extended regex)
-            // Escape the build_path for regex and exclude it
-            $build_path_escaped = preg_quote($build_path, '/');
-            $command = escapeshellarg($inotifywait) . ' -r -m -e modify,create,delete,move --exclude ' . escapeshellarg('^' . $build_path_escaped . '(/.*)?$') . ' ' . escapeshellarg($root) . ' 2>/dev/null';
+            // Use --format to get just the full path for easier parsing
+            // Format: %w = watched directory, %f = filename (if any)
+            // We'll filter out build directory in PHP for more reliable filtering
+            $command = escapeshellarg($inotifywait) . ' -r -m -e modify,create,delete,move --format "%w%f" ' . escapeshellarg($root) . ' 2>/dev/null';
         }
     }
     
@@ -157,25 +157,21 @@ return function (
             
             while (true) {
                 $line = fgets($process);
-                
+
                 if ($line !== false) {
-                    $line_trimmed = trim($line);
-                    // Extract the path from inotifywait output (format: "path EVENT_TYPE")
-                    $event_path = explode(' ', $line_trimmed)[0] ?? $line_trimmed;
-                    
+                    $event_path = trim($line);
+
+                    // Skip empty lines
+                    if ($event_path === '') {
+                        continue;
+                    }
+
                     // Skip events from build output directory
                     // build_path is something like /root/build, so we exclude anything under /root/build
-                    if (str_starts_with($event_path, $build_path)) {
+                    if (str_starts_with($event_path, $build_path . '/') || $event_path === $build_path) {
                         continue;
                     }
-                    
-                    // Also exclude the build directory itself (parent of build_path)
-                    // Extract build directory from build_path: /root/build -> /root/build
-                    $builds_dir = dirname($build_path);
-                    if (str_starts_with($event_path, $builds_dir)) {
-                        continue;
-                    }
-                    
+
                     // Event detected
                     $last_change = time();
                     $pending_rebuild = true;
