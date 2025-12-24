@@ -471,3 +471,96 @@ function hide_spinner(): void
     flush();
 }
 
+/**
+ * Display data in a formatted table with headers and rows.
+ *
+ * @param array<string> $headers Array of header column names
+ * @param array<array<string>> $rows Array of rows, where each row is an array of cell values
+ * @return void
+ */
+function table(array $headers, array $rows): void
+{
+    // ANSI color codes
+    $reset = "\033[0m";
+    $bold = "\033[1m";
+    $cyan = "\033[36m";
+    $gray = "\033[90m";
+
+    // Calculate column widths based on content
+    $column_widths = [];
+    foreach ($headers as $index => $header) {
+        $column_widths[$index] = mb_strlen(strip_ansi_codes($header));
+    }
+
+    foreach ($rows as $row) {
+        foreach ($row as $index => $cell) {
+            $cell_width = mb_strlen(strip_ansi_codes($cell));
+            if (!isset($column_widths[$index]) || $cell_width > $column_widths[$index]) {
+                $column_widths[$index] = $cell_width;
+            }
+        }
+    }
+
+    // Box-drawing characters
+    $top_left = '┌';
+    $top_right = '┐';
+    $bottom_left = '└';
+    $bottom_right = '┘';
+    $horizontal = '─';
+    $vertical = '│';
+    $top_separator = '┬';
+    $middle_separator = '┼';
+    $bottom_separator = '┴';
+    $left_separator = '├';
+    $right_separator = '┤';
+
+    // Build top border
+    $top_border = $gray . $top_left;
+    foreach ($column_widths as $index => $width) {
+        $top_border .= str_repeat($horizontal, $width + 2);
+        $top_border .= ($index < count($column_widths) - 1) ? $top_separator : $top_right;
+    }
+    $top_border .= $reset;
+    echo $top_border . "\n";
+
+    // Build header row
+    $header_row = $gray . $vertical . $reset;
+    foreach ($headers as $index => $header) {
+        $width = $column_widths[$index];
+        $padding = $width - mb_strlen(strip_ansi_codes($header));
+        $header_row .= ' ' . $bold . $cyan . $header . $reset . str_repeat(' ', $padding) . ' ';
+        $header_row .= $gray . $vertical . $reset;
+    }
+    echo $header_row . "\n";
+
+    // Build middle separator
+    $middle_border = $gray . $left_separator;
+    foreach ($column_widths as $index => $width) {
+        $middle_border .= str_repeat($horizontal, $width + 2);
+        $middle_border .= ($index < count($column_widths) - 1) ? $middle_separator : $right_separator;
+    }
+    $middle_border .= $reset;
+    echo $middle_border . "\n";
+
+    // Build data rows
+    foreach ($rows as $row) {
+        $data_row = $gray . $vertical . $reset;
+        foreach ($row as $index => $cell) {
+            $width = $column_widths[$index];
+            $padding = $width - mb_strlen(strip_ansi_codes($cell));
+            $data_row .= ' ' . $cell . str_repeat(' ', $padding) . ' ';
+            $data_row .= $gray . $vertical . $reset;
+        }
+        echo $data_row . "\n";
+    }
+
+    // Build bottom border
+    $bottom_border = $gray . $bottom_left;
+    foreach ($column_widths as $index => $width) {
+        $bottom_border .= str_repeat($horizontal, $width + 2);
+        $bottom_border .= ($index < count($column_widths) - 1) ? $bottom_separator : $bottom_right;
+    }
+    $bottom_border .= $reset;
+    echo $bottom_border . "\n";
+}
+
