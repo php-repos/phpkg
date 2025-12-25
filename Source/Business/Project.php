@@ -822,7 +822,15 @@ function build(string $project): Outcome
             }
 
             if (Paths\file_is_symlink($path)) {
-                return Paths\symlink($destination, Paths\symlink_destination($path));
+                $symlink_target = Paths\symlink_destination($path);
+
+                if (Paths\is_absolute_path($symlink_target)) {
+                    $adjusted_target = $symlink_target;
+                } else {
+                    $adjusted_target = '..' . DIRECTORY_SEPARATOR . $symlink_target;
+                }
+
+                return Paths\symlink($adjusted_target, $destination);
             }
 
             if (!PHPKGs\has_entry_point($config, $relative_file_path)
