@@ -3152,7 +3152,6 @@ test(
     case: function (array $dirs) {
         // Skip this test on Windows as symlinks require special permissions and behave differently
         if (PHP_OS_FAMILY === 'Windows') {
-            notice('Skipping symlink test on Windows - symlinks require administrator privileges or developer mode');
             return;
         }
 
