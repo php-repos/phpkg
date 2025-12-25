@@ -3152,7 +3152,7 @@ test(
     case: function (array $dirs) {
         // Skip this test on Windows as symlinks require special permissions and behave differently
         if (PHP_OS_FAMILY === 'Windows') {
-            return;
+            return $dirs;
         }
 
         $temp_dir = $dirs['project'];
