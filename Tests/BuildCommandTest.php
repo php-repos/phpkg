@@ -3147,14 +3147,10 @@ PHP;
     }
 );
 
+if(PHP_OS_FAMILY !== 'Windows') {
 test(
     title: 'it should adjust symlink paths correctly when copying to build directory',
     case: function (array $dirs) {
-        // Skip this test on Windows as symlinks require special permissions and behave differently
-        if (PHP_OS_FAMILY === 'Windows') {
-            return $dirs;
-        }
-
         $temp_dir = $dirs['project'];
         $external_dir = $dirs['external'];
 
@@ -3257,3 +3253,4 @@ test(
         Files\force_delete_recursive($dirs['temp']);
     }
 );
+}
