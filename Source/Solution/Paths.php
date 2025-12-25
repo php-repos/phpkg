@@ -314,7 +314,7 @@ function file_is_symlink(string $path): bool
 function symlink_destination(string $path): string
 {
     log('Retrieving symlink destination', ['path' => $path]);
-    return under(Files\symlink_link($path));
+    return Files\symlink_link($path);
 }
 
 function preserve_copy(string $source, string $destination): bool

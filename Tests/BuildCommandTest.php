@@ -3138,11 +3138,123 @@ use function Application\Helper\greet;
 greet("World");
 PHP;
         Files\file_write($temp_dir . DIRECTORY_SEPARATOR . 'cli', $entry_point_content);
-        
+
         return $temp_dir;
     },
     after: function (string $temp_dir) {
         // Clean up: remove temp dir
         Files\force_delete_recursive($temp_dir);
+    }
+);
+
+test(
+    title: 'it should adjust symlink paths correctly when copying to build directory',
+    case: function (array $dirs) {
+        // Skip this test on Windows as symlinks require special permissions and behave differently
+        if (PHP_OS_FAMILY === 'Windows') {
+            notice('Skipping symlink test on Windows - symlinks require administrator privileges or developer mode');
+            return;
+        }
+
+        $temp_dir = $dirs['project'];
+        $external_dir = $dirs['external'];
+
+        // Build the project
+        $build_output = CliRunner\phpkg('build', ["--project=$temp_dir"]);
+
+        // Should show success message
+        Assertions\assert_true(
+            str_contains($build_output, 'Build finished successfully') ||
+            str_contains($build_output, 'successfully') ||
+            str_contains($build_output, 'success'),
+            'Should show success message. Output: ' . $build_output
+        );
+
+        // Verify build directory was created
+        $build_dir = $temp_dir . DIRECTORY_SEPARATOR . 'build';
+        Assertions\assert_true(is_dir($build_dir), 'Build directory should be created');
+
+        // Verify Source directory structure is preserved
+        $source_dir = $build_dir . DIRECTORY_SEPARATOR . 'Source';
+        Assertions\assert_true(is_dir($source_dir), 'Source directory should be created');
+
+        // Verify symlink was copied to build directory
+        $build_symlink = $source_dir . DIRECTORY_SEPARATOR . 'linked-file.txt';
+        Assertions\assert_true(is_link($build_symlink), 'Symlink should be created in build directory');
+
+        // Read the symlink target (this is the raw symlink, not the resolved path)
+        $symlink_target = readlink($build_symlink);
+
+        // The original symlink points to ../../external/target.txt (from project/Source)
+        // Since the build directory is one level deeper (project/build/Source instead of project/Source),
+        // the symlink should be adjusted to ../../../external/target.txt
+        $expected_target = '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'external' . DIRECTORY_SEPARATOR . 'target.txt';
+
+        Assertions\assert_true(
+            $symlink_target === $expected_target,
+            "Symlink target should be adjusted for build directory depth. Expected: $expected_target, Got: $symlink_target"
+        );
+
+        // Verify the symlink actually resolves to the correct file
+        $resolved_path = realpath($build_symlink);
+        $expected_resolved = realpath($external_dir . DIRECTORY_SEPARATOR . 'target.txt');
+
+        Assertions\assert_true(
+            $resolved_path === $expected_resolved,
+            "Symlink should resolve to the external target file. Expected: $expected_resolved, Got: $resolved_path"
+        );
+
+        // Verify we can read the content through the symlink
+        $content = file_get_contents($build_symlink);
+        Assertions\assert_true($content === 'This is the external target file', 'Should be able to read content through symlink');
+    },
+    before: function () {
+        // Create a temporary directory for the project
+        $temp_dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('phpkg_build_symlink_test');
+        Files\make_directory_recursively($temp_dir);
+
+        // Create an external directory (outside the project) with a target file
+        $external_dir = $temp_dir . DIRECTORY_SEPARATOR . 'external';
+        Files\make_directory_recursively($external_dir);
+        Files\file_write($external_dir . DIRECTORY_SEPARATOR . 'target.txt', 'This is the external target file');
+
+        // Create the actual project directory
+        $project_dir = $temp_dir . DIRECTORY_SEPARATOR . 'project';
+        Files\make_directory_recursively($project_dir);
+
+        // Initialize the project
+        $init_output = CliRunner\phpkg('init', ["--project=$project_dir"]);
+        Assertions\assert_true(
+            str_contains($init_output, 'Project has been initialized') ||
+            str_contains($init_output, 'initialized'),
+            'Project should be initialized. Output: ' . $init_output
+        );
+
+        // Create Source directory
+        $source_dir = $project_dir . DIRECTORY_SEPARATOR . 'Source';
+        Files\make_directory_recursively($source_dir);
+
+        // Create a symlink in the project Source directory pointing to the external file
+        // The symlink target is relative: ../../external/target.txt
+        // From project/Source/linked-file.txt, this points to external/target.txt (outside project, at temp/external)
+        $symlink_path = $source_dir . DIRECTORY_SEPARATOR . 'linked-file.txt';
+        $target_path = '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'external' . DIRECTORY_SEPARATOR . 'target.txt';
+
+        $success = symlink($target_path, $symlink_path);
+        Assertions\assert_true($success, 'Symlink should be created successfully');
+
+        // Verify the symlink works from the source location
+        $resolved = realpath($symlink_path);
+        Assertions\assert_true($resolved !== false, 'Symlink should resolve to a real path');
+
+        return [
+            'project' => $project_dir,
+            'external' => $external_dir,
+            'temp' => $temp_dir
+        ];
+    },
+    after: function (array $dirs) {
+        // Clean up: remove temp dir (this includes both project and external dirs)
+        Files\force_delete_recursive($dirs['temp']);
     }
 );
