@@ -3,11 +3,9 @@
 namespace Phpkg\Business\Project;
 
 use Exception;
+use JsonException;
 use Phpkg\Solution\Exceptions\CanNotDetectComposerPackageVersionException;
 use Phpkg\Solution\Exceptions\VersionIncompatibilityException;
-use PhpRepos\Datatype\Str;
-use PhpRepos\FileManager\Directories;
-use PhpRepos\FileManager\Files;
 use Phpkg\Solution\Commits;
 use Phpkg\Solution\Composers;
 use Phpkg\Solution\Dependencies;
@@ -19,33 +17,28 @@ use Phpkg\Solution\Exceptions\DependencyResolutionException;
 use Phpkg\Solution\Exceptions\NotWritableException;
 use PhpRepos\Git\Exception\ApiRequestException;
 use PhpRepos\Git\Exception\NotFoundException;
-use PhpRepos\Observer\Signals\Event;
 use Phpkg\Business\Config;
 use Phpkg\Business\Credential;
 use Phpkg\Business\Meta;
 use Phpkg\Business\Package;
 use Phpkg\Business\Outcome;
-use PhpRepos\Observer\Signals\Plan;
 use Phpkg\Infra\Exception\ArchiveDownloadException;
+use Phpkg\Infra\Arrays;
 use Phpkg\Infra\Envs;
-use function PhpRepos\Observer\Observer\broadcast;
+use Phpkg\Infra\Files;
+use Phpkg\Infra\Strings;
+use PhpRepos\Observer\API\Bus;
+use PhpRepos\Observer\API\Event;
+use PhpRepos\Observer\API\Plan;
 use function Phpkg\Solution\Parser\Parsers\find_starting_point_for_imports;
 use function Phpkg\Solution\Parser\Parsers\get_registry;
-use function Phpkg\Infra\Arrays\first;
-use function Phpkg\Infra\Arrays\map;
-use function Phpkg\Infra\Arrays\reduce;
-use function PhpRepos\Datatype\Arr\any;
-use function PhpRepos\FileManager\Paths\append;
-use function PhpRepos\FileManager\Paths\parent;
-use function PhpRepos\FileManager\Paths\relative_path;
-use function PhpRepos\Observer\Observer\propose;
 
 function init(string $project, ?string $packages_directory): Outcome
 {
     try {
         $packages_directory = $packages_directory ?: 'Packages';
 
-        propose(Plan::create('I try to init a project in the given path.', [
+        Bus\propose(Plan::create('I try to init a project in the given path.', [
             'project' => $project,
             'packages_directory' => $packages_directory,
         ]));
@@ -56,13 +49,13 @@ function init(string $project, ?string $packages_directory): Outcome
 
         if (Paths\find($root)) {
             if (Paths\file_itself_exists(Paths\phpkg_config_path($root))) {
-                broadcast(Event::create('The project is already initialized!', [
+                Bus\broadcast(Event::create('The project is already initialized!', [
                     'root' => $root,
                 ]));
                 return new Outcome(false, '⚠️ Project is already initialized.');
             }
         } else if (!Paths\make_recursively($root)) {
-            broadcast(Event::create('The path does not exist and I could not make it!', [
+            Bus\broadcast(Event::create('The path does not exist and I could not make it!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '❌ Could not make the directory.');
@@ -73,13 +66,13 @@ function init(string $project, ?string $packages_directory): Outcome
         Config\save($root, $config);
         Meta\save($root, []);
 
-        broadcast(Event::create('I initialized a project on the given project.', [
+        Bus\broadcast(Event::create('I initialized a project on the given project.', [
             'root' => $root,
             'config' => $config,
         ]));
         return new Outcome(true, '✅ Project initialized successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
@@ -92,7 +85,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
     try {
         $root = Paths\detect_project($root);
 
-        propose(Plan::create('I try to sync the given solution in the project root.', [
+        Bus\propose(Plan::create('I try to sync the given solution in the project root.', [
             'root' => $root,
             'vendor' => $vendor,
             'current_packages' => $current_packages,
@@ -120,7 +113,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
         foreach ($needs_install as $package) {
             $zip_file = Paths\zip_file_path($package);
             if (!Paths\file_itself_exists($zip_file) && !Commits\download_zip($package->commit, $zip_file)) {
-                broadcast(Event::create('I could not download a package zip file!', [
+                Bus\broadcast(Event::create('I could not download a package zip file!', [
                     'root' => $root,
                     'package' => $package,
                 ]));
@@ -134,7 +127,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
             }
 
             if (!Paths\verify_checksum($zip_file, $package->checksum)) {
-                broadcast(Event::create('Checksum verification failed for a package zip file!', [
+                Bus\broadcast(Event::create('Checksum verification failed for a package zip file!', [
                     'root' => $root,
                     'package' => $package,
                     'zip_file' => $zip_file,
@@ -151,7 +144,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
             $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
 
             if (Paths\exists($package_root) && !Paths\delete_recursively($package_root)) {
-                broadcast(Event::create('I could not delete the previous version of a package!', [
+                Bus\broadcast(Event::create('I could not delete the previous version of a package!', [
                     'root' => $root,
                     'package' => $package,
                 ]));
@@ -164,7 +157,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
             $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
 
             if (!Paths\unzip_to($zip_file, $package_root)) {
-                broadcast(Event::create('I could not unzip a package to its root!', [
+                Bus\broadcast(Event::create('I could not unzip a package to its root!', [
                     'root' => $root,
                     'package' => $package,
                     'zip_file' => $zip_file,
@@ -173,7 +166,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
             }
 
             if (!Paths\phpkg_config_exists($package_root) && !Config\save($package_root, $package->config)->success) {
-                broadcast(Event::create('I could not save the package config in its root path!', [
+                Bus\broadcast(Event::create('I could not save the package config in its root path!', [
                     'root' => $root,
                     'package' => $package,
                     'package_root' => $package_root,
@@ -186,7 +179,7 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
             $package_root = Paths\package_root($vendor, $package->commit->version->repository->owner, $package->commit->version->repository->repo);
 
             if (Paths\exists($package_root) && !Paths\delete_recursively($package_root)) {
-                broadcast(Event::create('I could not delete a removed package!', [
+                Bus\broadcast(Event::create('I could not delete a removed package!', [
                     'root' => $root,
                     'package' => $package,
                 ]));
@@ -199,27 +192,27 @@ function sync(string $root, string $vendor, array $current_packages, array $new_
 
         $outcome = Meta\save($root, $packages);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not save the meta file after syncing!', [
+            Bus\broadcast(Event::create('I could not save the meta file after syncing!', [
                 'root' => $root,
                 'packages' => $packages,
             ]));
             return new Outcome(false, '💾 Could not save the meta file after syncing.');
         }
 
-        broadcast(Event::create('I synced the project packages successfully.', [
+        Bus\broadcast(Event::create('I synced the project packages successfully.', [
             'root' => $root,
             'packages' => $packages,
         ]));
 
         return new Outcome(true, '🔄 Project packages synced successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'root' => $root,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "🔒 Path $root is not writable.");
     } catch (ArchiveDownloadException $e) {
-        broadcast(Event::create('I could not download an archive during syncing!', [
+        Bus\broadcast(Event::create('I could not download an archive during syncing!', [
             'root' => $root,
             'error' => $e->getMessage(),
         ]));
@@ -232,14 +225,14 @@ function install(string $project, bool $force): Outcome
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to install a project in the given path.', [
+        Bus\propose(Plan::create('I try to install a project in the given path.', [
             'root' => $root,
             'force' => $force,
         ]));
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
             ]));
 
@@ -251,7 +244,7 @@ function install(string $project, bool $force): Outcome
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not find any credentials!', [
+            Bus\broadcast(Event::create('I could not find any credentials!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '🔑 No credentials found.');
@@ -266,7 +259,7 @@ function install(string $project, bool $force): Outcome
                 Paths\delete_directory($vendor);
             } else {
                 if (!$force) {
-                    broadcast(Event::create('The packages directory is not empty!', [
+                    Bus\broadcast(Event::create('The packages directory is not empty!', [
                         'root' => $root,
                         'config' => $config,
                         'vendor' => $vendor,
@@ -277,7 +270,7 @@ function install(string $project, bool $force): Outcome
         }
 
         if (!Paths\find($vendor) && !Paths\make_recursively($vendor)) {
-            broadcast(Event::create('Packages directory does not exist and I could not make it!', [
+            Bus\broadcast(Event::create('Packages directory does not exist and I could not make it!', [
                 'root' => $root,
                 'config' => $config,
                 'vendor' => $vendor,
@@ -292,7 +285,7 @@ function install(string $project, bool $force): Outcome
             $meta = Paths\to_array($meta_path);
 
             if (empty($meta['packages'])) {
-                broadcast(Event::create('No packages found in the meta file!', [
+                Bus\broadcast(Event::create('No packages found in the meta file!', [
                     'root' => $root,
                     'config' => $config,
                     'meta' => $meta,
@@ -303,7 +296,7 @@ function install(string $project, bool $force): Outcome
             foreach ($meta['packages'] as $package_url => $package_meta) {
                 $outcome = Config\load($package_url, $package_meta['version'], $package_meta['hash']);
                 if (!$outcome->success) {
-                    broadcast(Event::create('I could not load a package config!', [
+                    Bus\broadcast(Event::create('I could not load a package config!', [
                         'root' => $root,
                         'package_url' => $package_url,
                         'version' => $package_meta['version'],
@@ -324,7 +317,7 @@ function install(string $project, bool $force): Outcome
             foreach ($config['packages'] as $package_url => $version) {
                 $outcome = Package\load($package_url, $version->tag);
                 if (!$outcome->success) {
-                    broadcast(Event::create('I could not load a package config!', [
+                    Bus\broadcast(Event::create('I could not load a package config!', [
                         'root' => $root,
                         'version' => $version,
                     ]));
@@ -342,7 +335,7 @@ function install(string $project, bool $force): Outcome
             }
         }
 
-        propose(Plan::create('I try to resolve dependencies for installing the project.', [
+        Bus\propose(Plan::create('I try to resolve dependencies for installing the project.', [
             'root' => $root,
         ]));
 
@@ -351,7 +344,7 @@ function install(string $project, bool $force): Outcome
         $outcome = sync($root, $vendor, $packages, $new_packages, $force);
 
         if (!$outcome->success) {
-            broadcast(Event::create('I could not sync the packages during installation!', [
+            Bus\broadcast(Event::create('I could not sync the packages during installation!', [
                 'root' => $root,
                 'config' => $config,
                 'vendor' => $vendor,
@@ -361,7 +354,7 @@ function install(string $project, bool $force): Outcome
             return new Outcome(false, '🔄 Could not sync the packages during installation. ' . $outcome->message);
         }
 
-        broadcast(Event::create('I installed the project packages successfully.', [
+        Bus\broadcast(Event::create('I installed the project packages successfully.', [
             'root' => $root,
             'config' => $config,
             'vendor' => $vendor,
@@ -372,19 +365,19 @@ function install(string $project, bool $force): Outcome
         
         return new Outcome(true, '✅ Project installed successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "🔒 Path for '$project' is not writable.");
     } catch(DependencyResolutionException $e) {
-        broadcast(Event::create('I could not resolve dependencies during installation!', [
+        Bus\broadcast(Event::create('I could not resolve dependencies during installation!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔗 Could not resolve dependencies during installation. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
-        broadcast(Event::create('There was a version incompatibility during installation!', [
+        Bus\broadcast(Event::create('There was a version incompatibility during installation!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
@@ -395,7 +388,7 @@ function install(string $project, bool $force): Outcome
 function run(string $url_or_path, ?string $version, ?string $entry_point): Outcome
 {
     try {
-        propose(Plan::create('I try to run a project from the given URL or path.', [
+        Bus\propose(Plan::create('I try to run a project from the given URL or path.', [
             'url_or_path' => $url_or_path,
             'version' => $version ?: 'latest',
             'entry_point' => $entry_point ?: '',
@@ -403,7 +396,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not find any credentials!', [
+            Bus\broadcast(Event::create('I could not find any credentials!', [
                 'url_or_path' => $url_or_path,
                 'version' => $version ?: 'latest',
                 'entry_point' => $entry_point ?: '',
@@ -418,7 +411,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
                 if (Repositories\can_guess_a_repo($url_or_path)) {
                     $url_or_path = Repositories\guess_the_repo($url_or_path);
                 } else {
-                    broadcast(Event::create('The given URL or path is not a valid package identifier!', [
+                    Bus\broadcast(Event::create('The given URL or path is not a valid package identifier!', [
                         'url_or_path' => $url_or_path,
                         'version' => $version ?: 'latest',
                         'entry_point' => $entry_point ?: '',
@@ -434,7 +427,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
 
             $outcome = Package\load($url_or_path, $version);
             if (!$outcome->success) {
-                broadcast(Event::create('I could not load a package config!', [
+                Bus\broadcast(Event::create('I could not load a package config!', [
                     'url_or_path' => $url_or_path,
                     'version' => $version,
                 ]));
@@ -446,7 +439,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
                 $zip_file = Paths\zip_path_for_run($outcome->data['commit']);
 
                 if (!Commits\download_zip($outcome->data['commit'], $zip_file)) {
-                    broadcast(Event::create('I could not download the package zip for running!', [
+                    Bus\broadcast(Event::create('I could not download the package zip for running!', [
                         'url_or_path' => $url_or_path,
                         'version' => $version,
                         'zip_file' => $zip_file,
@@ -455,7 +448,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
                 }
 
                 if (!Paths\unzip_to($zip_file, $root)) {
-                    broadcast(Event::create('I could not unzip the package for running!', [
+                    Bus\broadcast(Event::create('I could not unzip the package for running!', [
                         'url_or_path' => $url_or_path,
                         'version' => $version,
                         'zip_file' => $zip_file,
@@ -467,7 +460,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
                 Paths\delete_file($zip_file);
 
                 if (!Config\save($root, $outcome->data['config'])) {
-                    broadcast(Event::create('I could not save the package config for running!', [
+                    Bus\broadcast(Event::create('I could not save the package config for running!', [
                         'url_or_path' => $url_or_path,
                         'version' => $version,
                         'root' => $root,
@@ -481,7 +474,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
         }
 
         if (!Paths\find($root)) {
-            broadcast(Event::create('I could not find the project root directory!', [
+            Bus\broadcast(Event::create('I could not find the project root directory!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '🔍 Project root directory does not exist.');
@@ -489,7 +482,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '📄 Could not read the project config.');
@@ -499,7 +492,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
 
         $outcome = install($root, true);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not install the project packages!', [
+            Bus\broadcast(Event::create('I could not install the project packages!', [
                 'root' => $root,
                 'config' => $config,
             ]));
@@ -508,7 +501,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
 
         $outcome = build($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not build the project!', [
+            Bus\broadcast(Event::create('I could not build the project!', [
                 'root' => $root,
                 'config' => $config,
             ]));
@@ -518,7 +511,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
         $entry_points = $outcome->data['entry_points'] ?? [];
 
         if (empty($entry_points)) {
-            broadcast(Event::create('I could not find any entry points in the project!', [
+            Bus\broadcast(Event::create('I could not find any entry points in the project!', [
                 'root' => $root,
                 'config' => $config,
                 'entry_points' => $entry_points,
@@ -528,8 +521,8 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
 
         $entry_point = $entry_point ? ($outcome->data['build_path'] ?? '') . DIRECTORY_SEPARATOR . $entry_point : $entry_points[0];
 
-        if ($entry_point && !\Phpkg\Infra\Files\file_exists($entry_point)) {
-            broadcast(Event::create('I could not find the entry point file!', [
+        if ($entry_point && !Files\exists($entry_point)) {
+            Bus\broadcast(Event::create('I could not find the entry point file!', [
                 'root' => $root,
                 'config' => $config,
                 'entry_points' => $entry_points,
@@ -538,7 +531,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
             return new Outcome(false, '🔍 Entry point file does not exist.');
         }
 
-        broadcast(Event::create('I ran the project successfully.', [
+        Bus\broadcast(Event::create('I ran the project successfully.', [
             'root' => $root,
             'config' => $config,
             'entry_points' => $entry_points,
@@ -546,7 +539,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
         ]));
         return new Outcome(true, '🚀 Project ran successfully.', ['entry_point' => $entry_point]);
     } catch (NotFoundException $e) {
-        broadcast(Event::create('The project could not be found!', [
+        Bus\broadcast(Event::create('The project could not be found!', [
             'url_or_path' => $url_or_path,
             'version' => $version ?: 'latest',
             'entry_point' => $entry_point ?: '',
@@ -554,7 +547,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
         ]));
         return new Outcome(false, '🔍 Project not found.');
     } catch (ApiRequestException $e) {
-        broadcast(Event::create('There was an API request error during running!', [
+        Bus\broadcast(Event::create('There was an API request error during running!', [
             'url_or_path' => $url_or_path,
             'version' => $version ?: 'latest',
             'entry_point' => $entry_point ?: '',
@@ -562,7 +555,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
         ]));
         return new Outcome(false, '❗ API request error: ' . $e->getMessage());
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'url_or_path' => $url_or_path,
             'version' => $version ?: 'latest',
             'entry_point' => $entry_point ?: '',
@@ -570,7 +563,7 @@ function run(string $url_or_path, ?string $version, ?string $entry_point): Outco
         ]));
         return new Outcome(false, "🔒 Path is not writable.");
     } catch (ArchiveDownloadException $e) {
-        broadcast(Event::create('I could not download an archive during running!', [
+        Bus\broadcast(Event::create('I could not download an archive during running!', [
             'url_or_path' => $url_or_path,
             'version' => $version ?: 'latest',
             'entry_point' => $entry_point ?: '',
@@ -585,13 +578,13 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to migrate a composer project to phpkg.', [
+        Bus\propose(Plan::create('I try to migrate a composer project to phpkg.', [
             'root' => $root,
             'ignore_version_compatibility' => $ignore_version_compatibility,
         ]));
 
         if (!Paths\find($root)) {
-            broadcast(Event::create('The directory does not exist or is not a valid project root.', [
+            Bus\broadcast(Event::create('The directory does not exist or is not a valid project root.', [
                 'root' => $root,
             ]));
             return new Outcome(false, '🔍 Directory does not exist or is not a valid project root.');
@@ -599,7 +592,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '📄 Could not read the project config.');
@@ -608,7 +601,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
         $composer_config = Paths\composer_config_path($root);
 
         if (!Paths\file_itself_exists($composer_config)) {
-            broadcast(Event::create('There is no composer config file!', [
+            Bus\broadcast(Event::create('There is no composer config file!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '🔍 There is no composer config file.');
@@ -617,7 +610,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
         $composer_lock = Paths\composer_lock_path($root);
 
         if (!Paths\file_itself_exists($composer_lock)) {
-            broadcast(Event::create('There is no composer lock file!', [
+            Bus\broadcast(Event::create('There is no composer lock file!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '🔍 There is no composer lock file.');
@@ -625,7 +618,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not find any credentials!', [
+            Bus\broadcast(Event::create('I could not find any credentials!', [
                 'root' => $root,
             ]));
             return new Outcome(false, '🔑 No credentials found.');
@@ -637,7 +630,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
         $vendor = Paths\under($root, 'vendor');
         $packages = Composers\detect_packages(Paths\to_array($composer_lock), $vendor, $credentials);
 
-        propose(Plan::create('I try to resolve dependencies for migrating a project.', [
+        Bus\propose(Plan::create('I try to resolve dependencies for migrating a project.', [
             'root' => $root,
         ]));
 
@@ -645,7 +638,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
         
         $outcome = Config\save($root, $config);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not save the config file after migration!', [
+            Bus\broadcast(Event::create('I could not save the config file after migration!', [
                 'root' => $root,
                 'config' => $config,
             ]));
@@ -656,7 +649,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
 
         $outcome = sync($root, $vendor, [], $resolved_packages, true);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not sync the packages after migration!', [
+            Bus\broadcast(Event::create('I could not sync the packages after migration!', [
                 'root' => $root,
                 'config' => $config,
                 'vendor' => $vendor,
@@ -665,7 +658,7 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
             return new Outcome(false, '🔄 Could not sync the packages after migration.');
         }
 
-        broadcast(Event::create('I migrated the composer project to phpkg successfully.', [
+        Bus\broadcast(Event::create('I migrated the composer project to phpkg successfully.', [
             'root' => $root,
             'config' => $config,
             'vendor' => $vendor,
@@ -673,37 +666,37 @@ function migrate(string $project, bool $ignore_version_compatibility = false): O
         ]));
         return new Outcome(true, '🔄 Project migrated successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "🔒 Path for $project is not writable.");
     } catch (ApiRequestException $e) {
-        broadcast(Event::create('An API request error occurred during migration!', [
+        Bus\broadcast(Event::create('An API request error occurred during migration!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '❗ API request error: ' . $e->getMessage());
     } catch (NotFoundException $e) {
-        broadcast(Event::create('A repository was not found during migration!', [
+        Bus\broadcast(Event::create('A repository was not found during migration!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔍 Repository not found: ' . $e->getMessage());
     } catch (CanNotDetectComposerPackageVersionException $e) {
-        broadcast(Event::create('I could not detect a composer package version during migration!', [
+        Bus\broadcast(Event::create('I could not detect a composer package version during migration!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '❗ Could not detect a composer package version: ' . $e->getMessage());
     } catch (DependencyResolutionException $e) {
-        broadcast(Event::create('I could not resolve dependencies during migration!', [
+        Bus\broadcast(Event::create('I could not resolve dependencies during migration!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔗 Could not resolve dependencies during migration. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
-        broadcast(Event::create('There was a version incompatibility during migration!', [
+        Bus\broadcast(Event::create('There was a version incompatibility during migration!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
@@ -716,13 +709,13 @@ function build(string $project): Outcome
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to build a project in the given root.', [
+        Bus\propose(Plan::create('I try to build a project in the given root.', [
             'root' => $root,
         ]));
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
             ]));
 
@@ -737,7 +730,7 @@ function build(string $project): Outcome
 
         if (Paths\find($builds)) {
             if (!Paths\delete_recursively($builds)) {
-                broadcast(Event::create('I could not delete the previous build directory!', [
+                Bus\broadcast(Event::create('I could not delete the previous build directory!', [
                     'root' => $root,
                     'builds' => $builds,
                 ]));
@@ -746,7 +739,7 @@ function build(string $project): Outcome
         }
 
         if (!Paths\make_recursively($builds)) {
-            broadcast(Event::create('I could not create the build directory!', [
+            Bus\broadcast(Event::create('I could not create the build directory!', [
                 'root' => $root,
                 'builds_directory' => $builds,
             ]));
@@ -754,7 +747,7 @@ function build(string $project): Outcome
         }
 
         if (!Paths\make_recursively($build_vendor)) {
-            broadcast(Event::create('I could not create the build vendor directory!', [
+            Bus\broadcast(Event::create('I could not create the build vendor directory!', [
                 'root' => $root,
                 'build_vendor' => $build_vendor,
             ]));
@@ -763,7 +756,7 @@ function build(string $project): Outcome
 
         $outcome = Meta\read($root, $vendor);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project meta!', [
+            Bus\broadcast(Event::create('I could not read the project meta!', [
                 'root' => $root,
                 'config' => $config,
             ]));
@@ -776,7 +769,7 @@ function build(string $project): Outcome
         // Check if there's an import file in the project root (suggests building inside a build directory)
         $project_import_file = Paths\under($root, $config['import-file']);
         if (Paths\file_itself_exists($project_import_file)) {
-            propose(Plan::create('I detected an import file in the current directory, which suggests this is a build directory. I will go to the parent root directory and build it instead.', [
+            Bus\propose(Plan::create('I detected an import file in the current directory, which suggests this is a build directory. I will go to the parent root directory and build it instead.', [
                 'root' => $root,
                 'import_file' => $project_import_file,
                 'config' => $config,
@@ -813,8 +806,8 @@ function build(string $project): Outcome
         }
 
         $compile = function (string $path, string $file_root, array $config) use ($root, &$import_map, &$namespace_map) {
-            $relative_file_path = relative_path($file_root, $path); // source/to/file
-            $relative_path = relative_path($root, $path); // Packages/owner/repo/source/to/file
+            $relative_file_path = Paths\relative_path($file_root, $path); // source/to/file
+            $relative_path = Paths\relative_path($root, $path); // Packages/owner/repo/source/to/file
             $destination = Paths\under($root, 'build', $relative_path); // /path-to-project/build/Packages/owner/repo/source/to/file
 
             if (Paths\find($path)) {
@@ -851,20 +844,20 @@ function build(string $project): Outcome
             $file_imports = [];
 
             foreach ($registry->imports as $import) {
-                if (any($import_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import)) {
-                    $import_path = first($import_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import);
+                if (Arrays\any($import_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import)) {
+                    $import_path = Arrays\first($import_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import);
                     $import_path = Paths\under($import_path);
                     $file_imports[$import] = $import_path;
                     break;
                 }
 
-                $import_path = any($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import)
-                    ? first($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import)
+                $import_path = Arrays\any($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import)
+                    ? Arrays\first($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $import)
                     : null;
-                $import = $import_path ? $import : Str\before_last_occurrence($import, '\\');
-                $import_path = $import_path ?: reduce($namespace_map, function (?string $carry, string $map_path, string $map_namespace) use ($import) {
+                $import = $import_path ? $import : Strings\before_last_occurrence($import, '\\');
+                $import_path = $import_path ?: Arrays\reduce($namespace_map, function (?string $carry, string $map_path, string $map_namespace) use ($import) {
                     return str_starts_with($import, $map_namespace)
-                        ? append($map_path, Str\after_first_occurrence($import, $map_namespace) . '.php')
+                        ? Files\append($map_path, Strings\after_first_occurrence($import, $map_namespace) . '.php')
                         : $carry;
                 });
                 if (is_null($import_path)) {
@@ -877,16 +870,16 @@ function build(string $project): Outcome
                     continue; // Skip if the import path does not exist
                 }
 
-                $file_imports[$import] = Paths\under($root, 'build', relative_path($root, $import_path));
+                $file_imports[$import] = Paths\under($root, 'build', Paths\relative_path($root, $import_path));
             }
 
             foreach ($registry->namespaces as $namespace) {
-                if (any($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $namespace)) {
-                    $namespace_path = first($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $namespace);
+                if (Arrays\any($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $namespace)) {
+                    $namespace_path = Arrays\first($namespace_map, fn (string $map_path, string $map_namespace) => $map_namespace === $namespace);
                 } else {
-                    $namespace_path = reduce($namespace_map, function (?string $carry, string $map_path, string $map_namespace) use ($namespace) {
+                    $namespace_path = Arrays\reduce($namespace_map, function (?string $carry, string $map_path, string $map_namespace) use ($namespace) {
                         return str_starts_with($namespace, $map_namespace)
-                            ? append($map_path, Str\after_first_occurrence($namespace, $map_namespace) . '.php')
+                            ? Files\append($map_path, Strings\after_first_occurrence($namespace, $map_namespace) . '.php')
                             : $carry;
                     });
 
@@ -900,8 +893,8 @@ function build(string $project): Outcome
             }
 
             if (count($file_imports) > 0) {
-                $require_statements = map($file_imports, function (string $import) use ($destination, $path) {
-                    return "require_once " . PHPKGs\portable_require_path(parent($destination), $import) . ';';
+                $require_statements = Arrays\map($file_imports, function (string $import) use ($destination, $path) {
+                    return "require_once " . PHPKGs\portable_require_path(Files\parent($destination), $import) . ';';
                 });
 
                 $single_line_require_statements = implode('', $require_statements);
@@ -919,7 +912,7 @@ function build(string $project): Outcome
             foreach ($package->config['excludes'] as $exclude) {
                 $excludes[] = PHPKGs\exclude_path($package->root, $exclude);
             }
-            foreach (Directories\ls_all_recursively($package->root, fn ($current, $key, $iterator)
+            foreach (Files\ls_all_recursively($package->root, fn ($current, $key, $iterator)
                 => ! Paths\is_excluded($excludes, Paths\normalize($current))) as $path) {
                 $compile($path, $package->root, $package->config);
             }
@@ -938,7 +931,7 @@ function build(string $project): Outcome
              $excludes[$key] = PHPKGs\exclude_path($root, $exclude);
         }
 
-        foreach (Directories\ls_all_recursively($root, fn ($current, $key, $iterator)
+        foreach (Files\ls_all_recursively($root, fn ($current, $key, $iterator)
             => ! Paths\is_excluded($excludes, Paths\normalize($current))) as $path) {
             $compile($path, $root, $config);
         }
@@ -953,9 +946,9 @@ function build(string $project): Outcome
 
         uksort($import_map, 'strcmp');
         foreach ($import_map as $map_namespace => $map_path) {
-            $build_namespace_path = Paths\under($builds, relative_path($root, $map_path));
+            $build_namespace_path = Paths\under($builds, Paths\relative_path($root, $map_path));
             if (Files\exists($build_namespace_path)) {
-                $require_path = PHPKGs\portable_require_path(parent($import_file), $build_namespace_path);
+                $require_path = PHPKGs\portable_require_path(Files\parent($import_file), $build_namespace_path);
                 $content .= <<<EOD
             '$map_namespace' => $require_path,
 
@@ -978,8 +971,8 @@ function build(string $project): Outcome
     EOD;
 
         foreach ($namespace_map as $map_namespace => $map_path) {
-            $build_namespace_path = Paths\under($builds, relative_path($root, $map_path));
-            $require_path = PHPKGs\portable_require_path(parent($import_file), $build_namespace_path);
+            $build_namespace_path = Paths\under($builds, Paths\relative_path($root, $map_path));
+            $require_path = PHPKGs\portable_require_path(Files\parent($import_file), $build_namespace_path);
             $content .= <<<EOD
             '$map_namespace' => $require_path,
 
@@ -1019,7 +1012,7 @@ function build(string $project): Outcome
                 }
                 $file_path = Paths\under($package_build_directory, $autoload);
                 if (Files\exists($file_path)) {
-                    $require_path = PHPKGs\portable_require_path(parent($import_file), $file_path);
+                    $require_path = PHPKGs\portable_require_path(Files\parent($import_file), $file_path);
                     $content .= "require_once $require_path;" . PHP_EOL;
                 }
             }
@@ -1029,7 +1022,7 @@ function build(string $project): Outcome
             if (str_ends_with($autoload, '.php')) {
                 $file_path = Paths\under($builds, $autoload);
                 if (Files\exists($file_path)) {
-                    $require_path = PHPKGs\portable_require_path(parent($import_file), $file_path);
+                    $require_path = PHPKGs\portable_require_path(Files\parent($import_file), $file_path);
                     $content .= "require_once $require_path;" . PHP_EOL;
                 }
             }
@@ -1047,7 +1040,7 @@ function build(string $project): Outcome
             }
 
             $content = Paths\read($entry_point_path); // For entry point, we add the import to the transpiled file.
-            $require_path = PHPKGs\portable_require_path(parent($entry_point_path), $import_file);
+            $require_path = PHPKGs\portable_require_path(Files\parent($entry_point_path), $import_file);
             $line = "require_once $require_path;";
 
             $position = find_starting_point_for_imports($content);
@@ -1075,7 +1068,7 @@ function build(string $project): Outcome
                     continue;
                 }
 
-                $require_path = PHPKGs\portable_require_path(parent($source), $import_file);
+                $require_path = PHPKGs\portable_require_path(Files\parent($source), $import_file);
                 $line = "require_once $require_path;";
 
                 $content = Paths\read($source);
@@ -1090,7 +1083,7 @@ function build(string $project): Outcome
             }
         }
 
-        broadcast(Event::create('I built the project successfully.', [
+        Bus\broadcast(Event::create('I built the project successfully.', [
             'root' => $root,
             'config' => $config,
             'vendor' => $vendor,
@@ -1107,13 +1100,13 @@ function build(string $project): Outcome
             'build_path' => $builds,
         ]);
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "🔒 Path for $project is not writable.");
     } catch (Exception $e) {
-        broadcast(Event::create('An error occurred during the build process!', [
+        Bus\broadcast(Event::create('An error occurred during the build process!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
@@ -1126,7 +1119,7 @@ function flush(string $project): Outcome
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to flush build and temp directories for the project.', [
+        Bus\propose(Plan::create('I try to flush build and temp directories for the project.', [
             'root' => $root,
         ]));
 
@@ -1139,14 +1132,14 @@ function flush(string $project): Outcome
         // Delete build directory if it exists
         if (Paths\find($builds)) {
             if (!Paths\delete_recursively($builds)) {
-                broadcast(Event::create('I could not delete the build directory!', [
+                Bus\broadcast(Event::create('I could not delete the build directory!', [
                     'root' => $root,
                     'builds' => $builds,
                 ]));
                 return new Outcome(false, '🗑️ Could not delete the build directory.');
             }
             $deleted_build = true;
-            broadcast(Event::create('I deleted the build directory.', [
+            Bus\broadcast(Event::create('I deleted the build directory.', [
                 'root' => $root,
                 'builds' => $builds,
             ]));
@@ -1155,18 +1148,18 @@ function flush(string $project): Outcome
         // Delete temp directory if it exists
         if (Paths\find($temp_dir)) {
             if (!Paths\delete_recursively($temp_dir)) {
-                broadcast(Event::create('I could not delete the temp directory!', [
+                Bus\broadcast(Event::create('I could not delete the temp directory!', [
                     'root' => $root,
                     'temp_dir' => $temp_dir,
                 ]));
                 // Don't fail if temp directory deletion fails, just report it
-                broadcast(Event::create('Build directory was deleted, but temp directory deletion failed.', [
+                Bus\broadcast(Event::create('Build directory was deleted, but temp directory deletion failed.', [
                     'root' => $root,
                     'temp_dir' => $temp_dir,
                 ]));
             } else {
                 $deleted_temp = true;
-                broadcast(Event::create('I deleted the temp directory.', [
+                Bus\broadcast(Event::create('I deleted the temp directory.', [
                     'root' => $root,
                     'temp_dir' => $temp_dir,
                 ]));
@@ -1174,7 +1167,7 @@ function flush(string $project): Outcome
         }
 
         if (!$deleted_build && !$deleted_temp) {
-            broadcast(Event::create('No build or temp directories found to delete.', [
+            Bus\broadcast(Event::create('No build or temp directories found to delete.', [
                 'root' => $root,
             ]));
             return new Outcome(true, '✨ No build or temp directories found to delete.');
@@ -1190,7 +1183,7 @@ function flush(string $project): Outcome
 
         $message = 'Successfully deleted ' . implode(' and ', $messages) . '.';
 
-        broadcast(Event::create('I flushed the project directories successfully.', [
+        Bus\broadcast(Event::create('I flushed the project directories successfully.', [
             'root' => $root,
             'deleted_build' => $deleted_build,
             'deleted_temp' => $deleted_temp,
@@ -1198,9 +1191,14 @@ function flush(string $project): Outcome
 
         return new Outcome(true, $message);
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, "🔒 Path is not writable: " . $e->getMessage());
+    } catch (JsonException $e) {
+        Bus\broadcast(Event::create('A JSON error occurred during flushing!', [
+            'error' => $e->getMessage(),
+        ]));
+        return new Outcome(false, "❗ JSON error: " . $e->getMessage());
     }
 }

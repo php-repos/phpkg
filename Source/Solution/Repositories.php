@@ -10,7 +10,7 @@ use PhpRepos\Git\Exception\NotFoundException;
 use function Phpkg\Infra\Arrays\first;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
-use function PhpRepos\Datatype\Str\before_first_occurrence;
+use function Phpkg\Infra\Strings\before_first_occurrence;
 
 function is_valid_package_identifier(string $url): bool
 {
@@ -130,7 +130,7 @@ function guess_the_repo(string $identifier): string
 {
     log('Guessing repository URL from identifier', ['identifier' => $identifier]);
     
-    // If identifier contains a slash, it's in owner/repo format
+    // If an identifier contains a slash, it's in owner/repo format
     if (Strings\contains($identifier, '/')) {
         return 'https://github.com/' . $identifier . '.git';
     }

@@ -2,7 +2,7 @@
 
 namespace Phpkg\Infra\Arrays;
 
-use PhpRepos\Datatype\Arr;
+use const ARRAY_FILTER_USE_BOTH;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
@@ -28,33 +28,12 @@ function json_to_array(string $encoded_json): array
 }
 
 /**
- * Converts an iterable to a standard array.
- *
- * Converts any iterable object (arrays, iterators, etc.) to a standard PHP array.
- * This ensures compatibility with array functions that require native arrays.
- *
- * @param iterable $array The iterable to convert
- * @return array The converted array
- *
- * @example
- * ```php
- * $iterator = new ArrayIterator(['a', 'b', 'c']);
- * $array = to_array($iterator);
- * // $array is now ['a', 'b', 'c']
- * ```
- */
-function to_array(iterable $array): array
-{
-    return Arr\to_array($array);
-}
-
-/**
  * Adds a value to a nested array at the specified dimensions.
  *
  * Creates nested array structures as needed and adds the value at the specified path.
  * If any intermediate arrays don't exist, they are created automatically.
  *
- * @param iterable $array The input array to modify
+ * @param array $array The input array to modify
  * @param mixed $value The value to add
  * @param mixed ...$dimension The keys defining the path to the target location
  * @return array The modified array with the new value
@@ -66,10 +45,8 @@ function to_array(iterable $array): array
  * // Result: ['users' => ['john' => ['age' => 30], 'jane' => ['role' => 'admin']]]
  * ```
  */
-function add(iterable $array, mixed $value, mixed ...$dimension): array
+function add(array $array, mixed $value, mixed ...$dimension): array
 {
-    $array = to_array($array);
-
     $reference = &$array;
     foreach ($dimension as $key) {
         if (!is_array($reference)) {
@@ -87,35 +64,34 @@ function add(iterable $array, mixed $value, mixed ...$dimension): array
 }
 
 /**
- * Updates a value in a nested array at the specified dimensions.
+ * Checks if any element in an array satisfies a condition or if the iterable is non-empty.
  *
- * Updates an existing value in a nested array structure. The path must already exist
- * in the array, otherwise the function may fail or create unexpected results.
- *
- * @param iterable $array The input array to modify
- * @param mixed $value The new value to set
- * @param mixed ...$dimension The keys defining the path to the target location
- * @return array The modified array with the updated value
- *
+ * @param array $array The array to check.
+ * @param callable|null $condition Optional callback to test each element. Receives value and key as parameters.
+ * @return bool True if any element satisfies the condition or if the iterable is non-empty, false otherwise.
  * @example
  * ```php
- * $data = ['users' => ['john' => ['age' => 30]]];
- * $result = update($data, 31, 'users', 'john', 'age');
- * // Result: ['users' => ['john' => ['age' => 31]]]
+ * $result = any([1, 2, 3], fn($value) => $value > 2); // Returns true
+ * $result = any([]); // Returns false
  * ```
  */
-function update(iterable $array, mixed $value, mixed ...$dimension): array
+function any(array $array, ?callable $condition = null): bool
 {
-    $array = to_array($array);
-    $ref = &$array;
+    if (is_callable($condition)) {
+        if (function_exists('array_any')) {
+            return array_any($array, $condition);
+        }
 
-    foreach ($dimension as $key) {
-        $ref = &$ref[$key];
+        foreach ($array as $key => $value) {
+            if ($condition($value, $key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    $ref = $value;
-
-    return $array;
+    return ! empty($array);
 }
 
 /**
@@ -124,7 +100,7 @@ function update(iterable $array, mixed $value, mixed ...$dimension): array
  * Returns the first element that passes the test implemented by the provided function.
  * If no condition is provided, returns the first element of the array.
  *
- * @param iterable $array The array to search
+ * @param array $array The array to search
  * @param callable|null $condition Optional test function to apply to each element
  * @return mixed The first matching element or null if none found
  *
@@ -137,9 +113,19 @@ function update(iterable $array, mixed $value, mixed ...$dimension): array
  * $first_user = first($users); // Returns: ['name' => 'John', 'age' => 30]
  * ```
  */
-function first(iterable $array, ?callable $condition = null): mixed
+function first(array $array, ?callable $condition = null): mixed
 {
-    return Arr\first($array, $condition);
+    if (is_callable($condition)) {
+        foreach ($array as $key => $value) {
+            if ($condition($value, $key)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    return $array[array_key_first($array)] ?? null;
 }
 
 /**
@@ -148,7 +134,7 @@ function first(iterable $array, ?callable $condition = null): mixed
  * Returns true if at least one element in the array passes the test implemented by the provided function.
  * Returns false if no elements pass the test.
  *
- * @param iterable $array The array to test
+ * @param array $array The array to test
  * @param callable $condition The test function to apply to each element
  * @return bool True if any element passes the test, false otherwise
  *
@@ -159,9 +145,9 @@ function first(iterable $array, ?callable $condition = null): mixed
  * // Returns: false (no even numbers)
  * ```
  */
-function has(iterable $array, callable $condition): bool
+function has(array $array, callable $condition): bool
 {
-    return Arr\has($array, $condition);
+    return any($array, fn($value, $key) => $condition($value, $key));
 }
 
 /**
@@ -169,7 +155,7 @@ function has(iterable $array, callable $condition): bool
  *
  * Creates a new array with the results of calling the provided function for every element in the input array.
  *
- * @param iterable $array The array to map
+ * @param array $array The array to map
  * @param callable $callback The function to apply to each element
  * @return array The new array with mapped values
  *
@@ -180,9 +166,9 @@ function has(iterable $array, callable $condition): bool
  * // Returns: [1, 4, 9, 16]
  * ```
  */
-function map(iterable $array, callable $callback): array
+function map(array $array, callable $callback): array
 {
-    return Arr\map($array, $callback);
+    return array_map($callback, array_values($array), array_keys($array));
 }
 
 /**
@@ -190,7 +176,7 @@ function map(iterable $array, callable $callback): array
  *
  * Applies a function against an accumulator and each element in the array to reduce it to a single value.
  *
- * @param iterable $array The array to reduce
+ * @param array $array The array to reduce
  * @param callable $callback The function to apply to each element
  * @param mixed $carry The initial value for the accumulator
  * @return mixed The reduced value
@@ -202,9 +188,13 @@ function map(iterable $array, callable $callback): array
  * // Returns: 10 (sum of all numbers)
  * ```
  */
-function reduce(iterable $array, callable $callback, mixed $carry = null): mixed
+function reduce(array $array, callable $callback, mixed $carry = null): mixed
 {
-    return Arr\reduce($array, $callback, $carry);
+    return array_reduce(
+        array_keys($array),
+        fn ($carry, $key) => $callback($carry, $array[$key], $key),
+        $carry
+    );
 }
 
 /**
@@ -212,7 +202,7 @@ function reduce(iterable $array, callable $callback, mixed $carry = null): mixed
  *
  * Sorts the array in place using the provided comparison function and returns the sorted array.
  *
- * @param iterable $array The array to sort
+ * @param array $array The array to sort
  * @param callable $callback The comparison function
  * @return array The sorted array
  *
@@ -223,14 +213,13 @@ function reduce(iterable $array, callable $callback, mixed $carry = null): mixed
  * // Returns: [['name' => 'Jane', 'age' => 25], ['name' => 'John', 'age' => 30]]
  * ```
  */
-function sort(iterable $array, callable $callback): array
+function sort(array $array, callable $callback): array
 {
-    $array = to_array($array);
     usort($array, $callback);
     return $array;
 }
 
-function group_by_keys(iterable $array): array
+function group_by_keys(array $array): array
 {
     $groups = [];
 
@@ -246,7 +235,7 @@ function group_by_keys(iterable $array): array
     return $groups;
 }
 
-function group_by(iterable $array, callable $callback): array
+function group_by(array $array, callable $callback): array
 {
     $groups = [];
 
@@ -261,7 +250,7 @@ function group_by(iterable $array, callable $callback): array
     return $groups;
 }
 
-function cartesian_product(iterable ...$array): array
+function cartesian_product(array ...$array): array
 {
     if (empty($array)) {
         return [[]];
@@ -280,7 +269,7 @@ function cartesian_product(iterable ...$array): array
     return $result;
 }
 
-function unique(iterable $array, ?callable $callback = null): array
+function unique(array $array, ?callable $callback = null): array
 {
     $callback = $callback ?? fn($a, $b) => $a === $b;
     $result = [];
@@ -300,32 +289,30 @@ function unique(iterable $array, ?callable $callback = null): array
     return $result;
 }
 
-function sort_keys(iterable $array): array
+function sort_keys(array $array): array
 {
-    $array = to_array($array);
     ksort($array, SORT_STRING);
     return $array;
 }
 
-function sort_by_keys(iterable $array, callable $callback): array
+function sort_by_keys(array $array, callable $callback): array
 {
-    $array = (array)$array;
     uksort($array, $callback);
     return $array;
 }
 
-function sort_by_keys_desc(iterable $array, callable $callback): array
+function sort_by_keys_desc(array $array, callable $callback): array
 {
     return sort_by_keys($array, fn ($a, $b) => $callback($b, $a));
 }
 
-function canonical_json_encode(iterable $array): string
+function canonical_json_encode(array $array): string
 {
     $sorted = sort_keys_recursively($array);
     return json_encode($sorted, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
-function sort_keys_recursively(iterable $value): array
+function sort_keys_recursively(array $value): array
 {
     $sorted = [];
     foreach (sort_keys($value) as $key => $item) {
@@ -335,7 +322,7 @@ function sort_keys_recursively(iterable $value): array
     return $sorted;
 }
 
-function filter(iterable $array, callable $callback): array
+function filter(array $array, callable $callback): array
 {
-    return Arr\filter($array, $callback);
+    return array_filter($array, $callback, ARRAY_FILTER_USE_BOTH);
 }

@@ -2,7 +2,7 @@
 
 namespace PhpRepos\Git\Signals;
 
-use PhpRepos\Observer\Signals\Message;
+use PhpRepos\Observer\API\Message;
 
 /**
  * Message signal for Git hosts download progress.

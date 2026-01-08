@@ -2,7 +2,7 @@
 
 namespace PhpRepos\Git\Signals;
 
-use PhpRepos\Observer\Signals\Event;
+use PhpRepos\Observer\API\Event;
 
 class HttpResponseReceived extends Event
 {

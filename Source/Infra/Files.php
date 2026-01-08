@@ -2,23 +2,75 @@
 
 namespace Phpkg\Infra\Files;
 
+use DirectoryIterator;
 use Exception;
+use FilesystemIterator;
 use JsonException;
-use PhpRepos\FileManager\Files;
-use PhpRepos\FileManager\Directories;
-use PhpRepos\FileManager\JsonFiles;
-use PhpRepos\FileManager\Paths;
-use PhpRepos\FileManager\Symlinks;
+use RecursiveCallbackFilterIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use ZipArchive;
+use Phpkg\Infra\Strings;
+use function file_exists;
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+
+/**
+ * Changes the permissions of a file.
+ *
+ * @param string $path The path to the file.
+ * @param int $permission The permission value (e.g., 0644).
+ * @return bool True on success, false on failure.
+ */
+function chmod(string $path, int $permission): bool
+{
+    $old_umask = umask(0);
+    $return = \chmod($path, $permission);
+    umask($old_umask);
+
+    return $return;
+}
+
+function exists(string $path): bool
+{
+    return file_exists($path);
+}
 
 function root(): string
 {
-    return Paths\root();
+    return getcwd() . DIRECTORY_SEPARATOR;
 }
 
 function realpath(string $path): string
 {
-    return Paths\realpath($path);
+    $path_string = rtrim(ltrim($path));
+    if ($path_string === '/') {
+        return $path_string;
+    }
+    $needle = DIRECTORY_SEPARATOR === '/' ? '\\' : '/';
+    $path_string = str_replace($needle, DIRECTORY_SEPARATOR, $path_string);
+
+    while (str_contains($path_string, DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR)) {
+        $path_string = str_replace(DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path_string);
+    }
+
+    $path_string = str_replace(DIRECTORY_SEPARATOR . '.' . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path_string);
+    $path_string = Strings\last_character($path_string) === DIRECTORY_SEPARATOR ? Strings\remove_last_character($path_string) : $path_string;
+
+    $parts = explode(DIRECTORY_SEPARATOR, $path_string);
+
+    while (in_array('..', $parts)) {
+        foreach ($parts as $key => $part) {
+            if ($part === '..') {
+                unset($parts[$key - 1]);
+                unset($parts[$key]);
+                $parts = array_values($parts);
+                break;
+            }
+        }
+    }
+
+    return implode(DIRECTORY_SEPARATOR, $parts);
 }
 
 /**
@@ -51,12 +103,15 @@ function append(string $absolute, string ...$relatives): string
 
 function parent(string $path): string
 {
-    return Paths\parent($path);
-}
+    $path = realpath($path);
 
-function preserve_copy_recursively(string $source, string $destination): bool
-{
-    return Directories\preserve_copy_recursively($source, $destination);
+    if ($path === DIRECTORY_SEPARATOR) {
+        return DIRECTORY_SEPARATOR;
+    }
+
+    $parent = realpath($path . '/..');
+
+    return $parent === '' ? DIRECTORY_SEPARATOR : $parent;
 }
 
 /**
@@ -80,26 +135,12 @@ function preserve_copy_recursively(string $source, string $destination): bool
  */
 function file_write(string $path, string $content, ?int $permission = 0664): bool
 {
-    return Files\create($path, $content, $permission);
-}
+    $file = fopen($path, "w");
+    fwrite($file, $content);
+    $created = fclose($file);
+    chmod($path, $permission);
 
-/**
- * Reads the content of a file.
- *
- * Retrieves the entire content of a file as a string.
- *
- * @param string $path The path to the file to read
- * @return string The content of the file
- *
- * @example
- * ```php
- * $content = file_content('/path/to/config.json');
- * $config = json_decode($content, true);
- * ```
- */
-function file_content(string $path): string
-{
-    return Files\content($path);
+    return $created;
 }
 
 /**
@@ -120,43 +161,8 @@ function file_content(string $path): string
  */
 function file_permission(string $path): int
 {
-    return Files\permission($path);
-}
-
-/**
- * Checks if a file exists at the specified path.
- *
- * @param string $path The path to check
- * @return bool True if the file exists, false otherwise
- *
- * @example
- * ```php
- * if (file_exists('/path/to/config.php')) {
- *     include '/path/to/config.php';
- * }
- * ```
- */
-function file_exists(string $path): bool
-{
-    return Files\exists($path);
-}
-
-/**
- * Checks if a directory exists at the specified path.
- *
- * @param string $path The directory path to check
- * @return bool True if the directory exists, false otherwise
- *
- * @example
- * ```php
- * if (directory_exists('/path/to/vendor')) {
- *     echo "Vendor directory exists";
- * }
- * ```
- */
-function directory_exists(string $path): bool
-{
-    return Directories\exists($path);
+    clearstatcache();
+    return fileperms($path) & 0x0FFF;
 }
 
 /**
@@ -189,12 +195,12 @@ function path_is_writable(string $path): bool
  * @example
  * ```php
  * $data = ['name' => 'John', 'age' => 30];
- * $success = save_array_as_json('/path/to/data.json', $data);
+ * $success = save_array_as_json(\'/path/to/data.json\', $data);
  * ```
  */
 function save_array_as_json(string $path, array $content): bool
 {
-    return JsonFiles\write($path, $content);
+    return file_put_contents($path, json_encode($content, JSON_PRETTY_PRINT) . PHP_EOL) !== false;
 }
 
 /**
@@ -212,7 +218,55 @@ function save_array_as_json(string $path, array $content): bool
  */
 function read_json_as_array(string $path): array
 {
-    return JsonFiles\to_array($path);
+    return json_decode(json: file_get_contents($path), associative: true, flags: JSON_THROW_ON_ERROR);
+}
+
+/**
+ * Deletes an empty directory.
+ *
+ * @param string $path The path to the directory.
+ * @return bool True on success, false on failure.
+ */
+function delete_directory(string $path): bool
+{
+    return rmdir($path);
+}
+
+/**
+ * Deletes a file.
+ *
+ * @param string $path The path to the file.
+ * @return bool True on success, false on failure.
+ */
+function delete_file(string $path): bool
+{
+    return unlink($path);
+}
+
+/**
+ * Lists all directory contents recursively in reverse order (children first) with an optional filter.
+ *
+ * @param string $directory The path to the directory.
+ * @param callable|null $filter An optional callback to filter paths.
+ * @return RecursiveIteratorIterator An iterator over the directory contents, processing children before parents.
+ */
+function ls_all_backward(string $directory, ?callable $filter = null): RecursiveIteratorIterator
+{
+    return ls_all_recursively($directory, $filter, RecursiveIteratorIterator::CHILD_FIRST);
+}
+
+/**
+ * Removes all contents from a directory.
+ *
+ * @param string $path The path to the directory.
+ * @return void
+ */
+function clean(string $path): void
+{
+    $iterator = ls_all_backward($path);
+    foreach ($iterator as $item) {
+        is_dir($item) ? delete_directory($item) : delete_file($item);
+    }
 }
 
 /**
@@ -233,7 +287,9 @@ function read_json_as_array(string $path): array
  */
 function force_delete_recursive(string $path): bool
 {
-    return Directories\delete_recursive($path);
+    clean($path);
+
+    return delete_directory($path);
 }
 
 /**
@@ -252,9 +308,13 @@ function force_delete_recursive(string $path): bool
  * }
  * ```
  */
-function make_directory_recursively(string $path): bool
+function make_directory_recursively(string $path, ?int $permission = 0775): bool
 {
-    return Directories\make_recursive($path);
+    $old_umask = umask(0);
+    $created = mkdir(directory: $path, permissions: $permission, recursive: true);
+    umask($old_umask);
+
+    return $created;
 }
 
 /**
@@ -310,7 +370,7 @@ function unpack(string $zip_file, string $destination): bool
  */
 function make_symlink(string $source, string $link): bool
 {
-    return Symlinks\link($source, $link);
+    return symlink($source, $link);
 }
 
 /**
@@ -328,7 +388,7 @@ function make_symlink(string $source, string $link): bool
  */
 function is_symlink(string $path): bool
 {
-    return Symlinks\exists($path);
+    return is_link($path);
 }
 
 /**
@@ -349,7 +409,13 @@ function is_symlink(string $path): bool
  */
 function is_empty_directory(string $path): bool
 {
-    return Directories\is_empty($path);
+    $iterator = new DirectoryIterator($path);
+    foreach ($iterator as $item) {
+        if (!$item->isDot()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -383,12 +449,24 @@ function is_directory(string $path): bool
  * @example
  * ```php
  * $target = symlink_link('/path/to/symlink');
- * echo "Symlink points to: " . $target;
+ * echo "Symlink points to:" . $target;
  * ```
  */
-function symlink_link(string $path): string
+function symlink_target(string $path): string
 {
-    return Symlinks\target($path);
+    return readlink($path);
+}
+
+/**
+ * Retrieves the permission bits of a file.
+ *
+ * @param string $path The path to the file.
+ * @return int The permission bits (e.g., 0644), or false on failure.
+ */
+function permission(string $path): int
+{
+    clearstatcache();
+    return fileperms($path) & 0x0FFF;
 }
 
 /**
@@ -411,7 +489,9 @@ function symlink_link(string $path): string
  */
 function preserve_copy_file(string $source, string $destination): bool
 {
-    return Files\preserve_copy($source, $destination);
+    $copied = copy($source, $destination);
+    chmod($destination, permission($source));
+    return $copied;
 }
 
 function hash(string $path, string $algorithm = 'sha256'): string
@@ -419,9 +499,32 @@ function hash(string $path, string $algorithm = 'sha256'): string
     return hash_file($algorithm, $path);
 }
 
-function ls_all(string $path): array
+/**
+ * Lists all directory contents (non-recursive) with an optional filter.
+ *
+ * @param string $directory The path to the directory.
+ * @param callable|null $filter An optional callback to filter paths.
+ * @return array An array of file and directory paths.
+ */
+function ls_all(string $directory, ?callable $filter = null): array
 {
-    return Directories\ls_all($path);
+    $items = [];
+    $iterator = new DirectoryIterator($directory);
+
+    foreach ($iterator as $item) {
+        if (!$item->isDot()) {
+            $pathname = $item->getPathname();
+            if (is_callable($filter)) {
+                if ($filter($pathname)) {
+                    $items[] = $pathname;
+                }
+            } else {
+                $items[] = $pathname;
+            }
+        }
+    }
+
+    return $items;
 }
 
 /**
@@ -456,11 +559,6 @@ function zip_root(string $zip_file): string
     return $root_dir;
 }
 
-function delete_directory(string $path): bool
-{
-    return Directories\delete($path);
-}
-
 /**
  * Checks if a path matches a glob pattern.
  *
@@ -482,7 +580,28 @@ function path_matches_pattern(string $pattern, string $path): bool
     return fnmatch($pattern, $path, FNM_PATHNAME | FNM_PERIOD);
 }
 
-function relative_path(string $origin, string $destination): string
+function content(string $path): string
 {
-    return Paths\relative_path($origin, $destination);
+    return file_get_contents($path);
+}
+
+/**
+ * Lists all directory contents recursively with an optional filter.
+ *
+ * @param string $directory The path to the directory.
+ * @param callable|null $filter An optional callback to filter paths.
+ * @param int|null $mode The iteration mode (e.g., RecursiveIteratorIterator::SELF_FIRST).
+ * @return RecursiveIteratorIterator An iterator over the directory contents.
+ */
+function ls_all_recursively(string $directory, ?callable $filter = null, ?int $mode = null): RecursiveIteratorIterator
+{
+    $mode = $mode ?: RecursiveIteratorIterator::SELF_FIRST;
+    $iterator = new RecursiveDirectoryIterator(
+        $directory,
+        FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME
+    );
+
+    $iterator = is_callable($filter) ? new RecursiveCallbackFilterIterator($iterator, $filter) : $iterator;
+
+    return new RecursiveIteratorIterator($iterator, $mode);
 }

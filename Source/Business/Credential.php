@@ -5,14 +5,13 @@ namespace Phpkg\Business\Credential;
 use Phpkg\Solution\Environments;
 use Phpkg\Solution\Paths;
 use Phpkg\Business\Outcome;
-use PhpRepos\Observer\Signals\Event;
-use PhpRepos\Observer\Signals\Plan;
-use function PhpRepos\Observer\Observer\propose;
-use function PhpRepos\Observer\Observer\broadcast;
+use PhpRepos\Observer\API\Bus;
+use PhpRepos\Observer\API\Event;
+use PhpRepos\Observer\API\Plan;
 
 function read(): Outcome
 {
-    propose(Plan::create('I try to read credentials from the credentials file or environment variables.'));
+    Bus\propose(Plan::create('I try to read credentials from the credentials file or environment variables.'));
 
     $path = Paths\credentials();
     $file_content = Paths\file_itself_exists($path) ? Paths\to_array($path) : [];
@@ -27,7 +26,7 @@ function read(): Outcome
         $credentials['github.com'] = $github_token;
     }
 
-    broadcast(Event::create('I loaded credentials.', [
+    Bus\broadcast(Event::create('I loaded credentials.', [
         'credentials' => $credentials,
     ]));
 
@@ -36,19 +35,19 @@ function read(): Outcome
 
 function add(string $provider, string $token, bool $force = false): Outcome
 {
-    propose(Plan::create('I try to add the given token for the given provider to credentials.', [
+    Bus\propose(Plan::create('I try to add the given token for the given provider to credentials.', [
         'provider' => $provider,
     ]));
 
     if (empty($provider)) {
-        broadcast(Event::create('It seems the given provider is empty!', [
+        Bus\broadcast(Event::create('It seems the given provider is empty!', [
             'provider' => $provider,
         ]));
         return new Outcome(false, '❌ Failed to add credential: provider is empty.');
     }
 
     if (empty($token)) {
-        broadcast(Event::create('It seems the given token is empty!', [
+        Bus\broadcast(Event::create('It seems the given token is empty!', [
             'provider' => $provider,
         ]));
         return new Outcome(false, '❌ Failed to add credential: token is empty.');
@@ -61,7 +60,7 @@ function add(string $provider, string $token, bool $force = false): Outcome
         foreach ($file_content as $registered_provider => $setting) {
             if ($registered_provider === $provider) {
                 if (isset($setting['token']) && strlen($setting['token'] > 0)) {
-                    broadcast(Event::create('It seems there is already a token for the given provider!', [
+                    Bus\broadcast(Event::create('It seems there is already a token for the given provider!', [
                        'provider' => $provider,
                        'path' => $path,
                     ]));
@@ -74,14 +73,14 @@ function add(string $provider, string $token, bool $force = false): Outcome
     $file_content[$provider]['token'] = $token;
 
     if (!Paths\save_as_json($path, $file_content)) {
-        broadcast(Event::create('It seems file has not been saved!', [
+        Bus\broadcast(Event::create('It seems file has not been saved!', [
             'provider' => $provider,
             'path' => $path,
         ]));
         return new Outcome(false, '💾 Cannot save credentials file.');
     }
 
-    broadcast(Event::create('I saved the given token for the given provider to the credentials file.', [
+    Bus\broadcast(Event::create('I saved the given token for the given provider to the credentials file.', [
         'provider' => $provider,
         'token' => $token,
         'path' => $path,

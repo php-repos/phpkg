@@ -4,11 +4,11 @@ namespace Phpkg\Solution\Parser\Parsers;
 
 use Phpkg\Solution\Parser\NodeParser;
 use Phpkg\Solution\Parser\SymbolRegistry;
+use Phpkg\Infra\Arrays;
 use Phpkg\Infra\Strings;
 use PhpParser\Lexer\Emulative;
 use PhpParser\NodeTraverser;
 use PhpParser\ParserFactory;
-use function PhpRepos\Datatype\Arr\has;
 use function Phpkg\Infra\Logs\debug;
 use function Phpkg\Infra\Logs\log;
 
@@ -22,7 +22,8 @@ function get_registry(string $code): SymbolRegistry
     $functions = array_filter($parser->nodes, fn ($node) => $node['type'] === 'function');
 
     foreach ($classes as $import => $node) {
-        if (has($constants, fn ($node) => $node['namespace'] === $import) || has($functions, fn ($node) => $node['namespace'] === $import)) {
+        if (Arrays\has($constants, fn ($node) => $node['namespace'] === $import)
+            || Arrays\has($functions, fn ($node) => $node['namespace'] === $import)) {
             unset($classes[$import]);
         }
     }

@@ -2,9 +2,9 @@
 
 use Phpkg\Business\Credential;
 use Phpkg\Solution\Paths;
+use function Phpkg\Infra\CLI\error;
+use function Phpkg\Infra\CLI\line;
 use function Phpkg\Infra\CLI\table;
-use function PhpRepos\Cli\Output\error;
-use function PhpRepos\Cli\Output\line;
 
 /**
  * Lists all saved credentials for Git providers.

@@ -181,7 +181,7 @@ test(
         $release_file = $released_package_dir . '/release-file.txt';
         Assertions\assert_true(file_exists($release_file), 'Release file should exist');
         
-        $release_file_content = Files\file_content($release_file);
+        $release_file_content = Files\content($release_file);
         $expected_content = "This is a specific file.\nv1.0.0\nv1.0.1\nv1.1.0\n";
         Assertions\assert_true($release_file_content === $expected_content, 'Release file content should match expected content. Actual: ' . $release_file_content);
         

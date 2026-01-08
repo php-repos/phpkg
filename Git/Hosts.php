@@ -8,7 +8,7 @@ use PhpRepos\Git\Exception\NotFoundException;
 use PhpRepos\Git\Exception\RateLimitedException;
 use PhpRepos\Git\Exception\UnsupportedHostException;
 use PhpRepos\Git\GitHub;
-use function PhpRepos\Datatype\Arr\first;
+use PhpRepos\Git\Platform\Arrays;
 use function PhpRepos\SemanticVersioning\Tags\compare;
 use function PhpRepos\SemanticVersioning\Tags\has_major_change;
 
@@ -58,7 +58,7 @@ function match_highest_version(string $domain, string $owner, string $repo, stri
         return compare($tag2['name'], $tag1['name']);
     });
 
-    $exact_version = first($tags, fn($tag) => compare($version, $tag['name']) === 0);
+    $exact_version = Arrays\first($tags, fn($tag) => compare($version, $tag['name']) === 0);
 
     if ($exact_version) {
         return $exact_version['name'];

@@ -2,7 +2,7 @@
 
 namespace PhpRepos\Git\Signals;
 
-use PhpRepos\Observer\Signals\Plan;
+use PhpRepos\Observer\API\Plan;
 
 class SendingGitHttpRequest extends Plan
 {

@@ -1,11 +1,11 @@
 <?php
 
 use Phpkg\Business\Project;
-use PhpRepos\Console\Attributes\Description;
-use PhpRepos\Console\Attributes\LongOption;
-use function PhpRepos\Cli\Output\error;
-use function PhpRepos\Cli\Output\line;
-use function PhpRepos\Cli\Output\success;
+use PhpRepos\Console\Business\Attributes\Description;
+use PhpRepos\Console\Business\Attributes\LongOption;
+use function Phpkg\Infra\CLI\error;
+use function Phpkg\Infra\CLI\line;
+use function Phpkg\Infra\CLI\success;
 
 /**
  * This command initializes the project by adding the necessary files and directories.

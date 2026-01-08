@@ -3,7 +3,7 @@
 use PhpRepos\SimpleCSP\CSP;
 use function PhpRepos\SimpleCSP\CSPs\solve;
 use function Phpkg\Infra\Arrays\first;
-use PhpRepos\Datatype\Arr;
+use function PhpRepos\TestRunner\Assertions\assert_true;
 use function PhpRepos\TestRunner\Runner\test;
 
 test(
@@ -57,14 +57,14 @@ test(
 
         $solutions = solve($csp);
 
-        Arr\assert_equal([count($solutions)], [3]);
+        assert_true([count($solutions)] === [3]);
         
         // Verify that the constraint works: A v1.0.0 should only appear with B v2.0.0
         foreach ($solutions as $solution) {
             $a_id = 'package-a';
             $b_id = 'package-b';
             if (isset($solution[$a_id]) && $solution[$a_id]['value'] === 'v1.0.0') {
-                Arr\assert_equal([$solution[$b_id]['value']], ['v2.0.0']);
+                assert_true([$solution[$b_id]['value']] === ['v2.0.0']);
             }
         }
     }
@@ -137,7 +137,7 @@ test(
         // 3. package-a => v1.1.0, package-b => v2.1.0 (no constraint)
         // 4. package-a => v1.1.0, package-b => v2.0.0 (no constraint)
         // 5. package-a => v1.0.0, package-b => v2.0.0 (satisfies constraint)
-        Arr\assert_equal([count($solutions)], [5]);
+        assert_true([count($solutions)] === [5]);
         
         // Verify ordering: first solution should have latest versions (due to ordering)
         $first_solution = first($solutions);
@@ -145,8 +145,8 @@ test(
         foreach ($first_solution as $assignment) {
             $assignment_array[$assignment['variable']] = $assignment['value'];
         }
-        Arr\assert_equal([$assignment_array['A']], ['v1.2.0']); // Latest version
-        Arr\assert_equal([$assignment_array['B']], ['v2.1.0']); // Latest version
+        assert_true([$assignment_array['A']] === ['v1.2.0']); // Latest version
+        assert_true([$assignment_array['B']] === ['v2.1.0']); // Latest version
     }
 );
 
@@ -217,7 +217,7 @@ test(
         // With constraint "package-a depends on package-b" (package-b must be assigned before package-a),
         // and 3 packages each with 2 versions, we should have 8 solutions (2^3)
         // The constraint ensures package-b is assigned when package-a is assigned
-        Arr\assert_equal([count($solutions)], [8]);
+        assert_true([count($solutions)] === [8]);
         
         // Verify all solutions have all 3 packages assigned
         foreach ($solutions as $solution) {
@@ -225,15 +225,15 @@ test(
             foreach ($solution as $assignment) {
                 $assignment_array[$assignment['variable']] = $assignment['value'];
             }
-            Arr\assert_equal([count($assignment_array)], [3]);
+            assert_true([count($assignment_array)] === [3]);
             
             // Extract keys from assignment
             $keys = array_keys($assignment_array);
             sort($keys); // Sort for comparison
-            Arr\assert_equal($keys, ['A', 'B', 'C']);
+            assert_true($keys === ['A', 'B', 'C']);
             
             // Verify constraint: package-b must be assigned (which it always is since we have 3 packages)
-            Arr\assert_equal([isset($assignment_array['B'])], [true]);
+            assert_true([isset($assignment_array['B'])] === [true]);
         }
     }
 );
@@ -284,7 +284,7 @@ test(
 
         $solutions = solve($csp);
 
-        Arr\assert_equal([count($solutions)], [0]);
+        assert_true([count($solutions)] === [0]);
     }
 );
 
@@ -317,9 +317,9 @@ test(
         $solutions = solve($csp);
 
         // With no domains, an empty assignment is a valid solution
-        Arr\assert_equal([count($solutions)], [1]);
+        assert_true([count($solutions)] === [1]);
         $first_solution = first($solutions);
-        Arr\assert_equal([count($first_solution)], [0]);
+        assert_true([count($first_solution)] === [0]);
     }
 );
 
@@ -353,13 +353,13 @@ test(
 
         $solutions = solve($csp);
 
-        Arr\assert_equal([count($solutions)], [1]);
+        assert_true([count($solutions)] === [1]);
         $first_solution = first($solutions);
         $assignment_array = [];
         foreach ($first_solution as $assignment) {
             $assignment_array[$assignment['variable']] = $assignment['value'];
         }
-        Arr\assert_equal([$assignment_array['A']], ['v1.0.0']);
+        assert_true([$assignment_array['A']] === ['v1.0.0']);
     }
 );
 
@@ -395,7 +395,7 @@ test(
         $solutions = solve($csp);
 
         // Should find all 4 possible combinations
-        Arr\assert_equal([count($solutions)], [4]);
+        assert_true([count($solutions)] === [4]);
         
         // Check that all expected solutions are present
         $expectedSolutions = [
@@ -417,7 +417,7 @@ test(
                     break;
                 }
             }
-            Arr\assert_equal([$found], [true], "Expected solution not found: " . json_encode($expected));
+            assert_true([$found] === [true], "Expected solution not found: " . json_encode($expected));
         }
     }
 );
@@ -523,7 +523,7 @@ test(
         // - logger => v1.1.0, datatype => v2.1.0, console => v3.0.0 (valid)
         // - logger => v1.1.0, datatype => v2.1.0, console => v3.1.0 (valid)
         // All other combinations violate constraints
-        Arr\assert_equal([count($solutions)], [2]);
+        assert_true([count($solutions)] === [2]);
         
         // Verify ordering: first solution should have latest versions
         $first_solution = first($solutions);
@@ -531,15 +531,15 @@ test(
         foreach ($first_solution as $assignment) {
             $assignment_array[$assignment['variable']] = $assignment['value'];
         }
-        Arr\assert_equal([count($assignment_array)], [3]);
+        assert_true([count($assignment_array)] === [3]);
         
         // Extract keys from assignment
         $keys = array_keys($assignment_array);
         sort($keys); // Sort for comparison
-        Arr\assert_equal($keys, ['C', 'D', 'L']);
+        assert_true($keys === ['C', 'D', 'L']);
         
         // Verify dependency constraints are satisfied
-        Arr\assert_equal([version_compare($assignment_array['L'], 'v1.1.0', '>=')], [true]);
-        Arr\assert_equal([version_compare($assignment_array['D'], 'v2.1.0', '>=')], [true]);
+        assert_true([version_compare($assignment_array['L'], 'v1.1.0', '>=')] === [true]);
+        assert_true([version_compare($assignment_array['D'], 'v2.1.0', '>=')] === [true]);
     }
 );

@@ -2,9 +2,6 @@
 
 namespace PhpRepos\SemanticVersioning\Tags;
 
-use function PhpRepos\Datatype\Arr\reduce;
-use function PhpRepos\Datatype\Str\before_first_occurrence;
-
 /**
  * Compare two version strings.
  *
@@ -84,15 +81,9 @@ function has_major_change(string $version1, string $version2): bool
 function major(string $version): string
 {
     $version_string = ltrim($version, 'vV');
+    $length = strcspn($version_string, '+-_.');
 
-    return reduce(
-        ['+', '-', '_', '.'],
-        function (string $major, string $separator) use ($version_string) {
-            $possible_major = before_first_occurrence($version_string, $separator);
-            return strlen($possible_major) <= strlen($major) ? $possible_major : $major;
-        },
-        $version_string,
-    );
+    return substr($version_string, 0, $length);
 }
 
 /**

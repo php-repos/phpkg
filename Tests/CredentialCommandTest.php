@@ -2,7 +2,7 @@
 
 namespace Tests\CredentialCommandTest;
 
-use PhpRepos\Cli\Output;
+use Phpkg\Infra\CLI;
 use Tests\CliRunner;
 use PhpRepos\TestRunner\Assertions;
 use function PhpRepos\TestRunner\Runner\test;
@@ -15,12 +15,12 @@ test(
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
         
-        $expected = Output\capture(function () use ($provider) {
-            Output\line("Adding credential for provider $provider...");
-            Output\success('💾 Credentials file saved.');
+        $expected = CLI\capture(function () use ($provider) {
+            CLI\line("Adding credential for provider $provider...");
+            CLI\success('💾 Credentials file saved.');
         });
         
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
     }
 );
 
@@ -32,23 +32,23 @@ test(
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
         
-        $expected = Output\capture(function () use ($provider) {
-            Output\line("Adding credential for provider $provider...");
-            Output\success('💾 Credentials file saved.');
+        $expected = CLI\capture(function () use ($provider) {
+            CLI\line("Adding credential for provider $provider...");
+            CLI\success('💾 Credentials file saved.');
         });
         
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
 
         $token = 'ghp_different_token_67890';
         
         $output = CliRunner\phpkg('credential', [$provider, $token]);
         
-        $expected = Output\capture(function () use ($provider) {
-            Output\line("Adding credential for provider $provider...");
-            Output\error('⚠️ There is a token for the given provider.');
+        $expected =  CLI\capture(function () use ($provider) {
+             CLI\line("Adding credential for provider $provider...");
+             CLI\error('⚠️ There is a token for the given provider.');
         });
         
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
     }
 );
 
@@ -60,23 +60,23 @@ test(
 
         $output = CliRunner\phpkg('credential', [$provider, $old_token]);
     
-        $expected = Output\capture(function () use ($provider) {
-            Output\line("Adding credential for provider $provider...");
-            Output\success('💾 Credentials file saved.');
+        $expected =  CLI\capture(function () use ($provider) {
+             CLI\line("Adding credential for provider $provider...");
+            CLI\success('💾 Credentials file saved.');
         });
 
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
 
         $token = 'ghp_new_token_with_force_12345';
 
         $output = CliRunner\phpkg('credential', [$provider, $token, '--force']);
 
-        $expected = Output\capture(function () use ($provider) {
-            Output\line("Adding credential for provider $provider...");
-            Output\success('💾 Credentials file saved.');
+        $expected =  CLI\capture(function () use ($provider) {
+             CLI\line("Adding credential for provider $provider...");
+            CLI\success('💾 Credentials file saved.');
         });
         
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
     }
 );
 

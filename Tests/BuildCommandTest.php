@@ -1,7 +1,6 @@
 <?php
 
 use function PhpRepos\TestRunner\Runner\test;
-use PhpRepos\Datatype\Str;
 use PhpRepos\TestRunner\Assertions;
 use Phpkg\Solution\PHPKGs;
 use Phpkg\Infra\Files;
@@ -111,7 +110,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_content);
+        Assertions\assert_true($import_content === $expected_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -202,7 +201,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_content);
+        Assertions\assert_true($import_content === $expected_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -259,7 +258,7 @@ test(
         
         $model_content = file_get_contents($model_file);
         $original_model = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Model.php');
-        Str\assert_equal($model_content, $original_model);
+        Assertions\assert_true($model_content === $original_model);
         
         // Verify Service.php was copied with same content
         $service_file = $source_dir . DIRECTORY_SEPARATOR . 'Service.php';
@@ -267,7 +266,7 @@ test(
         
         $service_content = file_get_contents($service_file);
         $original_service = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Service.php');
-        Str\assert_equal($service_content, $original_service);
+        Assertions\assert_true($service_content === $original_service);
         
         // Verify phpkg.imports.php was created with correct namespace mapping
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -312,7 +311,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_content);
+        Assertions\assert_true($import_content === $expected_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -411,7 +410,7 @@ class Model
 }
 EOD;
 
-        Str\assert_equal($model_content, $expected_content);
+        Assertions\assert_true($model_content === $expected_content);
         
         // Verify Service.php was copied with same content
         $service_file = $source_dir . DIRECTORY_SEPARATOR . 'Service.php';
@@ -419,7 +418,7 @@ EOD;
         
         $service_content = file_get_contents($service_file);
         $original_service = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Service.php');
-        Str\assert_equal($service_content, $original_service);
+        Assertions\assert_true($service_content === $original_service);
         
         // Verify phpkg.imports.php was created with correct namespace mapping
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -464,7 +463,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -554,7 +553,7 @@ test(
         
         $model_dto_content = file_get_contents($model_dto_file);
         $original_model_dto = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'DTO' . DIRECTORY_SEPARATOR . 'ModelDto.php');
-        Str\assert_equal($model_dto_content, $original_model_dto);
+        Assertions\assert_true($model_dto_content === $original_model_dto);
         
         // Verify Model.php was copied with same content
         $model_file = $source_dir . DIRECTORY_SEPARATOR . 'Model.php';
@@ -562,7 +561,7 @@ test(
         
         $model_content = file_get_contents($model_file);
         $original_model = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Model.php');
-        Str\assert_equal($model_content, $original_model);
+        Assertions\assert_true($model_content === $original_model);
         
         // Verify phpkg.imports.php was created with correct class and namespace mappings
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -608,7 +607,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -726,7 +725,7 @@ class Model
 }
 EOD;
         
-        Str\assert_equal($model_content, $expected_model_content);
+        Assertions\assert_true($model_content === $expected_model_content);
         
         // Verify ModelDto.php was copied and modified with require_once injection
         $model_dto_file = $source_dir . DIRECTORY_SEPARATOR . 'DTO' . DIRECTORY_SEPARATOR . 'ModelDto.php';
@@ -754,7 +753,7 @@ class ModelDto
 }
 EOD;
         
-        Str\assert_equal($model_dto_content, $expected_model_dto_content);
+        Assertions\assert_true($model_dto_content === $expected_model_dto_content);
         
         // Verify Service.php was copied with same content
         $service_file = $source_dir . DIRECTORY_SEPARATOR . 'Service.php';
@@ -762,7 +761,7 @@ EOD;
         
         $service_content = file_get_contents($service_file);
         $original_service = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Service.php');
-        Str\assert_equal($service_content, $original_service);
+        Assertions\assert_true($service_content === $original_service);
         
         // Verify Response.php was copied with same content
         $response_file = $third_party_dir . DIRECTORY_SEPARATOR . 'Response.php';
@@ -770,7 +769,7 @@ EOD;
         
         $response_content = file_get_contents($response_file);
         $original_response = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'External' . DIRECTORY_SEPARATOR . 'ThirdParties' . DIRECTORY_SEPARATOR . 'Response.php');
-        Str\assert_equal($response_content, $original_response);
+        Assertions\assert_true($response_content === $original_response);
         
         // Verify Helper.php was copied with same content
         $helper_file = $third_party_dir . DIRECTORY_SEPARATOR . 'Helper.php';
@@ -778,7 +777,7 @@ EOD;
         
         $helper_content = file_get_contents($helper_file);
         $original_helper = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'External' . DIRECTORY_SEPARATOR . 'ThirdParties' . DIRECTORY_SEPARATOR . 'Helper.php');
-        Str\assert_equal($helper_content, $original_helper);
+        Assertions\assert_true($helper_content === $original_helper);
         
         // Verify phpkg.imports.php was created with correct class and namespace mappings
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -825,7 +824,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -984,7 +983,7 @@ require_once __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'phpkg
 echo "Hello World!";
 EOD;
         
-        Str\assert_equal($index_content, $expected_index_content);
+        Assertions\assert_true($index_content === $expected_index_content);
         
         // Verify phpkg.imports.php was created with correct content (no entry point import needed)
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -1028,7 +1027,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1100,7 +1099,7 @@ test(
         
         $service_content = file_get_contents($service_file);
         $original_service = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Service.php');
-        Str\assert_equal($service_content, $original_service);
+        Assertions\assert_true($service_content === $original_service);
         
         // Verify phpkg.imports.php was created with correct content
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -1145,7 +1144,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1244,7 +1243,7 @@ test(
         
         $service_content = file_get_contents($service_file);
         $original_service = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'Service.php');
-        Str\assert_equal($service_content, $original_service);
+        Assertions\assert_true($service_content === $original_service);
         
         // Verify phpkg.imports.php was created with correct content
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -1289,7 +1288,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1428,7 +1427,7 @@ class TestClass
 }
 EOD;
         
-        Str\assert_equal($package_class_content, $expected_package_class_content);
+        Assertions\assert_true($package_class_content === $expected_package_class_content);
         
         // Verify main project Model.php was copied and modified with require_once injection
         $model_file = $source_dir . DIRECTORY_SEPARATOR . 'Model.php';
@@ -1453,7 +1452,7 @@ class Model
 }
 EOD;
         
-        Str\assert_equal($model_content, $expected_model_content);
+        Assertions\assert_true($model_content === $expected_model_content);
         
         // Verify phpkg.imports.php was created with correct package namespace and class mappings
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -1500,7 +1499,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -1698,7 +1697,7 @@ EOD;
         // Replace placeholder with relative path (empty string for current directory)
         $expected_repo_cli_content = str_replace('@BUILDS_DIRECTORY', '', $expected_repo_cli_content);
         
-        Str\assert_equal($repo_cli_content, $expected_repo_cli_content);
+        Assertions\assert_true($repo_cli_content === $expected_repo_cli_content);
         
         // Verify repo package RepoClass.php was copied and modified with require_once injection
         $repo_class_content = file_get_contents($repo_class_file);
@@ -1723,12 +1722,12 @@ class RepoClass
 }
 EOD;
         
-        Str\assert_equal($repo_class_content, $expected_repo_class_content);
+        Assertions\assert_true($repo_class_content === $expected_repo_class_content);
         
         // Verify utils package UtilsHelper.php was copied with same content
         $utils_helper_content = file_get_contents($utils_helper_file);
         $original_utils_helper = file_get_contents($temp_dir . DIRECTORY_SEPARATOR . 'Packages' . DIRECTORY_SEPARATOR . 'utils-owner' . DIRECTORY_SEPARATOR . 'utils-package' . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'UtilsHelper.php');
-        Str\assert_equal($utils_helper_content, $original_utils_helper);
+        Assertions\assert_true($utils_helper_content === $original_utils_helper);
         
         // Verify executable symlink was created
         $executable_symlink = $build_dir . DIRECTORY_SEPARATOR . 'repo-cli';
@@ -1795,7 +1794,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
     },
     before: function () {
         // Create a temporary directory and initialize it as a phpkg project
@@ -2145,7 +2144,7 @@ require_once __DIR__ . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'P
 
 EOD;
 
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
 
         return $temp_dir;
     },
@@ -2359,7 +2358,7 @@ class App
 }
 EOD;
         
-        Str\assert_equal($app_content, $expected_app_content);
+        Assertions\assert_true($app_content === $expected_app_content);
         
         // Verify entry points were copied and have correct import file paths
         $cli_file = $build_dir . DIRECTORY_SEPARATOR . 'cli.php';
@@ -2379,7 +2378,7 @@ $app = new App();
 $result = $app->run();
 echo "CLI Result: $result\n";
 EOD;
-        Str\assert_equal($cli_content, $expected_cli_content);
+        Assertions\assert_true($cli_content === $expected_cli_content);
         
         // Verify index.php content with injected require statement
         $index_content = file_get_contents($index_file);
@@ -2392,7 +2391,7 @@ $app = new App();
 $result = $app->run();
 echo "Web Result: $result\n";
 EOD;
-        Str\assert_equal($index_content, $expected_index_content);
+        Assertions\assert_true($index_content === $expected_index_content);
         
         // Verify Logger.php was modified with require_once injection for UtilsHelper
         $logger_content = file_get_contents($logger_class_file);
@@ -2413,7 +2412,7 @@ class Logger
 }
 EOD;
         
-        Str\assert_equal($logger_content, $expected_logger_content);
+        Assertions\assert_true($logger_content === $expected_logger_content);
         
                 // Verify UtilsHelper.php was copied without modification (no dependencies)
         $utils_content = file_get_contents($utils_helper_file);
@@ -2431,7 +2430,7 @@ class UtilsHelper
 }
 EOD;
         
-        Str\assert_equal($utils_content, $expected_utils_content);
+        Assertions\assert_true($utils_content === $expected_utils_content);
         
         // Verify package autoload files were copied correctly
         $utils_package_helper_file = $utils_package_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'PackageHelper.php';
@@ -2452,7 +2451,7 @@ function package_helper_function(): string
     return "Package helper function called";
 }
 EOD;
-        Str\assert_equal($package_helper_content, $expected_package_helper_content);
+        Assertions\assert_true($package_helper_content === $expected_package_helper_content);
         
         // Verify PackageUtils.php content
         $package_utils_content = file_get_contents($utils_package_utils_file);
@@ -2466,7 +2465,7 @@ function package_utils_function(): string
     return "Package utils function called";
 }
 EOD;
-        Str\assert_equal($package_utils_content, $expected_package_utils_content);
+        Assertions\assert_true($package_utils_content === $expected_package_utils_content);
         
         // Verify phpkg.imports.php was created with correct content
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -2521,7 +2520,7 @@ require_once __DIR__ . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'P
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
         
         // Verify project autoload files were copied correctly
         $project_helper_file = $build_dir . DIRECTORY_SEPARATOR . 'Source' . DIRECTORY_SEPARATOR . 'ProjectHelper.php';
@@ -2542,7 +2541,7 @@ function project_helper_function(): string
     return "Project helper function called";
 }
 EOD;
-        Str\assert_equal($project_helper_content, $expected_project_helper_content);
+        Assertions\assert_true($project_helper_content === $expected_project_helper_content);
         
         // Verify ProjectUtils.php content
         $project_utils_content = file_get_contents($project_utils_file);
@@ -2556,7 +2555,7 @@ function project_utils_function(): string
     return "Project utils function called";
 }
 EOD;
-        Str\assert_equal($project_utils_content, $expected_project_utils_content);
+        Assertions\assert_true($project_utils_content === $expected_project_utils_content);
         
         return $temp_dir;
     },
@@ -2908,7 +2907,7 @@ interface Model
     public function getName(): string;
 }
 EOD;
-        Str\assert_equal($model_content, $expected_model_content);
+        Assertions\assert_true($model_content === $expected_model_content);
         
         // Verify phpkg.imports.php was created with correct namespace and file mappings
         $import_file = $build_dir . DIRECTORY_SEPARATOR . 'phpkg.imports.php';
@@ -2957,7 +2956,7 @@ spl_autoload_register(function ($class) {
 
 EOD;
         
-        Str\assert_equal($import_content, $expected_import_content);
+        Assertions\assert_true($import_content === $expected_import_content);
         
         return $temp_dir;
     },

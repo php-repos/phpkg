@@ -1,61 +1,57 @@
 #!/usr/bin/env php
 <?php
 
-use PhpRepos\Cli\Output;
-use PhpRepos\Console\Input;
-use PhpRepos\FileManager\Path;
 use PhpRepos\Git\Signals\GitHostDownloadProgress;
 use PhpRepos\Git\Signals\SendingGitHttpRequest;
 use PhpRepos\Git\Signals\HttpResponseReceived;
-use PhpRepos\Logger\Log\Level;
-use PhpRepos\Logger\Log\Message;
-use PhpRepos\Logger\Logs;
-use PhpRepos\Observer\Observer;
-use PhpRepos\Observer\Signals\Internals\HandlerExecution;
-use PhpRepos\Observer\Signals\Internals\HandlerFound;
-use PhpRepos\Observer\Signals\Internals\NoHandlerFound;
-use PhpRepos\Observer\Signals\Signal;
-use function Phpkg\Cli\Runner\execute;
-use function Phpkg\Infra\CLI\download_progressbar;
-use function Phpkg\Infra\CLI\show_spinner;
-use function Phpkg\Infra\CLI\hide_spinner;
-use function PhpRepos\Console\Runner\from_path;
-use function PhpRepos\Logger\Media\file_lock;
+use PhpRepos\Logger\API\Config;
+use PhpRepos\Logger\API\Logs;
+use PhpRepos\Logger\API\Media;
+use PhpRepos\Logger\Core\Data\Message;
+use PhpRepos\Observer\API\Bus;
+use PhpRepos\Observer\API\Signal;
+use Phpkg\Infra\CLI;
+use Phpkg\Infra\Files;
+use PhpRepos\Console\Business\Finder;
+use PhpRepos\Console\Business\Command;
+use PhpRepos\Console\UI;
+use PhpRepos\Console\Infra\Filesystem;
 
 global $argv;
 
+$entrypoint = 'phpkg';
 $short_options = 'vhd';
 $long_options = ['help', 'debug'];
-
 $options = getopt($short_options, $long_options, $offset);
+$wants_help = isset($options['h']) || isset($options['help']);
+$inputs = array_slice($argv, $offset);
 
 $verbosity_level = 0;
 if (isset($options['v'])) {
     $verbosity_level = is_array($options['v']) ? count($options['v']) : 1;
 }
 
-$wants_help  = isset($options['h']) || isset($options['help']);
 $debug_mode = isset($options['d']) || isset($options['debug']);
 
 $cli_logger = function (Message $message) {
     $context = json_encode($message->context);
     $format = <<<EOD
-\e[34m[{$message->time->format('Y-m-d\TH:i:s.uP')}] \e[33m{$message->level->name}:\e[39m {$message->text} \e[34m{$context}
+\e[34m[{$message->time->format('Y-m-d\TH:i:s.uP')}] \e[33m{$message->level}:\e[39m {$message->text} \e[34m{$context}
 EOD;
 
-    Output\line($format);
+    CLI\line($format);
 };
 
-Logs\default_media(function (Message $message) use ($verbosity_level, $debug_mode, $cli_logger) {
-    if ($debug_mode || $message->level !== Level::DEBUG) {
-        file_lock(Path::from(__DIR__)->sub('Logs/phpkg.log'))($message);
+Config\set_default_media(function (Message $message) use ($verbosity_level, $debug_mode, $cli_logger) {
+    if ($debug_mode || $message->level !== 'DEBUG') {
+        Media\file_lock(Files\realpath(__DIR__.'/Logs/phpkg.log'))($message);
     }
 
     if ($verbosity_level === 0 || $verbosity_level === 1) {
         return;
     }
     if ($verbosity_level === 2) {
-        if ($message->level === Level::DEBUG) return;
+        if ($message->level === 'DEBUG') return;
         $cli_logger($message);
         return;
     }
@@ -63,20 +59,19 @@ Logs\default_media(function (Message $message) use ($verbosity_level, $debug_mod
     $cli_logger($message);
 });
 
-Observer\subscribe(function (Signal $signal) use ($verbosity_level, $cli_logger) {
-    Logs\log(Message::info('A signal has been sent.', $signal->jsonSerialize()), file_lock(Path::from(__DIR__)->sub('Logs/console-signals.log')));
+Bus\subscribe(function (Signal $signal) use ($verbosity_level, $cli_logger) {
+    Logs\info('A signal has been sent.', $signal->jsonSerialize(), Media\file_lock(Files\realpath(__DIR__ . '/Logs/console-signals.log')));
 
-    if ($verbosity_level === 0 || in_array(get_class($signal), [HandlerFound::class, NoHandlerFound::class, HandlerExecution::class])) {
+    if ($verbosity_level === 0) {
         return;
     }
-
-    $cli_logger(Message::info("Signal $signal->title", $signal->details));
+    Logs\info("Signal $signal->title", $signal->details, $cli_logger);
 });
 
-Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_level) {
+Bus\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_level) {
     if ($verbosity_level > 0) return;
     $details = $progress->details;
-    
+
     // Generate unique ID for this download (includes full hash)
     $id = sprintf(
         '%s/%s/%s@%s',
@@ -97,7 +92,7 @@ Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_
         );
     }
     
-    download_progressbar(
+    CLI\download_progressbar(
         $id,
         $url,
         $details['downloaded'],
@@ -106,19 +101,49 @@ Observer\subscribe(function (GitHostDownloadProgress $progress) use ($verbosity_
     );
 });
 
-Observer\subscribe(function (SendingGitHttpRequest $plan) use ($verbosity_level) {
+Bus\subscribe(function (SendingGitHttpRequest $plan) use ($verbosity_level) {
     if ($verbosity_level === 0) {
-        show_spinner($plan->details['method'] . ': ' . $plan->details['url']);
+        CLI\show_spinner($plan->details['method'] . ': ' . $plan->details['url']);
     }
 });
-Observer\subscribe(function (HttpResponseReceived $event) use ($verbosity_level) {
+Bus\subscribe(function (HttpResponseReceived $event) use ($verbosity_level) {
     if ($verbosity_level === 0) {
-        hide_spinner();
+        CLI\hide_spinner();
     }
 });
 
-$inputs = Input::make(array_slice($argv, $offset));
-$commands_directory = Path::from(__DIR__)->sub('Commands');
-$command_handlers = from_path($commands_directory);
+$root = Filesystem\realpath(__DIR__ . DIRECTORY_SEPARATOR . 'Commands');
+$outcome = Finder\path($root, 'Command.php');
 
-exit(execute($command_handlers, $inputs, $wants_help, $commands_directory, '[-v | -vv | -vvv][-d | --debug]'));
+if (!$outcome->success) CLI\error($outcome->message) && exit(1);
+
+$command_handlers = $outcome->data['handlers'];
+
+$outcome = Command\find($command_handlers, $inputs);
+
+if (!$outcome->success) {
+    if (!$wants_help) CLI\error($outcome->message);
+
+    $outcome = Command\all($command_handlers);
+    CLI\write(UI\short_help($outcome->data['commands'], $entrypoint)) && exit($wants_help ? 0 : 1);
+}
+
+$command = $outcome->data['name'];
+$handler = $outcome->data['handler'];
+
+$outcome = Command\describe($handler);
+if (!$outcome->success) CLI\error($outcome->message) && exit(1);
+
+$description = $outcome->data;
+
+if ($wants_help)
+    CLI\write(UI\long_help($description, $entrypoint, $command)) && exit(0);
+
+$outcome = Command\run($command, $handler, $command_handlers, $inputs);
+
+if (!$outcome->success)
+    CLI\error($outcome->message)
+    && CLI\write(UI\long_help($description, $entrypoint, $command))
+    && exit($outcome->data['exit_code'] ?? 1);
+
+exit($outcome->data['exit_code'] ?? 0);

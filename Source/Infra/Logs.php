@@ -2,7 +2,7 @@
 
 namespace Phpkg\Infra\Logs;
 
-use PhpRepos\Logger\Log\Message;
+use PhpRepos\Logger\API\Logs;
 
 /**
  * Logs an informational message with optional data.
@@ -26,25 +26,20 @@ use PhpRepos\Logger\Log\Message;
  */
 function log(string $message, array $data = []): void
 {
-    \PhpRepos\Logger\Logs\log(Message::info($message, $data));
+    Logs\log($message, 'INFO', $data);
 }
 
 function debug(string $message, array $data = []): void
 {
-    \PhpRepos\Logger\Logs\log(Message::debug($message, $data));
+    Logs\debug($message, $data);
 }
 
 function notice(string $message, array $data = []): void
 {
-    \PhpRepos\Logger\Logs\log(Message::notice($message, $data));
-}
-
-function warning(string $message, array $data = []): void
-{
-    \PhpRepos\Logger\Logs\log(Message::warning($message, $data));
+    Logs\notice($message, $data);
 }
 
 function error(string $message, array $data = []): void
 {
-    \PhpRepos\Logger\Logs\log(Message::error($message, $data));
+    Logs\error($message, $data);
 }

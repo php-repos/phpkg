@@ -1,8 +1,8 @@
 <?php
 
-use function PhpRepos\Cli\Output\line;
-use function PhpRepos\Cli\Output\success;
-use function PhpRepos\Cli\Output\write;
+use function Phpkg\Infra\CLI\line;
+use function Phpkg\Infra\CLI\success;
+use function Phpkg\Infra\CLI\write;
 use function Phpkg\Infra\Envs\phpkg_version;
 
 /**

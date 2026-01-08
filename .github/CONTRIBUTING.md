@@ -94,12 +94,12 @@ function my_feature(string $project): Outcome
         
         // ... implementation ...
         
-        broadcast(Event::create('I completed the feature operation.', [
+        Bus\broadcast(Event::create('I completed the feature operation.', [
             'root' => $root,
         ]));
         return new Outcome(true, '✅ Feature completed successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));

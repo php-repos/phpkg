@@ -7,14 +7,13 @@ use Phpkg\Solution\Paths;
 use Phpkg\Solution\PHPKGs;
 use Phpkg\Business\Config;
 use Phpkg\Business\Outcome;
-use PhpRepos\Observer\Signals\Plan;
-use PhpRepos\Observer\Signals\Event;
-use function PhpRepos\Observer\Observer\propose;
-use function PhpRepos\Observer\Observer\broadcast;
+use PhpRepos\Observer\API\Bus;
+use PhpRepos\Observer\API\Event;
+use PhpRepos\Observer\API\Plan;
 
 function read(string $root, string $vendor): Outcome
 {
-    propose(Plan::create('I try to read meta from the given root.', [
+    Bus\propose(Plan::create('I try to read meta from the given root.', [
         'root' => $root,
         'vendor' => $vendor,
     ]));
@@ -22,7 +21,7 @@ function read(string $root, string $vendor): Outcome
     $meta_path = Paths\phpkg_meta_path($root);
 
     if (!Paths\file_itself_exists($meta_path)) {
-        broadcast(Event::create('It seems meta file does not exist!', [
+        Bus\broadcast(Event::create('It seems meta file does not exist!', [
             'root' => $root,
             'vendor' => $vendor,
             'meta_path' => $meta_path,
@@ -37,7 +36,7 @@ function read(string $root, string $vendor): Outcome
     }
 
     if (!PHPKGs\verify_lock($meta['checksum'], $meta['packages'])) {
-        broadcast(Event::create('Meta lock verification failed!', [
+        Bus\broadcast(Event::create('Meta lock verification failed!', [
             'root' => $root,
             'vendor' => $vendor,
             'meta_path' => $meta_path,
@@ -47,7 +46,7 @@ function read(string $root, string $vendor): Outcome
     }
 
     if (!empty($meta['packages']) && !Paths\find($vendor)) {
-        broadcast(Event::create('There are some packages but the packages directory does not exist!', [
+        Bus\broadcast(Event::create('There are some packages but the packages directory does not exist!', [
             'root' => $root,
             'vendor' => $vendor,
             'meta_path' => $meta_path,
@@ -57,7 +56,7 @@ function read(string $root, string $vendor): Outcome
     }
 
     if (empty($meta['packages']) && Paths\find($vendor) && !Paths\is_empty_directory($vendor)) {
-        broadcast(Event::create('There are no packages but the packages directory is not empty!', [
+        Bus\broadcast(Event::create('There are no packages but the packages directory is not empty!', [
             'root' => $root,
             'vendor' => $vendor,
             'meta_path' => $meta_path,
@@ -75,7 +74,7 @@ function read(string $root, string $vendor): Outcome
         $package_root = Paths\under($vendor, $package_meta['owner'], $package_meta['repo']);
         $outcome = Config\read($package_root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not find a config file for a package!', [
+            Bus\broadcast(Event::create('I could not find a config file for a package!', [
                 'root' => $root,
                 'vendor' => $vendor,
                 'meta_path' => $meta_path,
@@ -91,7 +90,7 @@ function read(string $root, string $vendor): Outcome
     }
 
     if ($failed) {
-        broadcast(Event::create('There was a problem getting packages information.', [
+        Bus\broadcast(Event::create('There was a problem getting packages information.', [
             'root' => $root,
             'vendor' => $vendor,
             'meta_path' => $meta_path,
@@ -100,7 +99,7 @@ function read(string $root, string $vendor): Outcome
         return new Outcome(false, '❌ There was a problem getting packages information.');
     }
 
-    broadcast(Event::create('I read meta from the given root.', [
+    Bus\broadcast(Event::create('I read meta from the given root.', [
         'root' => $root,
         'vendor' => $vendor,
         'meta_path' => $meta_path,
@@ -112,7 +111,7 @@ function read(string $root, string $vendor): Outcome
 
 function save(string $root, array $packages): Outcome
 {
-    propose(Plan::create('I try to save a meta using given information on the given root.', [
+    Bus\propose(Plan::create('I try to save a meta using given information on the given root.', [
         'root' => $root,
         'packages' => $packages,
     ]));
@@ -136,7 +135,7 @@ function save(string $root, array $packages): Outcome
     $meta_path = Paths\phpkg_meta_path($root);
 
     if (! Paths\save_as_json($meta_path, $meta)) {
-        broadcast(Event::create('I could not save the lock file!', [
+        Bus\broadcast(Event::create('I could not save the lock file!', [
             'root' => $root,
             'meta_path' => $meta_path,
             'meta' => $meta,
@@ -144,7 +143,7 @@ function save(string $root, array $packages): Outcome
         return new Outcome(false, '💾 Could not save the meta file.');
     }
 
-    broadcast(Event::create('I saved a meta to the given root.', [
+    Bus\broadcast(Event::create('I saved a meta to the given root.', [
         'root' => $root,
         'meta_path' => $meta_path,
         'meta' => $meta,

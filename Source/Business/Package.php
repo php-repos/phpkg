@@ -21,24 +21,23 @@ use Phpkg\Business\Credential;
 use Phpkg\Business\Meta;
 use Phpkg\Business\Outcome;
 use Phpkg\Business\Project;
-use PhpRepos\Observer\Signals\Plan;
-use PhpRepos\Observer\Signals\Event;
-use function PhpRepos\Observer\Observer\propose;
-use function PhpRepos\Observer\Observer\broadcast;
+use PhpRepos\Observer\API\Bus;
+use PhpRepos\Observer\API\Event;
+use PhpRepos\Observer\API\Plan;
 
 function register_alias(string $project, string $alias, string $package_url): Outcome
 {
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to register the given alias to the given package URL for the current project.', [
+        Bus\propose(Plan::create('I try to register the given alias to the given package URL for the current project.', [
             'root' => $root,
             'alias' => $alias,
             'package_url' => $package_url,
         ]));
 
         if (!Repositories\is_valid_package_identifier($package_url)) {
-            broadcast(Event::create('The given package URL seems invalid!', [
+            Bus\broadcast(Event::create('The given package URL seems invalid!', [
                 'root' => $root,
                 'alias' => $alias,
                 'package_url' => $package_url,
@@ -48,7 +47,7 @@ function register_alias(string $project, string $alias, string $package_url): Ou
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('This does not seem to be a phpkg project!', [
+            Bus\broadcast(Event::create('This does not seem to be a phpkg project!', [
                 'root' => $root,
                 'alias' => $alias,
                 'package_url' => $package_url,
@@ -61,7 +60,7 @@ function register_alias(string $project, string $alias, string $package_url): Ou
         foreach ($config['aliases'] as $registered_alias => $registered_url) {
             if ($registered_alias !== $alias) continue;
 
-            broadcast(Event::create('It seems the alias has been registered for another package!', [
+            Bus\broadcast(Event::create('It seems the alias has been registered for another package!', [
                 'root' => $root,
                 'alias' => $alias,
                 'package_url' => $package_url,
@@ -74,7 +73,7 @@ function register_alias(string $project, string $alias, string $package_url): Ou
 
         $outcome = Config\save($root, $config);
         if (!$outcome->success) {
-            broadcast(Event::create('It seems we could not save the config file!', [
+            Bus\broadcast(Event::create('It seems we could not save the config file!', [
                 'root' => $root,
                 'alias' => $alias,
                 'package_url' => $package_url,
@@ -82,14 +81,14 @@ function register_alias(string $project, string $alias, string $package_url): Ou
             return new Outcome(false, '💾 Could not save the config file.');
         }
 
-        broadcast(Event::create('I registered the given alias for the given package URL.', [
+        Bus\broadcast(Event::create('I registered the given alias for the given package URL.', [
             'root' => $root,
             'alias' => $alias,
             'package_url' => $package_url,
         ]));
         return new Outcome(true, '✅ Alias registered successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
@@ -100,14 +99,14 @@ function register_alias(string $project, string $alias, string $package_url): Ou
 function load(string $url, string $version): Outcome
 {
     try {
-        propose(Plan::create('I try to load a package\'s dependencies from git host for the given URL and version.', [
+        Bus\propose(Plan::create('I try to load a package\'s dependencies from git host for the given URL and version.', [
             'url' => $url,
             'version' => $version ?: 'latest',
         ]));
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not find any credentials!', [
+            Bus\broadcast(Event::create('I could not find any credentials!', [
                 'url' => $url,
                 'version' => $version ?: 'latest',
             ]));
@@ -126,7 +125,7 @@ function load(string $url, string $version): Outcome
         if (Caches\remote_data_exists($version)) {
             $cached_data = Caches\get_remote_data($version);
 
-            broadcast(Event::create('I found a cached response.', [
+            Bus\broadcast(Event::create('I found a cached response.', [
                 'url' => $url,
                 'version' => $version,
                 'commit' => $cached_data['commit'],
@@ -148,7 +147,7 @@ function load(string $url, string $version): Outcome
 
         $outcome = Config\load($url, $version->tag, $commit->hash);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not get config for the package!', [
+            Bus\broadcast(Event::create('I could not get config for the package!', [
                 'url' => $url,
                 'commit' => $commit,
             ]));
@@ -164,7 +163,7 @@ function load(string $url, string $version): Outcome
         foreach ($config['packages'] as $package_url => $package_version) {
             $outcome = load($package_url, $package_version->tag);
             if (!$outcome->success) {
-                broadcast(Event::create('I could not load a dependency package!', [
+                Bus\broadcast(Event::create('I could not load a dependency package!', [
                     'url' => $url,
                     'commit' => $commit,
                     'package' => $package_version,
@@ -189,7 +188,7 @@ function load(string $url, string $version): Outcome
 
         Caches\update_remote_data($version, $packages);
 
-        broadcast(Event::create('I loaded package\'s dependencies for the given package.', [
+        Bus\broadcast(Event::create('I loaded package\'s dependencies for the given package.', [
             'url' => $url,
             'commit' => $commit,
             'config' => $config,
@@ -201,28 +200,28 @@ function load(string $url, string $version): Outcome
             'packages' => $packages,
         ]);
     } catch (ApiRequestException $e) {
-        broadcast(Event::create('An error occurred while trying to load the package from the git host!', [
+        Bus\broadcast(Event::create('An error occurred while trying to load the package from the git host!', [
             'url' => $url,
             'version' => $version,
             'exception' => $e,
         ]));
         return new Outcome(false, '⚠️ API request error: ' . $e->getMessage());
     } catch (NotFoundException $e) {
-        broadcast(Event::create('The required file was not found in the remote repository!', [
+        Bus\broadcast(Event::create('The required file was not found in the remote repository!', [
             'url' => $url,
             'version' => $version,
             'exception' => $e,
         ]));
         return new Outcome(false, '🔍 Remote file not found: ' . $e->getMessage());
     } catch (InvalidTokenException $e) {
-        broadcast(Event::create('The provided token is invalid for accessing the remote repository!', [
+        Bus\broadcast(Event::create('The provided token is invalid for accessing the remote repository!', [
             'url' => $url,
             'version' => $version,
             'exception' => $e,
         ]));
         return new Outcome(false, '🔐 Invalid token: ' . $e->getMessage());
     } catch (RateLimitedException $e) {
-        broadcast(Event::create('Rate limit exceeded when accessing the remote repository!', [
+        Bus\broadcast(Event::create('Rate limit exceeded when accessing the remote repository!', [
             'url' => $url,
             'version' => $version,
             'exception' => $e,
@@ -236,7 +235,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to add the given package to the project.', [
+        Bus\propose(Plan::create('I try to add the given package to the project.', [
             'root' => $root,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -245,7 +244,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -258,7 +257,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         $outcome = Meta\read($root, $vendor);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project dependencies!', [
+            Bus\broadcast(Event::create('I could not read the project dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -280,7 +279,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
             if (Repositories\can_guess_a_repo($identifier)) {
                 $url = Repositories\guess_the_repo($identifier);
             } else {
-                broadcast(Event::create('The given identifier is invalid!', [
+                Bus\broadcast(Event::create('The given identifier is invalid!', [
                     'root' => $root,
                     'identifier' => $identifier,
                     'url' => $url,
@@ -293,7 +292,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read credentials!', [
+            Bus\broadcast(Event::create('I could not read credentials!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -309,7 +308,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         foreach ($config['packages'] as $package_version) {
             if (Repositories\are_equal($repository, $package_version->repository)) {
-                broadcast(Event::create('The package is already added to this project!', [
+                Bus\broadcast(Event::create('The package is already added to this project!', [
                     'root' => $root,
                     'url' => $url,
                     'identifier' => $identifier,
@@ -321,7 +320,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         }
 
         if ($version !== 'development' && !Repositories\has_any_tag($repository)) {
-            broadcast(Event::create('I could not detect any release for the given package!', [
+            Bus\broadcast(Event::create('I could not detect any release for the given package!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -337,7 +336,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         $outcome = load($url, $version);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not get package and its dependencies!', [
+            Bus\broadcast(Event::create('I could not get package and its dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -353,7 +352,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
             $additional_packages[] = new Package($dependency['commit'], $dependency['config']);
         }
 
-        propose(Plan::create('I try to resolve dependencies for adding a package.', [
+        Bus\propose(Plan::create('I try to resolve dependencies for adding a package.', [
             'root' => $root,
             'identifier' => $identifier,
             'version' => $version,
@@ -370,7 +369,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         $outcome = Config\save($root, $new_config);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not save the config file after resolving dependencies!', [
+            Bus\broadcast(Event::create('I could not save the config file after resolving dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -384,7 +383,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
         if (!$outcome->success) {
             $sync_message = $outcome->message;
-            propose(Plan::create('I try to revert changes in the config, as sync has failed.', [
+            Bus\propose(Plan::create('I try to revert changes in the config, as sync has failed.', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version,
@@ -393,7 +392,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
 
             $outcome = Config\save($root, $config);
             if (!$outcome->success) {
-                broadcast(Event::create('Critical: Could not revert changes in the config after sync failure!', [
+                Bus\broadcast(Event::create('Critical: Could not revert changes in the config after sync failure!', [
                     'root' => $root,
                     'identifier' => $identifier,
                     'version' => $version ?: 'latest',
@@ -402,7 +401,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
                 ]));
                 return new Outcome(false, '⚡ Critical: Could not revert changes in the config after sync failure.');
             }
-            broadcast(Event::create('Sync failed after adding a package!', [
+            Bus\broadcast(Event::create('Sync failed after adding a package!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -410,7 +409,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
             ]));
             return new Outcome(false, '🔄 Sync failed after adding the package. ' . $sync_message);
         }
-        broadcast(Event::create('I added the given package to the project.', [
+        Bus\broadcast(Event::create('I added the given package to the project.', [
             'root' => $root,
             'config' => $config,
             'package' => $new_package,
@@ -418,13 +417,13 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         ]));
         return new Outcome(true, '✅ Package added successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'root' => $root ?? $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
     } catch (DependencyResolutionException $e) {
-        broadcast(Event::create('Dependency resolution failed!', [
+        Bus\broadcast(Event::create('Dependency resolution failed!', [
             'root' => $root,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -432,7 +431,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         ]));
         return new Outcome(false, '❌ Failed to add the package. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
-        broadcast(Event::create('Version incompatibility issue found!', [
+        Bus\broadcast(Event::create('Version incompatibility issue found!', [
             'root' => $root,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -440,7 +439,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         ]));
         return new Outcome(false, '❌ Failed to add package. ' . $e->getMessage());
     } catch (NotFoundException $e) {
-        broadcast(Event::create('The package repository was not found!', [
+        Bus\broadcast(Event::create('The package repository was not found!', [
             'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -448,7 +447,7 @@ function add(string $project, string $identifier, ?string $version, ?bool $ignor
         ]));
         return new Outcome(false, '🔍 Package repository not found. ' . $e->getMessage());
     } catch (ApiRequestException $e) {
-        broadcast(Event::create('An error occurred while trying to access the package repository!', [
+        Bus\broadcast(Event::create('An error occurred while trying to access the package repository!', [
             'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -463,7 +462,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to update the given package in the project.', [
+        Bus\propose(Plan::create('I try to update the given package in the project.', [
             'root' => $root,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -472,7 +471,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -485,7 +484,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         $outcome = Meta\read($root, $vendor);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project dependencies!', [
+            Bus\broadcast(Event::create('I could not read the project dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -507,7 +506,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             if (Repositories\can_guess_a_repo($identifier)) {
                 $url = Repositories\guess_the_repo($identifier);
             } else {
-                broadcast(Event::create('The given package identifier is invalid!', [
+                Bus\broadcast(Event::create('The given package identifier is invalid!', [
                     'root' => $root,
                     'identifier' => $identifier,
                     'version' => $version ?: 'latest',
@@ -519,7 +518,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read credentials!', [
+            Bus\broadcast(Event::create('I could not read credentials!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -543,7 +542,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         }
 
         if (!$old_version || !$old_url) {
-            broadcast(Event::create('Package not found in your project!', [
+            Bus\broadcast(Event::create('Package not found in your project!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -559,7 +558,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         foreach ($packages as $package) {
             if (Repositories\are_equal($repository, $package->commit->version->repository)) {
                 if ($package->commit->version->tag === $version) {
-                    broadcast(Event::create('The package is already at the desired version!', [
+                    Bus\broadcast(Event::create('The package is already at the desired version!', [
                         'root' => $root,
                         'identifier' => $identifier,
                         'version' => $version ?: 'latest',
@@ -574,7 +573,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         $outcome = load($url, $version);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not get package and its dependencies!', [
+            Bus\broadcast(Event::create('I could not get package and its dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -590,7 +589,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             $additional_packages[] = new Package($dependency['commit'], $dependency['config']);
         }
 
-        propose(Plan::create('I try to resolve dependencies for updating a package.', [
+        Bus\propose(Plan::create('I try to resolve dependencies for updating a package.', [
             'root' => $root,
             'identifier' => $identifier,
             'version' => $version,
@@ -607,7 +606,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         $outcome = Config\save($root, $new_config);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not save the config file after resolving dependencies!', [
+            Bus\broadcast(Event::create('I could not save the config file after resolving dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -621,7 +620,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
         if (!$outcome->success) {
             $sync_message = $outcome->message;
-            propose(Plan::create('I try to revert changes in the config, as sync has failed.', [
+            Bus\propose(Plan::create('I try to revert changes in the config, as sync has failed.', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version,
@@ -630,7 +629,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
 
             $outcome = Config\save($root, $config);
             if (!$outcome->success) {
-                broadcast(Event::create('Critical: Could not revert changes in the config after sync failure!', [
+                Bus\broadcast(Event::create('Critical: Could not revert changes in the config after sync failure!', [
                     'root' => $root,
                     'identifier' => $identifier,
                     'version' => $version ?: 'latest',
@@ -639,7 +638,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
                 ]));
                 return new Outcome(false, '⚡ Critical: Could not revert changes in the config after sync failure.');
             }
-            broadcast(Event::create('Sync failed after updating a package!', [
+            Bus\broadcast(Event::create('Sync failed after updating a package!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $version ?: 'latest',
@@ -648,7 +647,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
             return new Outcome(false, '🔄 Sync failed after updating the package. ' . $sync_message);
         }
 
-        broadcast(Event::create('I updated the given package in the project.', [
+        Bus\broadcast(Event::create('I updated the given package in the project.', [
             'root' => $root,
             'config' => $config,
             'old_version' => $old_version,
@@ -657,13 +656,13 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         ]));
         return new Outcome(true, '🔄 Package updated successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
     } catch (DependencyResolutionException $e) {
-        broadcast(Event::create('Dependency resolution failed!', [
+        Bus\broadcast(Event::create('Dependency resolution failed!', [
             'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -671,7 +670,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         ]));
         return new Outcome(false, '❌ Failed to update the package. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
-        broadcast(Event::create('Version incompatibility issue found!', [
+        Bus\broadcast(Event::create('Version incompatibility issue found!', [
             'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -679,7 +678,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         ]));
         return new Outcome(false, '❌ Failed to update the package. ' . $e->getMessage());
     } catch (NotFoundException $e) {
-        broadcast(Event::create('The package repository was not found!', [
+        Bus\broadcast(Event::create('The package repository was not found!', [
             'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -687,7 +686,7 @@ function update(string $project, string $identifier, ?string $version, ?bool $ig
         ]));
         return new Outcome(false, '🔍 Package repository not found. ' . $e->getMessage());
     } catch (ApiRequestException $e) {
-        broadcast(Event::create('An error occurred while trying to access the package repository!', [
+        Bus\broadcast(Event::create('An error occurred while trying to access the package repository!', [
             'project' => $project,
             'identifier' => $identifier,
             'version' => $version ?: 'latest',
@@ -702,14 +701,14 @@ function remove(string $project, string $identifier): Outcome
     try {
         $root = Paths\detect_project($project);
 
-        propose(Plan::create('I try to remove the given package from the project.', [
+        Bus\propose(Plan::create('I try to remove the given package from the project.', [
             'root' => $root,
             'identifier' => $identifier,
         ]));
 
         $outcome = Config\read($root);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project config!', [
+            Bus\broadcast(Event::create('I could not read the project config!', [
                 'root' => $root,
                 'identifier' => $identifier,
             ]));
@@ -722,7 +721,7 @@ function remove(string $project, string $identifier): Outcome
 
         $outcome = Meta\read($root, $vendor);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read the project dependencies!', [
+            Bus\broadcast(Event::create('I could not read the project dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
             ]));
@@ -744,7 +743,7 @@ function remove(string $project, string $identifier): Outcome
             if (Repositories\can_guess_a_repo($identifier)) {
                 $url = Repositories\guess_the_repo($identifier);
             } else {
-                broadcast(Event::create('The given package identifier is invalid!', [
+                Bus\broadcast(Event::create('The given package identifier is invalid!', [
                     'root' => $root,
                     'identifier' => $identifier,
                     'url' => $url,
@@ -755,7 +754,7 @@ function remove(string $project, string $identifier): Outcome
 
         $outcome = Credential\read();
         if (!$outcome->success) {
-            broadcast(Event::create('I could not read credentials!', [
+            Bus\broadcast(Event::create('I could not read credentials!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'url' => $url,
@@ -778,7 +777,7 @@ function remove(string $project, string $identifier): Outcome
         }
 
         if (!$old_version || !$old_url) {
-            broadcast(Event::create('The package not found in your project!', [
+            Bus\broadcast(Event::create('The package not found in your project!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'url' => $url,
@@ -790,7 +789,7 @@ function remove(string $project, string $identifier): Outcome
 
         unset($new_config['packages'][$old_url]);
 
-        propose(Plan::create('I try to resolve dependencies for removing a package.', [
+        Bus\propose(Plan::create('I try to resolve dependencies for removing a package.', [
             'root' => $root,
             'identifier' => $identifier,
             'url' => $url,
@@ -801,7 +800,7 @@ function remove(string $project, string $identifier): Outcome
 
         $outcome = Config\save($root, $new_config);
         if (!$outcome->success) {
-            broadcast(Event::create('I could not save the config file after resolving dependencies!', [
+            Bus\broadcast(Event::create('I could not save the config file after resolving dependencies!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $old_version,
@@ -815,7 +814,7 @@ function remove(string $project, string $identifier): Outcome
 
         if (!$outcome->success) {
             $sync_message = $outcome->message;
-            propose(Plan::create('I try to revert changes in the config, as sync has failed.', [
+            Bus\propose(Plan::create('I try to revert changes in the config, as sync has failed.', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $old_version,
@@ -824,7 +823,7 @@ function remove(string $project, string $identifier): Outcome
 
             $outcome = Config\save($root, $config);
             if (!$outcome->success) {
-                broadcast(Event::create('Critical: Could not revert changes in the config after sync failure!', [
+                Bus\broadcast(Event::create('Critical: Could not revert changes in the config after sync failure!', [
                     'root' => $root,
                     'identifier' => $identifier,
                     'version' => $old_version,
@@ -833,7 +832,7 @@ function remove(string $project, string $identifier): Outcome
                 ]));
                 return new Outcome(false, '⚡ Critical: Could not revert changes in the config after sync failure.');
             }
-            broadcast(Event::create('Sync failed after removing a package!', [
+            Bus\broadcast(Event::create('Sync failed after removing a package!', [
                 'root' => $root,
                 'identifier' => $identifier,
                 'version' => $old_version,
@@ -842,7 +841,7 @@ function remove(string $project, string $identifier): Outcome
             return new Outcome(false, '🔄 Sync failed after removing the package. ' . $sync_message);
         }
 
-        broadcast(Event::create('I removed the given package from the project.', [
+        Bus\broadcast(Event::create('I removed the given package from the project.', [
             'root' => $root,
             'config' => $config,
             'old_version' => $old_version,
@@ -852,20 +851,20 @@ function remove(string $project, string $identifier): Outcome
         ]));
         return new Outcome(true, '🗑️ Package removed successfully.');
     } catch (NotWritableException $e) {
-        broadcast(Event::create('The path is not writable!', [
+        Bus\broadcast(Event::create('The path is not writable!', [
             'project' => $project,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '🔒 The path is not writable: ' . $e->getMessage());
     } catch (DependencyResolutionException $e) {
-        broadcast(Event::create('Dependency resolution failed!', [
+        Bus\broadcast(Event::create('Dependency resolution failed!', [
             'project' => $project,
             'identifier' => $identifier,
             'error' => $e->getMessage(),
         ]));
         return new Outcome(false, '❌ Failed to remove the package. ' . $e->getMessage());
     } catch (VersionIncompatibilityException $e) {
-        broadcast(Event::create('Version incompatibility issue found!', [
+        Bus\broadcast(Event::create('Version incompatibility issue found!', [
             'project' => $project,
             'identifier' => $identifier,
             'error' => $e->getMessage(),
