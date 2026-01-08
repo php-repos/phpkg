@@ -61,7 +61,7 @@ function detect_project(string $project): string
 function file_itself_exists(string $path): bool
 {
     log('Checking if the file itself exists', ['path' => $path]);
-    return Files\file_exists($path);
+    return Files\exists($path);
 }
 
 function temp_directory(string ...$relatives): string
@@ -179,7 +179,13 @@ function has_path_identifier(string $str): bool
 function find(string $path): bool
 {
     log('Checking if the directory exists', ['path' => $path]);
-    return Files\directory_exists($path);
+    return directory_exists($path);
+}
+
+function directory_exists(string $path): bool
+{
+    log('Checking if directory exists', ['path' => $path]);
+    return Files\exists($path) && Files\is_directory($path);
 }
 
 /**
@@ -192,7 +198,7 @@ function make_recursively(string $path): bool
     $parent = Files\parent($path);
     // Check for root paths: Unix root '/' or Windows root (C:\ or C:/)
     $is_root = ($parent === '/' || $parent === '\\' || preg_match('/^[A-Za-z]:[\/\\\\]?$/', $parent));
-    while (!$is_root && !Files\directory_exists($parent)) {
+    while (!$is_root && !directory_exists($parent)) {
         $parent = Files\parent($parent);
         $is_root = ($parent === '/' || $parent === '\\' || preg_match('/^[A-Za-z]:[\/\\\\]?$/', $parent));
     }
@@ -211,7 +217,7 @@ function delete_recursively(string $path): bool
 function phpkg_config_exists(string $root): bool
 {
     log('Checking if PHPKG config exists', ['root' => $root]);
-    return Files\directory_exists(phpkg_config_path($root));
+    return Files\exists(phpkg_config_path($root));
 }
 
 function composer_vendor_path(string $root): string
@@ -262,7 +268,7 @@ function write(string $root, string $content, ?int $permission = 0664): bool
         'root' => $root,
         'permission' => $permission,
     ]);
-    if (!Files\directory_exists(Files\parent($root))) {
+    if (!directory_exists(Files\parent($root))) {
         log('Parent directory does not exist, creating it', ['parent' => Files\parent($root)]);
         Files\make_directory_recursively(Files\parent($root));
     }
@@ -278,7 +284,7 @@ function permission(string $path): int
 function read(string $root): string
 {
     log('Reading file content', ['root' => $root]);
-    return Files\file_content($root);
+    return Files\content($root);
 }
 
 function symlink(string $source, string $link): bool
@@ -287,7 +293,7 @@ function symlink(string $source, string $link): bool
         'source' => $source,
         'link' => $link,
     ]);
-    if (!Files\directory_exists(Files\parent($source))) {
+    if (!directory_exists(Files\parent($source))) {
         log('Parent directory of source does not exist, creating it', ['parent' => Files\parent($source)]);
         Files\make_directory_recursively(Files\parent($source));
     }
@@ -298,7 +304,7 @@ function symlink(string $source, string $link): bool
 function ensure_directory_exists(string $path): bool
 {
     log('Ensuring directory exists', ['path' => $path]);
-    if (Files\directory_exists($path)) {
+    if (directory_exists($path)) {
         return true;
     }
     return Files\make_directory_recursively($path);
@@ -308,13 +314,13 @@ function file_is_symlink(string $path): bool
 {
     log('Checking if the file is a symlink', ['path' => $path]);
 
-    return Files\file_exists($path) && Files\is_symlink($path);
+    return Files\exists($path) && Files\is_symlink($path);
 }
 
 function symlink_destination(string $path): string
 {
     log('Retrieving symlink destination', ['path' => $path]);
-    return Files\symlink_link($path);
+    return Files\symlink_target($path);
 }
 
 function preserve_copy(string $source, string $destination): bool
@@ -323,7 +329,7 @@ function preserve_copy(string $source, string $destination): bool
         'source' => $source,
         'destination' => $destination,
     ]);
-    if (!Files\directory_exists(Files\parent($destination))) {
+    if (!directory_exists(Files\parent($destination))) {
         debug('Parent directory of destination does not exist, creating it', ['parent' => Files\parent($destination)]);
         Files\make_directory_recursively(Files\parent($destination));
     }
@@ -348,7 +354,7 @@ function preserve_copy_directory_content(string $source, string $destination): b
         return false;
     }
 
-    if (!Files\directory_exists($destination)) {
+    if (!directory_exists($destination)) {
         Files\make_directory_recursively($destination);
     }
 
@@ -360,7 +366,7 @@ function preserve_copy_directory_content(string $source, string $destination): b
         $dest_path = under($destination, $item_name);
 
         if (Files\is_directory($item)) {
-            if (!Files\directory_exists($dest_path)) {
+            if (!directory_exists($dest_path)) {
                 Files\make_directory_recursively($dest_path);
             }
             $success = preserve_copy_directory_content($item, $dest_path) && $success;
@@ -381,7 +387,7 @@ function is_php_file(string $path): bool
 function exists(string $path): bool
 {
     log('Checking if file or directory exists', ['path' => $path]);
-    return Files\file_exists($path) || Files\directory_exists($path);
+    return Files\exists($path) || directory_exists($path);
 }
 
 function is_empty_directory(string $path): bool
@@ -525,4 +531,40 @@ function is_excluded(array $excludes, string $path): bool
     }
 
     return false;
+}
+
+function relative_path(string $origin, string $destination): string
+{
+    log('Calculating relative path', [
+        'origin' => $origin,
+        'destination' => $destination,
+    ]);
+
+    $origin = Files\realpath($origin);
+    $destination = Files\realpath($destination);
+
+    if ($origin === $destination) {
+        return '';
+    }
+
+    $origin_parts = array_filter(explode(DIRECTORY_SEPARATOR, $origin), fn($part) => $part !== '');
+    $destination_parts = array_filter(explode(DIRECTORY_SEPARATOR, $destination), fn($part) => $part !== '');
+
+    if (empty($origin_parts)) {
+        return implode(DIRECTORY_SEPARATOR, $destination_parts);
+    }
+
+    $common_length = 0;
+    foreach ($origin_parts as $i => $part) {
+        if (!isset($destination_parts[$i]) || $part !== $destination_parts[$i]) {
+            break;
+        }
+        $common_length++;
+    }
+
+    $upward_steps = count($origin_parts) - $common_length;
+    $relative_parts = array_fill(0, $upward_steps, '..');
+    $relative_parts = array_merge($relative_parts, array_slice($destination_parts, $common_length));
+
+    return implode(DIRECTORY_SEPARATOR, $relative_parts) ?: '.';
 }

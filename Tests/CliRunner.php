@@ -2,20 +2,34 @@
 
 namespace Tests\CliRunner;
 
-use PhpRepos\Console\Input;
-use PhpRepos\FileManager\Path;
-use function Phpkg\Cli\Runner\execute;
-use function PhpRepos\Console\Runner\from_path;
+use PhpRepos\Console\Business\Finder;
+use PhpRepos\Console\Business\Command;
 
 function phpkg(string $command, array $arguments = []): string
 {
+    $inputs = [$command, ...$arguments];
+
+    $outcome = Finder\path(__DIR__.'/../Commands', 'Command.php');
+
+    if (!$outcome->success) return $outcome->message;
+
+    $command_handlers = $outcome->data['handlers'];
+
+    $outcome = Command\find($command_handlers, $inputs);
+
+    if (!$outcome->success) {
+        return $outcome->message;
+    }
+
+    $command = $outcome->data['name'];
+    $handler = $outcome->data['handler'];
+
+    $outcome = Command\describe($handler);
+    if (!$outcome->success) return $outcome->message;
+
     ob_start();
-    $inputs = Input::make([$command, ...$arguments]);
-    $commands_directory = Path::from_string(__DIR__ . '/../Commands');
-    execute(from_path($commands_directory), $inputs, false, $commands_directory, '[-v | -vv | -vvv]');
+    $outcome = Command\run($command, $handler, $command_handlers, $inputs);
+    if (!$outcome->success) return $outcome->message;
 
-    $output = ob_get_contents();
-    ob_end_clean();
-
-    return $output;
+    return ob_get_clean();
 }

@@ -2,10 +2,80 @@
 
 namespace Phpkg\Infra\CLI;
 
+use Closure;
 use Phpkg\Infra\Cache;
 use function Phpkg\Infra\Formats\bytes;
 use function Phpkg\Infra\Formats\duration;
 use function Phpkg\Infra\Strings\truncate;
+
+function capture(Closure $closure): string
+{
+    // Start output buffering
+    ob_start();
+
+    // Execute the provided closure, capturing its output
+    $closure();
+
+    // Get the captured output as a string and clean the buffer
+    $output = ob_get_contents();
+    ob_end_clean();
+
+    // Return the captured output
+    return $output;
+}
+
+/**
+ * Write a message to the console.
+ *
+ * This function prints the provided message to the console without any additional formatting.
+ *
+ * @param string $message The message to be displayed.
+ * @return bool
+ */
+function write(string $message): bool
+{
+    echo $message;
+    return true;
+}
+
+/**
+ * Output a line of text to the console with default text color.
+ *
+ * This function prints a line of text to the console, with default text color (reset to normal).
+ *
+ * @param string $string The text to be displayed.
+ * @return bool
+ */
+function line(string $string): bool
+{
+    return write("\e[39m$string" . PHP_EOL);
+}
+
+/**
+ * Output a success message to the console with green text color.
+ *
+ * This function prints a success message to the console with green text color, indicating a successful operation.
+ *
+ * @param string $string The success message to be displayed.
+ * @return bool
+ */
+function success(string $string): bool
+{
+    return write("\e[92m$string\e[39m" . PHP_EOL);
+}
+
+/**
+ * Output an error message to the console with red text color.
+ *
+ * This function prints an error message to the console with red text color, indicating an error condition.
+ *
+ * @param string $string The error message to be displayed.
+ * @return bool
+ */
+function error(string $string): bool
+{
+    return write("\e[91m$string\e[39m" . PHP_EOL);
+}
 
 /**
  * Get the terminal width in columns.

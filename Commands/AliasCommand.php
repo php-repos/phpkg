@@ -1,12 +1,12 @@
 <?php
 
 use Phpkg\Business\Package;
-use PhpRepos\Console\Attributes\Argument;
-use PhpRepos\Console\Attributes\Description;
-use PhpRepos\Console\Attributes\LongOption;
-use function PhpRepos\Cli\Output\error;
-use function PhpRepos\Cli\Output\line;
-use function PhpRepos\Cli\Output\success;
+use PhpRepos\Console\Business\Attributes\Argument;
+use PhpRepos\Console\Business\Attributes\Description;
+use PhpRepos\Console\Business\Attributes\LongOption;
+use function Phpkg\Infra\CLI\error;
+use function Phpkg\Infra\CLI\line;
+use function Phpkg\Infra\CLI\success;
 
 /**
  * Defines the provided alias for a given package, allowing you to use the alias in other commands where a package URL is required.

@@ -3,12 +3,12 @@
 namespace Phpkg\Commands\Credential;
 
 use Phpkg\Business\Credential;
-use PhpRepos\Console\Attributes\Argument;
-use PhpRepos\Console\Attributes\Description;
-use PhpRepos\Console\Attributes\LongOption;
-use function PhpRepos\Cli\Output\error;
-use function PhpRepos\Cli\Output\line;
-use function PhpRepos\Cli\Output\success;
+use PhpRepos\Console\Business\Attributes\Argument;
+use PhpRepos\Console\Business\Attributes\Description;
+use PhpRepos\Console\Business\Attributes\LongOption;
+use function Phpkg\Infra\CLI\error;
+use function Phpkg\Infra\CLI\line;
+use function Phpkg\Infra\CLI\success;
 
 /**
  * The `credential` command is used to add a security token for a specified Git provider to the credential file.

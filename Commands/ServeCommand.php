@@ -1,13 +1,13 @@
 <?php
 
 use Phpkg\Business\Project;
-use PhpRepos\Console\Attributes\Argument;
-use PhpRepos\Console\Attributes\Description;
-use PhpRepos\Console\Attributes\ExcessiveArguments;
-use PhpRepos\Console\Attributes\LongOption;
-use function PhpRepos\Cli\Output\error;
-use function PhpRepos\Cli\Output\line;
-use function PhpRepos\FileManager\Paths\parent;
+use PhpRepos\Console\Business\Attributes\Argument;
+use PhpRepos\Console\Business\Attributes\Description;
+use PhpRepos\Console\Business\Attributes\ExcessiveArguments;
+use PhpRepos\Console\Business\Attributes\LongOption;
+use function Phpkg\Infra\CLI\error;
+use function Phpkg\Infra\CLI\line;
+use function Phpkg\Infra\Files\parent;
 
 /**
  * Serves an external project using PHP's built-in server on-the-fly.

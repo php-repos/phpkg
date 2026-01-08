@@ -1,12 +1,12 @@
 <?php
 
 use Phpkg\Business\Project;
-use PhpRepos\Console\Attributes\Argument;
-use PhpRepos\Console\Attributes\Description;
-use PhpRepos\Console\Attributes\ExcessiveArguments;
-use PhpRepos\Console\Attributes\LongOption;
-use function PhpRepos\Cli\Output\error;
-use function PhpRepos\Cli\Output\line;
+use PhpRepos\Console\Business\Attributes\Argument;
+use PhpRepos\Console\Business\Attributes\Description;
+use PhpRepos\Console\Business\Attributes\ExcessiveArguments;
+use PhpRepos\Console\Business\Attributes\LongOption;
+use function Phpkg\Infra\CLI\error;
+use function Phpkg\Infra\CLI\line;
 
 /**
  * Runs a project on-the-fly.

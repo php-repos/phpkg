@@ -11,8 +11,6 @@ use Phpkg\Solution\Paths;
 use Phpkg\Infra\Strings;
 use PhpRepos\Git\Exception\ApiRequestException;
 use PhpRepos\Git\Exception\NotFoundException;
-use function PhpRepos\Datatype\Str\last_character;
-use function PhpRepos\Datatype\Str\remove_last_character;
 use function PhpRepos\Git\Hosts\tags;
 use function PhpRepos\SemanticVersioning\Tags\compare;
 use function PhpRepos\SemanticVersioning\Tags\has_major_change;
@@ -112,8 +110,8 @@ function config_from_local(array $composer_config, array $composer_lock): array
                 continue;
             }
 
-            $namespace = last_character($namespace) === '\\' ? remove_last_character($namespace) : $namespace;
-            $path = last_character($path) === '/' ? remove_last_character($path) : $path;
+            $namespace = Strings\last_character($namespace) === '\\' ? Strings\remove_last_character($namespace) : $namespace;
+            $path = Strings\last_character($path) === '/' ? Strings\remove_last_character($path) : $path;
 
             $config['map'][$namespace] = $path;
         }
@@ -182,8 +180,8 @@ function config(array $composer_config, array $credentials): array
                 continue;
             }
 
-            $namespace = last_character($namespace) === '\\' ? remove_last_character($namespace) : $namespace;
-            $path = last_character($path) === '/' ? remove_last_character($path) : $path;
+            $namespace = Strings\last_character($namespace) === '\\' ? Strings\remove_last_character($namespace) : $namespace;
+            $path = Strings\last_character($path) === '/' ? Strings\remove_last_character($path) : $path;
 
             $config['map'][$namespace] = $path;
         }

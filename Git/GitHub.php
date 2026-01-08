@@ -9,17 +9,15 @@ use PhpRepos\Git\Exception\RateLimitedException;
 use PhpRepos\Git\Http\Conversation;
 use PhpRepos\Git\Http\Request;
 use PhpRepos\Git\Http\Request\Header as RequestHeader;
-use PhpRepos\Git\Http\Request\Url;
 use PhpRepos\Git\Http\Response\Header as ResponseHeader;
 use PhpRepos\Git\Http\Response;
 use PhpRepos\Git\Http\Response\Status;
+use PhpRepos\Git\Platform\Arrays;
 use PhpRepos\Git\Signals\SendingGitHttpRequest;
 use PhpRepos\Git\Signals\HttpResponseReceived;
 use PhpRepos\Git\Signals\GitHostDownloadProgress;
-use PhpRepos\Observer\Observer;
-use function PhpRepos\Datatype\Arr\any;
-use function PhpRepos\Datatype\Arr\first;
-use function PhpRepos\Datatype\Arr\map;
+use PhpRepos\Observer\API\Bus;
+use function filesize;
 
 /**
  * Send an HTTP request to the GitHub API and return the response as a conversation.
@@ -40,13 +38,13 @@ function send(Request\Message $request): Conversation
         return $cache[$cache_key];
     }
 
-    $has_token = any($request->header, fn (array $header) => $header['key'] === 'Authorization');
-    Observer\propose(SendingGitHttpRequest::using($request->url, $request->method, $has_token));
+    $has_token = Arrays\any($request->header->to_array(), fn (string $value) => $value === 'Authorization');
+    Bus\propose(SendingGitHttpRequest::using($request->url, $request->method, $has_token));
 
     $start_time = microtime(true);
 
     $ch = curl_init($request->url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, map($request->header, fn (array $header) => $header['key'] . ': ' . $header['value']));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, Arrays\map($request->header->to_array(), fn (string $value, string $key) => $key . ': ' . $value));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HEADER, true);
     if (PHP_OS === 'WINNT') {
@@ -58,7 +56,7 @@ function send(Request\Message $request): Conversation
 
     if (curl_errno($ch) > 0) {
         $duration = microtime(true) - $start_time;
-        Observer\broadcast(HttpResponseReceived::with($request->url, $request->method, 0, $duration));
+        Bus\broadcast(HttpResponseReceived::with($request->url, $request->method, 0, $duration));
         throw new ApiRequestException('Git curl error: ' . $error);
     }
 
@@ -69,7 +67,7 @@ function send(Request\Message $request): Conversation
     $status_code = Status::tryFrom($http_code);
 
     $duration = microtime(true) - $start_time;
-    Observer\broadcast(HttpResponseReceived::with($request->url, $request->method, $http_code, $duration));
+    Bus\broadcast(HttpResponseReceived::with($request->url, $request->method, $http_code, $duration));
 
     $header_lines = explode("\r\n", trim($headers));
     $response_header = new ResponseHeader();
@@ -84,18 +82,18 @@ function send(Request\Message $request): Conversation
         throw new InvalidTokenException('GitHub token is not valid.');
     }
 
-    if (($status_code === Status::FORBIDDEN || $status_code === Status::TOO_MANY_REQUESTS) && any($response_header, fn (array $header) => $header['key'] === 'x-ratelimit-remaining' && $header['value'] == 0)) {
-        $reset_time = first($response_header, fn (array $header) => $header['key'] === 'x-ratelimit-reset')['value'] - time();
+    if (($status_code === Status::FORBIDDEN || $status_code === Status::TOO_MANY_REQUESTS) && Arrays\any($response_header->to_array(), fn (array $header) => $header['key'] === 'x-ratelimit-remaining' && $header['value'] == 0)) {
+        $reset_time = Arrays\first($response_header->to_array(), fn (string $value, string $key) => $key === 'x-ratelimit-reset') - time();
         throw new RateLimitedException("You have reached the GitHub API rate limit. Please try again in $reset_time seconds.");
     }
 
     if ($status_code === Status::NOT_FOUND) {
-        any($request->header, fn (array $header) => $header['key'] === 'Authorization')
+        Arrays\any($request->header->to_array(), fn (string $value, string $key) => $key === 'Authorization')
             ? throw new NotFoundException('The endpoint not found.')
             : throw new NotFoundException('The endpoint not found. If it is a private repository, please provide a token.');
     }
 
-    $response = new Response\Message($status_code, $response_header, new Response\Body($body));
+    $response = new Response\Message($status_code, $response_header, $body);
 
     $conversation = new Conversation($request, $response);
 
@@ -124,7 +122,7 @@ function get(string $api_sub_url, Request\Header $request_header, ?string $token
         $request_header = Request\Headers\authorization($request_header, "Bearer $token");
     }
 
-    $request = new Request\Message(new Url('https://api.github.com/' . $api_sub_url), 'GET', $request_header);
+    $request = new Request\Message('https://api.github.com/' . $api_sub_url, 'GET', $request_header);
 
     return send($request);
 }
@@ -268,7 +266,7 @@ function download_archive(string $owner, string $repo, string $hash, ?string $to
         $elapsed_seconds = microtime(true) - $download_start_time;
         $final_download_size = $download_size;
         $final_downloaded = $downloaded;
-        Observer\share(GitHostDownloadProgress::from_github_downloader(
+        Bus\share(GitHostDownloadProgress::from_github_downloader(
             'github.com',
             $owner,
             $repo,
@@ -290,9 +288,9 @@ function download_archive(string $owner, string $repo, string $hash, ?string $to
     // This handles cases where the callback doesn't fire at completion
     if ($http_code === 200) {
         $elapsed_seconds = microtime(true) - $download_start_time;
-        $file_size = \file_exists($destination) ? \filesize($destination) : $final_downloaded;
+        $file_size = \file_exists($destination) ? filesize($destination) : $final_downloaded;
         $total_size = $final_download_size > 0 ? $final_download_size : $file_size;
-        Observer\share(GitHostDownloadProgress::from_github_downloader(
+        Bus\share(GitHostDownloadProgress::from_github_downloader(
             'github.com',
             $owner,
             $repo,
@@ -392,19 +390,19 @@ function tags(string $owner, string $repo, ?string $token): array
  */
 function next_page(Conversation $conversation): ?Conversation
 {
-    $link = first($conversation->response->header, fn (array $header) => $header['key'] === 'link');
+    $link = Arrays\first($conversation->response->header->to_array(), fn (string $value, string $key) => $key === 'link');
 
     if (! $link) {
         return null;
     }
 
-    preg_match('/<([^>]+)>; rel="next"/', $link['value'], $matches);
+    preg_match('/<([^>]+)>; rel="next"/', $link, $matches);
     if (! isset($matches[1])) {
         // This is the last page
         return null;
     }
     $next_url = $matches[1];
-    $request = new Request\Message(new Url($next_url), 'GET', $conversation->request->header);
+    $request = new Request\Message($next_url, 'GET', $conversation->request->header);
 
     return send($request);
 }

@@ -3,10 +3,8 @@
 namespace Tests\InitCommandTest;
 
 use Phpkg\Solution\PHPKGs;
+use Phpkg\Infra\CLI;
 use Phpkg\Infra\Files;
-use PhpRepos\Cli\Output;
-use PhpRepos\Datatype\Arr;
-use PhpRepos\Datatype\Str;
 use Tests\CliRunner;
 use PhpRepos\TestRunner\Assertions;
 use function PhpRepos\TestRunner\Runner\test;
@@ -18,14 +16,14 @@ test(
             "--project=$temp_dir",
         ]);
 
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected = CLI\capture(function () {
+            CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
 
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
 
-        Arr\assert_equal([
+        Assertions\assert_true([
             'map' => [],
             'autoloads' => [],
             'excludes' => [],
@@ -35,11 +33,11 @@ test(
             'import-file' => 'phpkg.imports.php',
             'packages' => [],
             'aliases' => [],
-        ], Files\read_json_as_array($temp_dir . '/phpkg.config.json'));
+        ] === Files\read_json_as_array($temp_dir . '/phpkg.config.json'));
         $meta = Files\read_json_as_array($temp_dir . '/phpkg.config-lock.json');
-        Arr\assert_equal([], $meta['packages']);
-        Str\assert_equal($meta['version'], 2);
-        Str\assert_equal($meta['checksum'], PHPKGs\lock_checksum([]));
+        Assertions\assert_true([] === $meta['packages']);
+        Assertions\assert_true($meta['version'] === 2);
+        Assertions\assert_true($meta['checksum'] === PHPKGs\lock_checksum([]));
     },
     before: function () {
         $temp_dir = sys_get_temp_dir() . '/' . uniqid('phpkg_init_test');
@@ -63,22 +61,22 @@ test(
             "--project=$non_existent_dir",
         ]);
 
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected =  CLI\capture(function () {
+            CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
 
-        Output\assert_output($expected, $output);
-        
+        Assertions\assert_true($expected === $output, 'Output should match expected initialization messages');
+
         // Verify the directory was created
         Assertions\assert_true(is_dir($non_existent_dir), 'Directory should be created by init command');
-        
+
         // Verify the project files were created
         Assertions\assert_true(file_exists($non_existent_dir . '/phpkg.config.json'), 'phpkg.config.json should be created');
         Assertions\assert_true(file_exists($non_existent_dir . '/phpkg.config-lock.json'), 'phpkg.config-lock.json should be created');
-        
+
         // Verify the config content
-        Arr\assert_equal([
+        Assertions\assert_true([
             'map' => [],
             'autoloads' => [],
             'excludes' => [],
@@ -88,11 +86,11 @@ test(
             'import-file' => 'phpkg.imports.php',
             'packages' => [],
             'aliases' => [],
-        ], Files\read_json_as_array($non_existent_dir . '/phpkg.config.json'));
+        ] === Files\read_json_as_array($non_existent_dir . '/phpkg.config.json'), 'Config content should match expected default values');
         $meta = Files\read_json_as_array($non_existent_dir . '/phpkg.config-lock.json');
-        Str\assert_equal($meta['version'], 2);
-        Str\assert_equal($meta['checksum'], PHPKGs\lock_checksum([]));
-        Arr\assert_equal([], $meta['packages']);
+        Assertions\assert_true($meta['version'] === 2, 'Lock file version should be 2');
+        Assertions\assert_true($meta['checksum'] === PHPKGs\lock_checksum([]), 'Lock file checksum should match expected value');
+        Assertions\assert_true([] === $meta['packages'], 'Lock file packages should be an empty array');
         
         return $non_existent_dir;
     },
@@ -114,19 +112,19 @@ test(
             "--packages-directory=CustomPackages"
         ]);
 
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected =  CLI\capture(function () {
+             CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
 
-        Output\assert_output($expected, $output);
-        
+        Assertions\assert_true($expected === $output);
+
         // Verify custom packages directory is set in config
         $config = Files\read_json_as_array($temp_dir . '/phpkg.config.json');
         Assertions\assert_true($config['packages-directory'] === 'CustomPackages', 'Custom packages directory should be set correctly');
-        
+
         // Verify other config values remain correct
-        Arr\assert_equal([
+        Assertions\assert_true([
             'map' => [],
             'autoloads' => [],
             'excludes' => [],
@@ -136,7 +134,7 @@ test(
             'import-file' => 'phpkg.imports.php',
             'packages' => [],
             'aliases' => [],
-        ], $config);
+        ] === $config);
     },
     before: function () {
         $temp_dir = sys_get_temp_dir() . '/' . uniqid('phpkg_init_custom_packages_test');
@@ -157,12 +155,12 @@ test(
             "--project=$absolute_path",
         ]);
 
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected =  CLI\capture(function () {
+             CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
 
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
         
         // Verify the absolute path was created
         Assertions\assert_true(is_dir($absolute_path), 'Absolute path should be created');
@@ -182,11 +180,11 @@ test(
         // Initialize project first time
         $first_output = CliRunner\phpkg('init', ["--project=$temp_dir"]);
         
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected =  CLI\capture(function () {
+             CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
-        Output\assert_output($expected, $first_output);
+        Assertions\assert_true($expected === $first_output);
         
         // Try to initialize again
         $second_output = CliRunner\phpkg('init', ["--project=$temp_dir"]);
@@ -239,12 +237,12 @@ test(
         
         $output = CliRunner\phpkg('init');
         
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected =  CLI\capture(function () {
+             CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
         
-        Output\assert_output($expected, $output);
+        Assertions\assert_true($expected === $output);
         
         // Verify files were created in current directory
         Assertions\assert_true(file_exists('phpkg.config.json'), 'Should create config in current directory');
@@ -271,32 +269,32 @@ test(
     title: 'it should create valid config files with correct structure',
     case: function (string $temp_dir) {
         CliRunner\phpkg('init', ["--project=$temp_dir"]);
-        
+
         $config = Files\read_json_as_array($temp_dir . '/phpkg.config.json');
         $lock = Files\read_json_as_array($temp_dir . '/phpkg.config-lock.json');
-        
+
         // Verify all required keys exist in config
         $required_keys = ['map', 'autoloads', 'excludes', 'entry-points', 'executables', 'packages-directory', 'import-file', 'packages', 'aliases'];
         foreach ($required_keys as $key) {
             Assertions\assert_true(array_key_exists($key, $config), "Config should contain key: $key");
         }
-        
+
         // Verify lock file structure
         Assertions\assert_true(array_key_exists('packages', $lock), 'Lock file should contain packages key');
-        
+
         // Verify default values
-        Arr\assert_equal([], $config['map'], 'Map should be empty array');
-        Arr\assert_equal([], $config['autoloads'], 'Autoloads should be empty array');
-        Arr\assert_equal([], $config['excludes'], 'Excludes should be empty array');
-        Arr\assert_equal([], $config['entry-points'], 'Entry points should be empty array');
-        Arr\assert_equal([], $config['executables'], 'Executables should be empty array');
+        Assertions\assert_true([] === $config['map'], 'Map should be empty array');
+        Assertions\assert_true([] === $config['autoloads'], 'Autoloads should be empty array');
+        Assertions\assert_true([] === $config['excludes'], 'Excludes should be empty array');
+        Assertions\assert_true([] === $config['entry-points'], 'Entry points should be empty array');
+        Assertions\assert_true([] === $config['executables'], 'Executables should be empty array');
         Assertions\assert_true($config['packages-directory'] === 'Packages', 'Default packages directory should be Packages');
         Assertions\assert_true($config['import-file'] === 'phpkg.imports.php', 'Default import file should be phpkg.imports.php');
-        Arr\assert_equal([], $config['packages'], 'Packages should be empty array');
-        Arr\assert_equal([], $config['aliases'], 'Aliases should be empty array');
-        
+        Assertions\assert_true([] === $config['packages'], 'Packages should be empty array');
+        Assertions\assert_true([] === $config['aliases'], 'Aliases should be empty array');
+
         // Verify lock file content
-        Arr\assert_equal([], $lock['packages'], 'Lock file should contain empty packages array');
+        Assertions\assert_true([] === $lock['packages'], 'Lock file should contain empty packages array');
     },
     before: function () {
         $temp_dir = sys_get_temp_dir() . '/' . uniqid('phpkg_init_config_structure_test');
@@ -322,24 +320,24 @@ test(
             "--project=$relative_path",
         ]);
 
-        $expected = Output\capture(function () {
-            Output\line('Init project...');
-            Output\success('✅ Project initialized successfully.');
+        $expected =  CLI\capture(function () {
+             CLI\line('Init project...');
+            CLI\success('✅ Project initialized successfully.');
         });
 
-        Output\assert_output($expected, $output);
-        
+        Assertions\assert_true($expected === $output);
+
         // Verify the relative path was created
         Assertions\assert_true(is_dir($relative_path), 'Relative path should be created');
         Assertions\assert_true(is_dir($full_path), 'Full path should exist');
-        
+
         // Verify the project files were created
         Assertions\assert_true(file_exists($relative_path . '/phpkg.config.json'), 'phpkg.config.json should be created in relative path');
         Assertions\assert_true(file_exists($relative_path . '/phpkg.config-lock.json'), 'phpkg.config-lock.json should be created in relative path');
-        
+
         // Verify config content
         $config = Files\read_json_as_array($relative_path . '/phpkg.config.json');
-        Arr\assert_equal([
+        Assertions\assert_true([
             'map' => [],
             'autoloads' => [],
             'excludes' => [],
@@ -349,7 +347,7 @@ test(
             'import-file' => 'phpkg.imports.php',
             'packages' => [],
             'aliases' => [],
-        ], $config);
+        ] === $config);
         
         // Change back to original directory
         chdir($original_dir);

@@ -3,7 +3,6 @@
 use PhpRepos\SimpleCSP\SAT;
 use function PhpRepos\SimpleCSP\SATs\{solve, max, min};
 use function PhpRepos\TestRunner\Runner\test;
-use function PhpRepos\Datatype\Arr\assert_equal;
 use function PhpRepos\TestRunner\Assertions\assert_true;
 
 test(
@@ -33,9 +32,9 @@ test(
         };
         
         $solutions = solve($sat);
-        
+
         // Should find exactly 3 solutions: (A=true, B=true), (A=true, B=false), (A=false, B=true)
-        assert_equal($solutions, [
+        assert_true($solutions === [
             [
                 1 => ['variable' => 'A', 'value' => true],
                 2 => ['variable' => 'B', 'value' => true],
@@ -82,9 +81,9 @@ test(
         };
         
         $solutions = solve($sat);
-        
+
         // (A OR B) AND (NOT A OR C) AND (B OR NOT C) has exactly 3 solutions
-        assert_equal($solutions, [
+        assert_true($solutions === [
             [
                 1 => ['variable' => 'A', 'value' => true],
                 2 => ['variable' => 'B', 'value' => true],
@@ -132,13 +131,13 @@ test(
         };
         
         $optimal = max($sat);
-        
+
         // Should maximize evaluation (both variables true = evaluation 2)
-        assert_equal($optimal, [
+        assert_true($optimal === [
             1 => ['variable' => 'A', 'value' => true],
             2 => ['variable' => 'B', 'value' => true],
         ]);
-        assert_equal([$sat->evaluate($optimal)], [2.0], 'Maximum evaluation should be 2');
+        assert_true([$sat->evaluate($optimal)] === [2.0], 'Maximum evaluation should be 2');
     }
 );
 
@@ -178,7 +177,7 @@ test(
             ($minimal[1]['value'] === false && $minimal[2]['value'] === true),
             'Exactly one variable should be true for minimum evaluation'
         );
-        assert_equal([$sat->evaluate($minimal)], [1.0], 'Minimum evaluation should be 1');
+        assert_true([$sat->evaluate($minimal)] === [1.0], 'Minimum evaluation should be 1');
     }
 );
 
@@ -207,19 +206,19 @@ test(
         $solutions = solve($sat);
         $optimal = max($sat);
         $minimal = min($sat);
-        
+
         // Should find exactly one solution: A = true
-        assert_equal($solutions, [
+        assert_true($solutions === [
             [
                 1 => ['variable' => 'A', 'value' => true],
             ],
         ]);
-        
+
         // Optimal and minimal should also have A = true
-        assert_equal($optimal, [
+        assert_true($optimal === [
             1 => ['variable' => 'A', 'value' => true],
         ]);
-        assert_equal($minimal, [
+        assert_true($minimal === [
             1 => ['variable' => 'A', 'value' => true],
         ]);
     }
@@ -248,9 +247,9 @@ test(
         $solutions = solve($sat);
         $optimal = max($sat);
         $minimal = min($sat);
-        
+
         // Should return empty results for unsatisfiable problem
-        assert_equal([count($solutions)], [0]);
+        assert_true([count($solutions)] === [0]);
         assert_true($optimal === null, 'Optimal should be null for unsatisfiable problem');
         assert_true($minimal === null, 'Minimal should be null for unsatisfiable problem');
     }
@@ -283,9 +282,9 @@ test(
         $solutions = solve($sat);
         $optimal = max($sat);
         $minimal = min($sat);
-        
+
         // Should find all 4 possible assignments: (A=true, B=true), (A=true, B=false), (A=false, B=true), (A=false, B=false)
-        assert_equal($solutions, [
+        assert_true($solutions === [
             [
                 1 => ['variable' => 'A', 'value' => true],
                 2 => ['variable' => 'B', 'value' => true],
@@ -303,20 +302,20 @@ test(
                 2 => ['variable' => 'B', 'value' => false],
             ],
         ]);
-        
+
         // Optimal should have both true (evaluation = 2)
-        assert_equal($optimal, [
+        assert_true($optimal === [
             1 => ['variable' => 'A', 'value' => true],
             2 => ['variable' => 'B', 'value' => true],
         ]);
-        assert_equal([$sat->evaluate($optimal)], [2.0]);
-        
+        assert_true([$sat->evaluate($optimal)] === [2.0]);
+
         // Minimal should have both false (evaluation = 0)
-        assert_equal($minimal, [
+        assert_true($minimal === [
             1 => ['variable' => 'A', 'value' => false],
             2 => ['variable' => 'B', 'value' => false],
         ]);
-        assert_equal([$sat->evaluate($minimal)], [0.0]);
+        assert_true([$sat->evaluate($minimal)] === [0.0]);
     }
 );
 
@@ -347,9 +346,9 @@ test(
         };
         
         $solutions = solve($sat);
-        
+
         // (NOT A OR B) has exactly 3 solutions: (A=true, B=true), (A=false, B=true), (A=false, B=false)
-        assert_equal($solutions, [
+        assert_true($solutions === [
             [
                 1 => ['variable' => 'A', 'value' => true],
                 2 => ['variable' => 'B', 'value' => true],
@@ -399,9 +398,9 @@ test(
         $solutions = solve($sat);
         $optimal = max($sat);
         $minimal = min($sat);
-        
+
         // (A OR B) AND (C OR D) has exactly 9 solutions
-        assert_equal($solutions, [
+        assert_true($solutions === [
             [
                 1 => ['variable' => 'A', 'value' => true],
                 2 => ['variable' => 'B', 'value' => true],
@@ -457,24 +456,24 @@ test(
                 4 => ['variable' => 'D', 'value' => true],
             ],
         ]);
-        
+
         // Optimal should have all variables true (A=2, B=1, C=2, D=1 = 6)
-        assert_equal($optimal, [
+        assert_true($optimal === [
             1 => ['variable' => 'A', 'value' => true],
             2 => ['variable' => 'B', 'value' => true],
             3 => ['variable' => 'C', 'value' => true],
             4 => ['variable' => 'D', 'value' => true],
         ]);
-        assert_equal([$sat->evaluate($optimal)], [6.0], 'Optimal evaluation should be 6 (A=2 + B=1 + C=2 + D=1)');
-        
+        assert_true([$sat->evaluate($optimal)] === [6.0], 'Optimal evaluation should be 6 (A=2 + B=1 + C=2 + D=1)');
+
         // Minimal should be B=true, D=true (lowest score = 2)
-        assert_equal($minimal, [
+        assert_true($minimal === [
             1 => ['variable' => 'A', 'value' => false],
             2 => ['variable' => 'B', 'value' => true],
             3 => ['variable' => 'C', 'value' => false],
             4 => ['variable' => 'D', 'value' => true],
         ]);
-        assert_equal([$sat->evaluate($minimal)], [2.0], 'Minimal evaluation should be 2');
+        assert_true([$sat->evaluate($minimal)] === [2.0], 'Minimal evaluation should be 2');
     }
 );
 
@@ -512,20 +511,20 @@ test(
         $solutions = solve($sat);
         $optimal = max($sat);
         $minimal = min($sat);
-        
+
         // (A OR B) AND (C OR D) has exactly 9 solutions (same as previous test)
-        assert_equal([count($solutions)], [9]);
-        
+        assert_true([count($solutions)] === [9]);
+
         // Optimal should have all variables true (A=3, B=1, C=2, D=1 = 7)
-        assert_equal($optimal, [
+        assert_true($optimal === [
             1 => ['variable' => 'A', 'value' => true],
             2 => ['variable' => 'B', 'value' => true],
             3 => ['variable' => 'C', 'value' => true],
             4 => ['variable' => 'D', 'value' => true],
         ]);
-        
+
         // Minimal should be B=true, D=true (lowest score = 2)
-        assert_equal($minimal, [
+        assert_true($minimal === [
             1 => ['variable' => 'A', 'value' => false],
             2 => ['variable' => 'B', 'value' => true],
             3 => ['variable' => 'C', 'value' => false],

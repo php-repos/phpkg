@@ -139,7 +139,7 @@ function portable_require_path(string $origin, string $destination): string
         'destination' => $destination,
     ]);
 
-    $relative_path = Files\relative_path($origin, $destination);
+    $relative_path = Paths\relative_path($origin, $destination);
 
     $portable = "__DIR__";
     foreach (Strings\split($relative_path, DIRECTORY_SEPARATOR) as $segment) {
